@@ -32,12 +32,13 @@ test_loader = DataLoader(test_data, batch_size=2)
 
 print(f"✅ Loaded {len(train_data)} training images")
 print(f"✅ Loaded {len(test_data)} testing images")
+print(f"📚 Classes detected: {train_data.classes}")
 
 # -----------------------------
 # 4️⃣ MODEL (MATCHES TEST MODEL)
 # -----------------------------
 class SimpleCNN(nn.Module):
-    def __init__(self, num_classes=2):
+    def __init__(self, num_classes=len(train_data.classes)):
         super(SimpleCNN, self).__init__()
         self.conv1 = nn.Conv2d(3, 16, 3, 1, 1)
         self.conv2 = nn.Conv2d(16, 32, 3, 1, 1)
@@ -59,7 +60,7 @@ class SimpleCNN(nn.Module):
 # 5️⃣ TRAINING SETUP
 # -----------------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = SimpleCNN(num_classes=2).to(device)
+model = SimpleCNN(num_classes=len(train_data.classes)).to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
@@ -67,7 +68,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 # 6️⃣ TRAINING LOOP
 # -----------------------------
 epochs = 5
-print("\n🚀 Training started...\n")
+print("\n🚀 Training started using Convolutional Neural Network (CNN)...\n")
 
 for epoch in range(epochs):
     running_loss = 0.0
@@ -92,10 +93,13 @@ for epoch in range(epochs):
     print(f"Epoch [{epoch+1}/{epochs}] | Loss: {running_loss:.4f} | Accuracy: {accuracy:.2f}%")
 
 print("\n🎉 Training complete!")
+print("🧠 Result of CNN Training:")
+print(f"➡️ Model trained on {len(train_data.classes)} classes: {train_data.classes}")
+print(f"➡️ Final Epoch Accuracy: {accuracy:.2f}%")
 
 # -----------------------------
 # 7️⃣ SAVE MODEL
 # -----------------------------
 os.makedirs("checkpoints", exist_ok=True)
 torch.save(model.state_dict(), "checkpoints/simple_cnn.pth")
-print("✅ Model saved to checkpoints/simple_cnn.pth")
+print("✅ Trained model saved to checkpoints/simple_cnn.pth")

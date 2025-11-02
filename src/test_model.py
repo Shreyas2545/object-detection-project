@@ -8,7 +8,7 @@ import os
 # MODEL (IDENTICAL TO TRAINING)
 # -----------------------------
 class SimpleCNN(nn.Module):
-    def __init__(self, num_classes=2):
+    def __init__(self, num_classes=3):
         super(SimpleCNN, self).__init__()
         self.conv1 = nn.Conv2d(3, 16, 3, 1, 1)
         self.conv2 = nn.Conv2d(16, 32, 3, 1, 1)
@@ -53,7 +53,8 @@ model.load_state_dict(torch.load(model_path, map_location=device))
 model.to(device)
 model.eval()
 
-print(f"\n✅ Loaded model from: {model_path}")
+print("\n📊 RESULT OF CNN MODEL TESTING\n")
+print(f"✅ Loaded trained model from: {model_path}")
 print(f"📂 Found {len(test_dataset)} test images across {len(test_dataset.classes)} classes: {test_dataset.classes}\n")
 
 # -----------------------------
@@ -75,4 +76,5 @@ with torch.no_grad():
               f"(Confidence: {confidence.item() * 100:.2f}%) | Actual: {test_dataset.classes[labels.item()]}")
 
 accuracy = 100 * correct / total
-print(f"\n🎯 Overall Test Accuracy: {accuracy:.2f}%")
+print(f"\n🎯 Final Test Accuracy of CNN: {accuracy:.2f}%")
+print("💬 This accuracy shows how well the trained CNN model is able to classify unseen images.")
