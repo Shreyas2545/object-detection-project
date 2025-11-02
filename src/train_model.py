@@ -32,10 +32,10 @@ test_loader = DataLoader(test_data, batch_size=2)
 
 print(f"✅ Loaded {len(train_data)} training images")
 print(f"✅ Loaded {len(test_data)} testing images")
-print(f"📚 Classes detected: {train_data.classes}")
+print(f"📚 Classes detected for CNN training: {train_data.classes}")
 
 # -----------------------------
-# 4️⃣ MODEL (MATCHES TEST MODEL)
+# 4️⃣ CNN MODEL DEFINITION
 # -----------------------------
 class SimpleCNN(nn.Module):
     def __init__(self, num_classes=len(train_data.classes)):
@@ -92,9 +92,9 @@ for epoch in range(epochs):
     accuracy = 100 * correct / total
     print(f"Epoch [{epoch+1}/{epochs}] | Loss: {running_loss:.4f} | Accuracy: {accuracy:.2f}%")
 
-print("\n🎉 Training complete!")
-print("🧠 Result of CNN Training:")
-print(f"➡️ Model trained on {len(train_data.classes)} classes: {train_data.classes}")
+print("\n🎉 CNN Training Complete!")
+print("🧠 Training Summary:")
+print(f"➡️ Trained on {len(train_data.classes)} classes: {train_data.classes}")
 print(f"➡️ Final Epoch Accuracy: {accuracy:.2f}%")
 
 # -----------------------------
@@ -102,4 +102,4 @@ print(f"➡️ Final Epoch Accuracy: {accuracy:.2f}%")
 # -----------------------------
 os.makedirs("checkpoints", exist_ok=True)
 torch.save(model.state_dict(), "checkpoints/simple_cnn.pth")
-print("✅ Trained model saved to checkpoints/simple_cnn.pth")
+print("✅ Trained CNN model saved to checkpoints/simple_cnn.pth")
