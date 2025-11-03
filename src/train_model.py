@@ -52,7 +52,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # -----------------------------
 # TRAIN FUNCTION
 # -----------------------------
-def train_model(model, model_name, epochs=8):
+def train_model(model, model_name, epochs=8,lr=0.001):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     model.to(device)
@@ -85,8 +85,5 @@ def train_model(model, model_name, epochs=8):
     torch.save(model.state_dict(), save_path)
     print(f"✅ {model_name} saved to {save_path}\n")
 
-# -----------------------------
-# TRAIN BOTH MODELS
-# -----------------------------
-train_model(CNNModel(num_classes=len(train_data.classes)), "CNN",epochs=8)
-train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18",epochs=10)
+train_model(CNNModel(num_classes=len(train_data.classes)), "CNN",epochs=8,lr=0.001)
+train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18",epochs=10,lr=0.0001 )
