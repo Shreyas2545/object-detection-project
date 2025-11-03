@@ -1,19 +1,19 @@
+import os
 import torch
 import torch.nn as nn
 from torchvision import transforms, datasets
 from torch.utils.data import DataLoader
-import os
 
 # -----------------------------
-# 1️⃣ CNN MODEL (same as training)
+# 1️⃣ CNN MODEL (must match training)
 # -----------------------------
 class SimpleCNN(nn.Module):
     def __init__(self, num_classes=3):
         super(SimpleCNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 16, 3, padding=1)
+        self.conv1 = nn.Conv2d(3, 16, 3, 1, 1)
+        self.conv2 = nn.Conv2d(16, 32, 3, 1, 1)
+        self.conv3 = nn.Conv2d(32, 64, 3, 1, 1)
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
-        self.conv3 = nn.Conv2d(32, 64, 3, padding=1)
         self.fc1 = nn.Linear(64 * 16 * 16, 128)
         self.fc2 = nn.Linear(128, num_classes)
         self.relu = nn.ReLU()
@@ -36,7 +36,7 @@ model_path = os.path.join("checkpoints", "simple_cnn.pth")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # -----------------------------
-# 3️⃣ TRANSFORMS & LOAD DATA
+# 3️⃣ LOAD TEST DATA
 # -----------------------------
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
@@ -47,9 +47,6 @@ transform = transforms.Compose([
 test_dataset = datasets.ImageFolder(root=data_dir, transform=transform)
 test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
-# -----------------------------
-# 4️⃣ LOAD TRAINED MODEL
-# -----------------------------
 model = SimpleCNN(num_classes=len(test_dataset.classes))
 model.load_state_dict(torch.load(model_path, map_location=device))
 model.to(device)
@@ -60,7 +57,7 @@ print(f"✅ Loaded trained model from: {model_path}")
 print(f"📂 Found {len(test_dataset)} test images across {len(test_dataset.classes)} classes: {test_dataset.classes}\n")
 
 # -----------------------------
-# 5️⃣ EVALUATION LOOP
+# 4️⃣ EVALUATION LOOP
 # -----------------------------
 correct = 0
 total = 0
@@ -79,5 +76,4 @@ with torch.no_grad():
               f"(Confidence: {confidence.item() * 100:.2f}%) | Actual: {test_dataset.classes[labels.item()]}")
 
 accuracy = 100 * correct / total
-print(f"\n🎯 Final Test Accuracy of CNN: {accuracy:.2f}%")
-print("💬 This accuracy represents how effectively the trained CNN model classified unseen images of cats, dogs, and birds.")
+print(f"\n🎯 Final Test Accuracy: {accuracy:.2f}%")
