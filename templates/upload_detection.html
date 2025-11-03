@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Detection | ObjectVision</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white text-gray-900 font-sans">
+
+  <nav class="p-4 shadow-md flex justify-between items-center bg-blue-50">
+    <h1 class="font-bold text-xl">ObjectVision</h1>
+    <ul class="flex gap-6">
+      <li><a href="/" class="hover:text-blue-600">Home</a></li>
+      <li><a href="/about" class="hover:text-blue-600">About</a></li>
+      <li><a href="/live" class="hover:text-blue-600">Live</a></li>
+      <li><a href="/upload" class="text-blue-600 font-semibold">Upload</a></li>
+      <li><a href="/help" class="hover:text-blue-600">Help</a></li>
+    </ul>
+  </nav>
+
+  <section class="max-w-3xl mx-auto py-16 px-4 text-center">
+    <h2 class="text-3xl font-bold mb-6">📸 Upload Image for Detection</h2>
+    <form action="/upload" method="post" enctype="multipart/form-data" class="space-y-4">
+      <input type="file" name="file" accept="image/*" class="border p-2 rounded w-full">
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Upload</button>
+    </form>
+
+    {% if uploaded_image %}
+      <div class="mt-8">
+        <h3 class="text-lg font-semibold mb-2">Result:</h3>
+        <img src="{{ url_for('static', filename='uploads/' + uploaded_image) }}" class="mx-auto rounded-lg border shadow-lg">
+      </div>
+    {% endif %}
+  </section>
+
+</body>
+</html>

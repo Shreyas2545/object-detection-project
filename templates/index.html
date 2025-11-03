@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ObjectVision</title>
+
+    <!-- ✅ Tailwind via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- ✅ Local stylesheet (optional) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 flex flex-col min-h-screen">
+
+  <!-- 🌐 Header / Navbar -->
+  <header class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+    <nav class="max-w-6xl mx-auto flex justify-between items-center px-6 py-3">
+      <div class="text-2xl font-bold">🔍 ObjectVision</div>
+      <ul class="flex space-x-6">
+        <li><a href="/" class="hover:text-blue-500">Home</a></li>
+        <li><a href="/about" class="hover:text-blue-500">About</a></li>
+        <li><a href="/live" class="hover:text-blue-500">Live</a></li>
+        <li><a href="/upload" class="hover:text-blue-500">Upload</a></li>
+        <li><a href="/help" class="hover:text-blue-500">Help</a></li>
+      </ul>
+      <button id="themeToggle" class="bg-gray-200 dark:bg-gray-700 rounded-full p-2">
+        🌙
+      </button>
+    </nav>
+  </header>
+
+  <!-- 🏠 Hero Section -->
+  <main class="flex-grow flex flex-col justify-center items-center text-center py-20 px-6">
+    <h1 class="text-4xl sm:text-5xl font-bold mb-6">Welcome to <span class="text-blue-500">ObjectVision</span></h1>
+    <p class="max-w-2xl text-gray-600 dark:text-gray-300 mb-10">
+      Experience real-time and image-based object detection powered by advanced machine learning models.
+    </p>
+
+    <div class="flex flex-wrap justify-center gap-6">
+      <a href="/live" 
+         class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-md transition">
+         🎥 Live Detection
+      </a>
+      <a href="/upload" 
+         class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-semibold px-6 py-3 rounded-xl shadow-md transition">
+         📸 Upload Detection
+      </a>
+    </div>
+  </main>
+
+  <!-- ⚙️ Footer -->
+  <footer class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-inner mt-auto py-4">
+    <div class="max-w-6xl mx-auto text-center text-sm text-gray-500 dark:text-gray-400">
+      © 2025 ObjectVision | Built with Flask, Tailwind, and Love 💙
+    </div>
+  </footer>
+
+  <!-- 🌙 Dark Mode Toggle Script -->
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      if (document.documentElement.classList.contains('dark')) {
+        localStorage.theme = 'dark';
+        toggle.textContent = '☀️';
+      } else {
+        localStorage.theme = 'light';
+        toggle.textContent = '🌙';
+      }
+    });
+
+    // Set correct icon on load
+    toggle.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
+  </script>
+</body>
+</html>
