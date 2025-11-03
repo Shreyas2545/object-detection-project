@@ -1,40 +1,130 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>About | ObjectVision</title>
+
+  <!-- ✅ Tailwind via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#f9fafb] text-gray-800">
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 flex flex-col min-h-screen">
 
-  <!-- Navbar -->
-  <nav class="bg-[#27667B] p-4 text-white flex justify-between items-center">
-    <h1 class="text-xl font-bold">ObjectVision</h1>
-    <ul class="flex gap-6">
-      <li><a href="/" class="hover:text-[#71BBB2]">Home</a></li>
-      <li><a href="/about" class="text-[#71BBB2] font-semibold">About</a></li>
-      <li><a href="/live" class="hover:text-[#71BBB2]">Live</a></li>
-      <li><a href="/upload" class="hover:text-[#71BBB2]">Upload</a></li>
-      <li><a href="/help" class="hover:text-[#71BBB2]">Help</a></li>
-    </ul>
-  </nav>
+  <!-- 🌐 Header / Navbar (same as Home) -->
+  <header class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+    <nav class="max-w-6xl mx-auto flex justify-between items-center px-6 py-3">
+      <div class="text-2xl font-bold">🔍 ObjectVision</div>
+      <ul class="flex space-x-14">
+        <li><a href="/" class="hover:text-blue-500">Home</a></li>
+        <li><a href="/about" class="text-blue-500 font-semibold">About</a></li>
+        <li><a href="/live" class="hover:text-blue-500">Live</a></li>
+        <li><a href="/upload" class="hover:text-blue-500">Upload</a></li>
+        <li><a href="/help" class="hover:text-blue-500">Help</a></li>
+      </ul>
+      <button id="themeToggle" class="bg-gray-200 dark:bg-gray-700 rounded-full p-2">
+        🌙
+      </button>
+    </nav>
+  </header>
 
-  <section class="max-w-3xl mx-auto text-center mt-16">
-    <h1 class="text-4xl font-bold mb-6 text-[#27445D]">About ObjectVision</h1>
-    <p class="text-lg leading-relaxed">
-      ObjectVision is an advanced web application designed to perform real-time and image-based
-      object detection using deep learning models built with PyTorch and Flask.
-    </p>
-    <p class="mt-4 text-gray-600">
-      The platform was developed by <b>Shreyas Hadawale</b> as part of a full-stack ML integration project,
-      combining computer vision, Flask web services, and frontend design using Tailwind CSS.
-    </p>
-  </section>
+  <!-- 📘 Main Content (unchanged) -->
+  <main class="flex-grow">
+    <!-- Header -->
+    <section class="text-center mt-16 mb-10 px-4">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100">
+        About <span class="text-blue-500">The Project</span>
+      </h1>
+      <p class="text-lg text-gray-600 dark:text-gray-300 mt-3">
+        AI-powered object detection with multiple neural network models
+      </p>
+    </section>
 
-  <footer class="text-center mt-16 text-gray-600">
-    <p>© 2025 ObjectVision | Built with Flask, Tailwind, and 💙</p>
+    <!-- Project Info Card -->
+    <section class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow p-8 transition-colors">
+      <div class="flex items-center space-x-6 mb-6">
+        <div class="bg-blue-100 dark:bg-blue-900 p-4 rounded-full">💻</div>
+        <div>
+          <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">About ObjectVision</h2>
+          <p class="text-gray-600 dark:text-gray-300 text-lg">A project powered by deep learning and computer vision</p>
+        </div>
+      </div>
+      <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+        ObjectVision is a smart web application that demonstrates the power of modern AI-driven object detection,
+        combining advanced deep learning models with a clean, user-friendly interface.
+      </p>
+      <p class="text-gray-700 dark:text-gray-300 mt-3 leading-relaxed">
+        The application leverages multiple neural network architectures, including 
+        <span class="text-blue-500 font-medium">CNN (Convolutional Neural Networks)</span> 
+        and <span class="text-blue-500 font-medium">ResNet (Residual Networks)</span>, 
+        to deliver accurate, real-time object detection and analysis.
+      </p>
+    </section>
+
+    <!-- Technologies -->
+    <section class="mt-16 text-center px-6">
+      <h2 class="text-3xl font-semibold text-gray-800 dark:text-gray-100 mb-8">Built With Modern Technologies</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 transition-colors">
+          <div class="text-4xl mb-2">💡</div>
+          <h3 class="font-semibold text-lg">Python</h3>
+          <p class="text-gray-500 dark:text-gray-400 text-sm">Backend processing</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 transition-colors">
+          <div class="text-4xl mb-2">🧠</div>
+          <h3 class="font-semibold text-lg">PyTorch</h3>
+          <p class="text-gray-500 dark:text-gray-400 text-sm">Deep learning framework</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 transition-colors">
+          <div class="text-4xl mb-2">🔥</div>
+          <h3 class="font-semibold text-lg">Flask</h3>
+          <p class="text-gray-500 dark:text-gray-400 text-sm">Web framework</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 transition-colors">
+          <div class="text-4xl mb-2">📷</div>
+          <h3 class="font-semibold text-lg">OpenCV</h3>
+          <p class="text-gray-500 dark:text-gray-400 text-sm">Computer vision</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="mt-16 mb-20 text-center px-4">
+      <p class="text-lg text-gray-700 dark:text-gray-300 mb-4">Interested in collaboration or have questions?</p>
+      <a href="mailto:shreyashadawale25@gmail.com"
+         class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg transition">
+         Get in Touch
+      </a>
+    </section>
+  </main>
+
+  <!-- ⚙️ Footer (same as Home) -->
+  <footer class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-inner mt-auto py-4">
+    <div class="max-w-6xl mx-auto text-center text-sm text-gray-500 dark:text-gray-400">
+      © 2025 ObjectVision | Built with Flask, Tailwind, and Love 💙
+    </div>
   </footer>
 
+  <!-- 🌙 Dark Mode Toggle Script -->
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      if (document.documentElement.classList.contains('dark')) {
+        localStorage.theme = 'dark';
+        toggle.textContent = '☀️';
+      } else {
+        localStorage.theme = 'light';
+        toggle.textContent = '🌙';
+      }
+    });
+
+    if (localStorage.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      toggle.textContent = '☀️';
+    } else {
+      document.documentElement.classList.remove('dark');
+      toggle.textContent = '🌙';
+    }
+  </script>
 </body>
 </html>

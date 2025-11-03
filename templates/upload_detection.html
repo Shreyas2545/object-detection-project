@@ -1,38 +1,144 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Upload Detection | ObjectVision</title>
+
+  <!-- ✅ Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- ✅ Local CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
-<body class="bg-white text-gray-900 font-sans">
 
-  <nav class="p-4 shadow-md flex justify-between items-center bg-blue-50">
-    <h1 class="font-bold text-xl">ObjectVision</h1>
-    <ul class="flex gap-6">
-      <li><a href="/" class="hover:text-blue-600">Home</a></li>
-      <li><a href="/about" class="hover:text-blue-600">About</a></li>
-      <li><a href="/live" class="hover:text-blue-600">Live</a></li>
-      <li><a href="/upload" class="text-blue-600 font-semibold">Upload</a></li>
-      <li><a href="/help" class="hover:text-blue-600">Help</a></li>
-    </ul>
-  </nav>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 flex flex-col min-h-screen">
 
-  <section class="max-w-3xl mx-auto py-16 px-4 text-center">
-    <h2 class="text-3xl font-bold mb-6">📸 Upload Image for Detection</h2>
-    <form action="/upload" method="post" enctype="multipart/form-data" class="space-y-4">
-      <input type="file" name="file" accept="image/*" class="border p-2 rounded w-full">
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Upload</button>
-    </form>
+  <!-- 🌐 Header / Navbar -->
+  <header class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+    <nav class="max-w-6xl mx-auto flex justify-between items-center px-6 py-3">
+      <div class="text-2xl font-bold">🔍 ObjectVision</div>
+      <ul class="flex space-x-14">
+        <li><a href="/" class="hover:text-blue-500">Home</a></li>
+        <li><a href="/about" class="hover:text-blue-500">About</a></li>
+        <li><a href="/live" class="hover:text-blue-500">Live</a></li>
+        <li><a href="/upload" class="text-blue-500 font-semibold border-b-2 border-blue-500 pb-1">Upload</a></li>
+        <li><a href="/help" class="hover:text-blue-500">Help</a></li>
+      </ul>
+      <button id="themeToggle" class="bg-gray-200 dark:bg-gray-700 rounded-full p-2">🌙</button>
+    </nav>
+  </header>
 
-    {% if uploaded_image %}
-      <div class="mt-8">
-        <h3 class="text-lg font-semibold mb-2">Result:</h3>
-        <img src="{{ url_for('static', filename='uploads/' + uploaded_image) }}" class="mx-auto rounded-lg border shadow-lg">
+  <!-- 📸 Upload Section -->
+  <main class="flex-grow py-20 px-6 flex flex-col items-center">
+    <h2 class="text-4xl font-semibold text-blue-500 mb-3">Upload <span class="dark:text-gray-100 text-gray-800">Image</span></h2>
+    <p class="text-gray-600 dark:text-gray-300 mb-12 text-center">Upload an image to analyze with multiple AI models</p>
+
+    <div class="flex flex-wrap justify-center gap-8 max-w-5xl w-full">
+
+      <!-- Upload Box -->
+      <div class="relative bg-gray-100 dark:bg-gray-800/60 border border-dashed border-gray-400 dark:border-gray-600 rounded-2xl w-[360px] h-[260px] flex flex-col justify-center items-center text-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+        <div class="text-blue-500 text-5xl mb-3">⬆️</div>
+        <p class="text-lg font-semibold">Drop your image here</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">or click to browse</p>
+        <p class="text-xs text-gray-400 mt-3">Supports: JPG, PNG, GIF</p>
+        <input type="file" class="absolute opacity-0 w-full h-full cursor-pointer" id="imageUpload" accept="image/*">
       </div>
-    {% endif %}
-  </section>
 
+      <!-- Preview Box -->
+      <div id="previewBox" class="bg-gray-100 dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 rounded-2xl w-[360px] h-[260px] flex flex-col justify-center items-center text-gray-500 dark:text-gray-300">
+        <span class="text-5xl mb-3 text-blue-500">🖼️</span>
+        <p>Upload an image to see results</p>
+      </div>
+    </div>
+
+    <!-- 📊 Chart Section -->
+    <section class="mt-16 w-full max-w-3xl bg-gray-100 dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
+      <h3 class="text-2xl text-center mb-6 text-blue-500 font-semibold">Model Accuracy Overview</h3>
+      <canvas id="accuracyChart" height="150"></canvas>
+    </section>
+  </main>
+
+  <!-- ⚙️ Footer -->
+  <footer class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-inner mt-auto py-4">
+    <div class="max-w-6xl mx-auto text-center text-sm text-gray-500 dark:text-gray-400">
+      © 2025 ObjectVision | Designed by <span class="text-blue-500 font-semibold">Shreyas Hadawale</span>
+    </div>
+  </footer>
+
+  <!-- 🌙 Theme Toggle + Chart Script -->
+  <script>
+    // Theme toggle
+    const toggle = document.getElementById('themeToggle');
+    toggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      if (document.documentElement.classList.contains('dark')) {
+        localStorage.theme = 'dark';
+        toggle.textContent = '☀️';
+      } else {
+        localStorage.theme = 'light';
+        toggle.textContent = '🌙';
+      }
+    });
+    toggle.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
+
+    // Image Preview
+    const imageUpload = document.getElementById('imageUpload');
+    const previewBox = document.getElementById('previewBox');
+    imageUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        previewBox.innerHTML = `<img src="${reader.result}" alt="Preview" class="rounded-lg max-h-[220px] object-contain" />`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Chart.js
+    const ctx = document.getElementById('accuracyChart').getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, '#3B82F6');
+    gradient.addColorStop(1, '#60A5FA');
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Model A', 'Model B', 'Model C'],
+        datasets: [{
+          label: 'Accuracy (%)',
+          data: [94, 89, 86],
+          backgroundColor: gradient,
+          borderRadius: 8,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { color: '#A0AEC0' },
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          },
+          x: {
+            ticks: { color: '#A0AEC0' },
+            grid: { color: 'transparent' }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1F2937',
+            titleColor: '#60A5FA',
+            bodyColor: '#E5E7EB',
+            borderColor: '#60A5FA',
+            borderWidth: 1
+          }
+        }
+      }
+    });
+  </script>
 </body>
 </html>

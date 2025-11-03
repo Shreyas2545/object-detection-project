@@ -1,36 +1,102 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Help | ObjectVision</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
-<body class="bg-white text-gray-900 font-sans">
 
-  <nav class="p-4 shadow-md flex justify-between items-center bg-blue-50">
-    <h1 class="font-bold text-xl">ObjectVision</h1>
-    <ul class="flex gap-6">
-      <li><a href="/" class="hover:text-blue-600">Home</a></li>
-      <li><a href="/about" class="hover:text-blue-600">About</a></li>
-      <li><a href="/live" class="hover:text-blue-600">Live</a></li>
-      <li><a href="/upload" class="hover:text-blue-600">Upload</a></li>
-      <li><a href="/help" class="text-blue-600 font-semibold">Help</a></li>
-    </ul>
-  </nav>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 flex flex-col min-h-screen">
 
-  <section class="max-w-3xl mx-auto py-16 px-4">
-    <h2 class="text-3xl font-bold mb-4 text-center">Need Help?</h2>
-    <p class="text-gray-700 mb-6 text-center">
-      Follow the steps below to use ObjectVision easily:
-    </p>
-    <ul class="list-disc list-inside text-gray-700 space-y-2">
-      <li>Go to <strong>Live Detection</strong> for real-time object recognition using your webcam.</li>
-      <li>Go to <strong>Upload Detection</strong> to upload an image for analysis.</li>
-      <li>Make sure your browser allows camera access for live mode.</li>
-      <li>If you face errors, check that your model file is loaded and paths are correct.</li>
-    </ul>
-  </section>
+  <!-- 🌐 Header / Navbar -->
+  <header class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+    <nav class="max-w-6xl mx-auto flex justify-between items-center px-6 py-3">
+      <div class="text-2xl font-bold">🔍 ObjectVision</div>
+      <ul class="flex space-x-14">
+        <li><a href="/" class="hover:text-blue-500">Home</a></li>
+        <li><a href="/about" class="hover:text-blue-500">About</a></li>
+        <li><a href="/live" class="hover:text-blue-500">Live</a></li>
+        <li><a href="/upload" class="hover:text-blue-500">Upload</a></li>
+        <li><a href="/help" class="text-blue-500 font-semibold border-b-2 border-blue-500 pb-1">Help</a></li>
+      </ul>
+      <button id="themeToggle" class="bg-gray-200 dark:bg-gray-700 rounded-full p-2">🌙</button>
+    </nav>
+  </header>
 
+  <!-- 📘 Help Section -->
+  <main class="flex-grow flex flex-col items-center py-20 px-6">
+    <div class="text-center mb-12">
+      <div class="flex justify-center mb-4">
+        <div class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 w-16 h-16 rounded-full flex items-center justify-center text-3xl">❓</div>
+      </div>
+      <h2 class="text-4xl font-semibold text-gray-800 dark:text-gray-100">Need <span class="text-blue-500">Help?</span></h2>
+      <p class="text-gray-600 dark:text-gray-400 mt-3">Find answers to commonly asked questions</p>
+    </div>
+
+    <!-- FAQ Boxes -->
+    <div class="w-full max-w-3xl space-y-5">
+      <div class="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 hover:shadow-lg transition-all">
+        <h3 class="text-lg font-semibold flex items-center text-gray-800 dark:text-gray-100">
+          💡 <span class="ml-2">How do I start detection?</span>
+        </h3>
+        <p class="text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
+          Navigate to the <strong>Live Detection</strong> page and click the “Start Detection” button. The camera will activate and begin real-time object detection. 
+          Alternatively, go to the <strong>Upload Detection</strong> page to analyze a static image.
+        </p>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 hover:shadow-lg transition-all">
+        <h3 class="text-lg font-semibold flex items-center text-gray-800 dark:text-gray-100">
+          🧠 <span class="ml-2">Which models are used?</span>
+        </h3>
+        <p class="text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
+          ObjectVision uses multiple AI models like <strong>YOLOv8</strong> and <strong>TensorFlow Lite</strong> to ensure accuracy and speed during both live and upload detections.
+        </p>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 hover:shadow-lg transition-all">
+        <h3 class="text-lg font-semibold flex items-center text-gray-800 dark:text-gray-100">
+          🎥 <span class="ml-2">Camera permissions issue?</span>
+        </h3>
+        <p class="text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
+          Make sure your browser allows <strong>camera access</strong> for this website. You can check it in browser settings under "Site Permissions".
+        </p>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 hover:shadow-lg transition-all">
+        <h3 class="text-lg font-semibold flex items-center text-gray-800 dark:text-gray-100">
+          ⚙️ <span class="ml-2">Facing errors or model not loading?</span>
+        </h3>
+        <p class="text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
+          If you encounter issues, ensure your model file is correctly loaded and paths are properly configured in your backend or static folder.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ⚙️ Footer -->
+  <footer class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-inner mt-auto py-4">
+    <div class="max-w-6xl mx-auto text-center text-sm text-gray-500 dark:text-gray-400">
+      © 2025 ObjectVision | Designed by <span class="text-blue-500 font-semibold">Shreyas Hadawale</span>
+    </div>
+  </footer>
+
+  <!-- 🌙 Theme Toggle -->
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    toggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      if (document.documentElement.classList.contains('dark')) {
+        localStorage.theme = 'dark';
+        toggle.textContent = '☀️';
+      } else {
+        localStorage.theme = 'light';
+        toggle.textContent = '🌙';
+      }
+    });
+    toggle.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
+  </script>
 </body>
 </html>
