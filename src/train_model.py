@@ -88,5 +88,5 @@ def train_model(model, model_name, epochs=8):
 # -----------------------------
 # TRAIN BOTH MODELS
 # -----------------------------
-train_model(CNNModel(num_classes=len(train_data.classes)), "CNN")
-train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18")
+train_model(CNNModel(num_classes=len(train_data.classes)), "CNN",epochs=15)
+train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18",epochs=8)
