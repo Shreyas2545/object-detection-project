@@ -34,8 +34,9 @@ transform_test = transforms.Compose([
 # -----------------------------
 # LOAD DATA
 # -----------------------------
-train_data = datasets.ImageFolder(root=train_dir, transform=transform_train)
-test_data = datasets.ImageFolder(root=test_dir, transform=transform_test)
+train_data = datasets.ImageFolder(train_dir, transform=transform_train)
+test_data = datasets.ImageFolder(test_dir, transform=transform_test)
+
 train_loader = DataLoader(train_data, batch_size=4, shuffle=True)
 test_loader = DataLoader(test_data, batch_size=4, shuffle=False)
 
@@ -52,24 +53,22 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # -----------------------------
-# TRAINING LOOP
+# TRAIN LOOP
 # -----------------------------
-epochs = 8
-print("\n🚀 Training started using Convolutional Neural Network (CNN)...\n")
+epochs = 10
+print("\n🚀 Training CNN Model...\n")
 
 for epoch in range(epochs):
     model.train()
     running_loss = 0.0
-    correct = 0
-    total = 0
+    correct, total = 0, 0
 
     for images, labels in train_loader:
         images, labels = images.to(device), labels.to(device)
+        optimizer.zero_grad()
 
         outputs = model(images)
         loss = criterion(outputs, labels)
-
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
@@ -78,15 +77,10 @@ for epoch in range(epochs):
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
-    accuracy = 100 * correct / total
-    print(f"Epoch [{epoch+1}/{epochs}] | Loss: {running_loss:.4f} | Accuracy: {accuracy:.2f}%")
+    acc = 100 * correct / total
+    print(f"Epoch [{epoch+1}/{epochs}] | Loss: {running_loss:.4f} | Accuracy: {acc:.2f}%")
 
-print("\n🎉 CNN Training Complete!")
-print(f"🧠 Trained on classes: {train_data.classes}")
-
-# -----------------------------
-# SAVE MODEL
-# -----------------------------
+print("\n🎉 Training Complete!")
 os.makedirs("checkpoints", exist_ok=True)
 torch.save(model.state_dict(), "checkpoints/simple_cnn.pth")
 print("✅ Model saved to checkpoints/simple_cnn.pth")
