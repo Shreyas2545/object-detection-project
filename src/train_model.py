@@ -4,7 +4,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from model import SimpleCNN
+from model_cnn import CNNModel
+from model_resnet import get_resnet18_model
 
 # -----------------------------
 # PATHS
@@ -36,51 +37,56 @@ transform_test = transforms.Compose([
 # -----------------------------
 train_data = datasets.ImageFolder(train_dir, transform=transform_train)
 test_data = datasets.ImageFolder(test_dir, transform=transform_test)
-
 train_loader = DataLoader(train_data, batch_size=4, shuffle=True)
 test_loader = DataLoader(test_data, batch_size=4, shuffle=False)
 
 print(f"✅ Loaded {len(train_data)} training images")
 print(f"✅ Loaded {len(test_data)} testing images")
-print(f"📚 Classes detected for CNN training: {train_data.classes}")
+print(f"📚 Classes: {train_data.classes}")
 
 # -----------------------------
-# MODEL, LOSS, OPTIMIZER
+# DEVICE
 # -----------------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = SimpleCNN(num_classes=len(train_data.classes)).to(device)
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # -----------------------------
-# TRAIN LOOP
+# TRAIN FUNCTION
 # -----------------------------
-epochs = 10
-print("\n🚀 Training CNN Model...\n")
+def train_model(model, model_name, epochs=8):
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    model.to(device)
 
-for epoch in range(epochs):
-    model.train()
-    running_loss = 0.0
-    correct, total = 0, 0
+    print(f"\n🚀 Training {model_name}...\n")
+    for epoch in range(epochs):
+        model.train()
+        running_loss = 0.0
+        correct, total = 0, 0
 
-    for images, labels in train_loader:
-        images, labels = images.to(device), labels.to(device)
-        optimizer.zero_grad()
+        for images, labels in train_loader:
+            images, labels = images.to(device), labels.to(device)
+            optimizer.zero_grad()
 
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
 
-        running_loss += loss.item()
-        _, predicted = torch.max(outputs, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
+            running_loss += loss.item()
+            _, predicted = torch.max(outputs, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
 
-    acc = 100 * correct / total
-    print(f"Epoch [{epoch+1}/{epochs}] | Loss: {running_loss:.4f} | Accuracy: {acc:.2f}%")
+        acc = 100 * correct / total
+        print(f"Epoch [{epoch+1}/{epochs}] | Loss: {running_loss:.4f} | Accuracy: {acc:.2f}%")
 
-print("\n🎉 Training Complete!")
-os.makedirs("checkpoints", exist_ok=True)
-torch.save(model.state_dict(), "checkpoints/simple_cnn.pth")
-print("✅ Model saved to checkpoints/simple_cnn.pth")
+    os.makedirs("checkpoints", exist_ok=True)
+    save_path = os.path.join("checkpoints", f"{model_name.lower()}_model.pth")
+    torch.save(model.state_dict(), save_path)
+    print(f"✅ {model_name} saved to {save_path}\n")
+
+# -----------------------------
+# TRAIN BOTH MODELS
+# -----------------------------
+train_model(CNNModel(num_classes=len(train_data.classes)), "CNN")
+train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18")
