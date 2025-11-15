@@ -63,7 +63,7 @@ while True:
 
     cv2.imshow("Live Object Detection", frame)
 
-    # Key controls
+    # Key controls...
     key = cv2.waitKey(1) & 0xFF
     if key == ord('q'):
         break
