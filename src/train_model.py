@@ -86,4 +86,4 @@ def train_model(model, model_name, epochs=8,lr=0.001):
     print(f"✅ {model_name} saved to {save_path}\n")
 
 train_model(CNNModel(num_classes=len(train_data.classes)), "CNN",epochs=1,lr=0.001)
-train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18",epochs=1,lr=0.001 )
+train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18",epochs=1,lr=0.0001 )
