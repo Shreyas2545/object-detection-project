@@ -78,4 +78,4 @@ if cnn_acc > resnet_acc:
 elif resnet_acc > cnn_acc:
     print(f"🥇 ResNet18 performed better than CNN by {resnet_acc - cnn_acc:.2f}%")
 else:
-    print("🤝 Both CNN and ResNet18 performed equally well!")
+    print("🤝 Both CNN and ResNet18 performed equally well")
