@@ -70,7 +70,6 @@ cnn_acc = test_model(cnn_model, cnn_model_path, "CNN")
 resnet_acc = test_model(resnet_model, resnet_model_path, "ResNet18")
 
 # COMPARISON SUMMARY
-# -----------------------------
 print("📊 Model Comparison Result:")
 if cnn_acc > resnet_acc:
     print(f"Conclusion : 🥇 CNN performed better than ResNet18 by {cnn_acc - resnet_acc:.2f}%")
