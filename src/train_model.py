@@ -7,16 +7,12 @@ from torch.utils.data import DataLoader
 from model_cnn import CNNModel
 from model_resnet import get_resnet18_model
 
-# -----------------------------
 # PATHS
-# -----------------------------
 base_dir = os.path.join(os.getcwd(), "data", "images")
 train_dir = os.path.join(base_dir, "train")
 test_dir = os.path.join(base_dir, "test")
 
-# -----------------------------
 # DATA TRANSFORMS
-# -----------------------------
 transform_train = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.RandomHorizontalFlip(),
