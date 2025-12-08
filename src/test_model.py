@@ -57,9 +57,7 @@ def test_model(model, model_path, model_name):
     print(f"\n🎯 {model_name} Accuracy: {acc:.2f}%\n")
     return acc
 
-# -----------------------------
 # LOAD AND TEST BOTH MODELS
-# -----------------------------
 cnn_model_path = os.path.join(checkpoints_dir, "cnn_model.pth")
 resnet_model_path = os.path.join(checkpoints_dir, "resnet18_model.pth")
 
