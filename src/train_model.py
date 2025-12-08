@@ -28,9 +28,7 @@ transform_test = transforms.Compose([
     transforms.Normalize((0.5,), (0.5,))
 ])
 
-# -----------------------------
 # LOAD DATA
-# -----------------------------
 train_data = datasets.ImageFolder(train_dir, transform=transform_train)
 test_data = datasets.ImageFolder(test_dir, transform=transform_test)
 train_loader = DataLoader(train_data, batch_size=4, shuffle=True)
@@ -40,14 +38,10 @@ print(f"✅ Loaded {len(train_data)} training images")
 print(f"✅ Loaded {len(test_data)} testing images")
 print(f"📚 Classes: {train_data.classes}")
 
-# -----------------------------
 # DEVICE
-# -----------------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# -----------------------------
 # TRAIN FUNCTION
-# -----------------------------
 def train_model(model, model_name, epochs=8,lr=0.001):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
