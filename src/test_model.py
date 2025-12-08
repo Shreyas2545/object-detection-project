@@ -30,9 +30,7 @@ test_loader = DataLoader(test_data, batch_size=1, shuffle=False)
 classes = test_data.classes
 print(f"📚 Classes: {classes}\n")
 
-# -----------------------------
 # TEST FUNCTION
-# -----------------------------
 def test_model(model, model_path, model_name):
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
