@@ -69,7 +69,6 @@ resnet_model = get_resnet18_model(num_classes=len(classes))
 cnn_acc = test_model(cnn_model, cnn_model_path, "CNN")
 resnet_acc = test_model(resnet_model, resnet_model_path, "ResNet18")
 
-# -----------------------------
 # COMPARISON SUMMARY
 # -----------------------------
 print("📊 Model Comparison Result:")
