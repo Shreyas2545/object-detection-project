@@ -15,9 +15,7 @@ checkpoints_dir = os.path.join("checkpoints")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# -----------------------------
 # DATA LOADING
-# -----------------------------
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor(),
