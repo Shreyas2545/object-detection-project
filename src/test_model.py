@@ -6,9 +6,7 @@ from torch import nn
 from model_cnn import CNNModel
 from model_resnet import get_resnet18_model
 
-# -----------------------------
 # PATHS
-# -----------------------------
 base_dir = os.path.join(os.getcwd(), "data", "images")
 test_dir = os.path.join(base_dir, "test")
 checkpoints_dir = os.path.join("checkpoints")
