@@ -35,7 +35,7 @@ transform = transforms.Compose([
 ])
 
 # ===== Open webcam =====
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 print("[INFO] Press 'r' to switch to ResNet, 'c' to switch to CNN, 'q' to quit")
 
 while True:
