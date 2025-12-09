@@ -6,9 +6,7 @@ from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
-# -----------------------------
 # CNN MODEL DEFINITION
-# -----------------------------
 class CNNModel(nn.Module):
     def __init__(self):
         super(CNNModel, self).__init__()
