@@ -11,7 +11,7 @@ base_dir = os.path.join(os.getcwd(), "data", "images")
 test_dir = os.path.join(base_dir, "test")
 checkpoints_dir = os.path.join("checkpoints")
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # it will use the gpu if available otherwise cpu 
 
 # DATA LOADING
 transform = transforms.Compose([
@@ -23,6 +23,7 @@ transform = transforms.Compose([
 test_data = datasets.ImageFolder(test_dir, transform=transform)
 test_loader = DataLoader(test_data, batch_size=1, shuffle=False)
 
+# printing class name which is being tested 
 classes = test_data.classes
 print(f"📚 Classes: {classes}\n")
 
@@ -34,6 +35,7 @@ def test_model(model, model_path, model_name):
 
     print(f"\n🧠 Testing {model_name} model...\n")
 
+    # starts testing
     correct, total = 0, 0
     with torch.no_grad():
         for images, labels in test_loader:
@@ -47,7 +49,7 @@ def test_model(model, model_path, model_name):
 
             print(f"🖼️ Predicted: {classes[pred.item()]} ({conf.item() * 100:.2f}%) | Actual: {classes[labels.item()]}")
 
-    acc = 100 * correct / total
+    acc = 100 * correct / total # calculates final accuracy test
     print(f"\n🎯 {model_name} Accuracy: {acc:.2f}%\n")
     return acc
 
@@ -61,7 +63,7 @@ resnet_model = get_resnet18_model(num_classes=len(classes))
 cnn_acc = test_model(cnn_model, cnn_model_path, "CNN")
 resnet_acc = test_model(resnet_model, resnet_model_path, "ResNet18")
 
-# COMPARISON SUMMARY
+# COMPARISON SUMMARY 
 print("📊 Model Comparison Result:")
 if cnn_acc > resnet_acc:
     print(f"Conclusion : 🥇 CNN performed better than ResNet18 by {cnn_acc - resnet_acc:.2f}%")
