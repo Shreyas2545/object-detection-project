@@ -33,7 +33,7 @@ class CNNModel(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
 
-            # 4️⃣ Regularization + Classification Layers
+            # 4️⃣ Regularization + Classification Layers (Final layer that predicts the class)
             nn.Dropout(0.4),# Dropout randomly 40% of neurons during training.
             nn.Flatten(), # Converts the 3D feature map into a 1D vector
             nn.Linear(128 * 16 * 16, 256),  # assumes 128×16×16 feature map (layer that connects every input to every output.)
