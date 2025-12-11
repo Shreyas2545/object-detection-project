@@ -18,7 +18,7 @@ class CNNModel(nn.Module):
             nn.ReLU(),
             #Helps the model learn faster, better, and more complex patterns like for no. (if negative make it 0 , if positive keep it as it is )
             nn.MaxPool2d(2, 2),
-            #Downsamples (reduces size) of the feature map.
+            #Reduces image size by half and extracts only the strongest features
 
 
             # 2️⃣ Second Convolution Block
@@ -44,3 +44,6 @@ class CNNModel(nn.Module):
 
     def forward(self, x):
         return self.network(x)
+
+
+# Deeper layers learn MORE complex features (hence the input/output channels are increasedafter every blocks)
