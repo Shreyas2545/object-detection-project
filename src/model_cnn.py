@@ -16,9 +16,9 @@ class CNNModel(nn.Module):
             nn.BatchNorm2d(32),
             # normalizing the result after the convolution layer (32 is because of the prev convolutional layer has 32 output channels)
             nn.ReLU(),
-            #Helps the model learn faster, better, and more complex patterns like for no. (if negative make it 0 , if positive keep it as it is )
+            # Helps the model learn faster, better, and more complex patterns like for no. (if negative make it 0 , if positive keep it as it is )
             nn.MaxPool2d(2, 2),
-            #Reduces image size by half and extracts only the strongest features
+            # Reduces image size by half and extracts only the strongest features
 
 
             # 2️⃣ Second Convolution Block
