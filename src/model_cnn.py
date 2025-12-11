@@ -8,6 +8,11 @@ class CNNModel(nn.Module):
         self.network = nn.Sequential(
             # 1️⃣ First Convolution Block
             nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1),
+            # 3 = input channels(RGB) ,
+            #  32 = output channels(filters) ,
+            #  kernel size = (3x3)filter , 
+            # stride = how many pixels the filter moves each time.
+            
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
