@@ -12,8 +12,9 @@ class CNNModel(nn.Module):
             #  32 = output channels(filters) ,
             #  kernel size = (3x3)filter , 
             # stride = how many pixels the filter moves each time.
-            
+            # padding = adding padding as per given 
             nn.BatchNorm2d(32),
+            # normalizing the result after the convolution layer 
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
 
