@@ -15,7 +15,7 @@ test_dir = os.path.join(base_dir, "test")
 # DATA TRANSFORMS
 transform_train = transforms.Compose([
     transforms.Resize((128, 128)), # Changes every image to 128×128 pixels.
-    transforms.RandomHorizontalFlip(),
+    transforms.RandomHorizontalFlip(), #Randomly flips the image left↔right so it makes the model learn that direction doesn’t matter.
     transforms.RandomRotation(20),
     transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
     transforms.ToTensor(),
