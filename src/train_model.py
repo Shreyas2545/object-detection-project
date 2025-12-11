@@ -14,7 +14,7 @@ test_dir = os.path.join(base_dir, "test")
 
 # DATA TRANSFORMS
 transform_train = transforms.Compose([
-    transforms.Resize((128, 128)),
+    transforms.Resize((128, 128)), # Changes every image to 128×128 pixels.
     transforms.RandomHorizontalFlip(),
     transforms.RandomRotation(20),
     transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
