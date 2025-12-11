@@ -15,11 +15,11 @@ test_dir = os.path.join(base_dir, "test")
 # DATA TRANSFORMS
 transform_train = transforms.Compose([
     transforms.Resize((128, 128)), # Changes every image to 128×128 pixels.
-    transforms.RandomHorizontalFlip(), #Randomly flips the image left↔right so it makes the model learn that direction doesn’t matter.
-    transforms.RandomRotation(20),
-    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
+    transforms.RandomHorizontalFlip(), # Randomly flips the image left↔right so it makes the model learn that direction doesn’t matter.
+    transforms.RandomRotation(20), # Rotates the image randomly up to ±20 degrees.
+    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2), # Randomly changes saturation,brightness,contrast
+    transforms.ToTensor(), # Converts image from PIL format → PyTorch tensor.(numbers)
+    transforms.Normalize((0.5,), (0.5,)) # It shifts numbers from 0–1 → -1 to 1 (HELPS IN BALANCING THE NUMBERS)
 ])
 
 transform_test = transforms.Compose([
