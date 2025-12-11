@@ -2,7 +2,7 @@ import torch.nn as nn
 from torchvision.models import resnet18, ResNet18_Weights
 
 def get_resnet18_model(num_classes):
-    model = resnet18(weights=ResNet18_Weights.DEFAULT)
+    model = resnet18(weights=ResNet18_Weights.DEFAULT) # 18-layer CNN and already trained on 1,000 ImageNet classes
 
     # 🔒 Freeze only early layers (keep deeper ones trainable)
     for name, param in model.named_parameters():
