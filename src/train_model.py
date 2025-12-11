@@ -23,9 +23,9 @@ transform_train = transforms.Compose([
 ])
 
 transform_test = transforms.Compose([
-    transforms.Resize((128, 128)),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
+    transforms.Resize((128, 128)), # resizing images to 128x128 size
+    transforms.ToTensor(), #converts to torch numbers 
+    transforms.Normalize((0.5,), (0.5,)) #same as in train
 ])
 
 # LOAD DATA
