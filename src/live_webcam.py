@@ -66,7 +66,7 @@ while True:
     cv2.putText(frame,
                 f"CNN: {label_cnn} ({conf_cnn:.1f}%)",
                 (30, 60), cv2.FONT_HERSHEY_SIMPLEX,
-                0.9, (0, 255, 0), 2)
+                0.9, (17, 195, 86), 2)
 
     cv2.putText(frame,
                 f"ResNet: {label_res} ({conf_res:.1f}%)",
