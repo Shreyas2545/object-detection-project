@@ -85,5 +85,5 @@ def train_model(model, model_name, epochs=8,lr=0.001): # model + model name + ep
     torch.save(model.state_dict(), save_path)
     print(f"✅ {model_name} saved to {save_path}\n")
 
-train_model(CNNModel(num_classes=len(train_data.classes)), "CNN",epochs=1,lr=0.001) # training cnn model
-train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18",epochs=1,lr=0.001 ) # for resnet18 model
+train_model(CNNModel(num_classes=len(train_data.classes)), "CNN",epochs=5,lr=0.001) # training cnn model
+train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18",epochs=5,lr=0.001 ) # for resnet18 model
