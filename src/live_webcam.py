@@ -10,7 +10,7 @@ from model_resnet import get_resnet18_model  # using your ResNet function
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # ===== Load CNN model =====
-cnn_model = CNNModel(num_classes=5)  # change 5 if your classes differ
+cnn_model = CNNModel(num_classes=5)
 cnn_model.load_state_dict(torch.load("checkpoints/cnn_model.pth", map_location=device))
 cnn_model.to(device)
 cnn_model.eval()
@@ -21,22 +21,19 @@ resnet_model.load_state_dict(torch.load("checkpoints/resnet18_model.pth", map_lo
 resnet_model.to(device)
 resnet_model.eval()
 
-# ===== Model control =====
-current_model = cnn_model
-current_name = "CNN"
-
 # ===== Class labels =====
-class_names = ["bird", "car", "cat", "dog", "watch"]  # example labels
+class_names = ["bird", "car", "cat", "dog", "watch"]
 
 # ===== Transform for webcam frames =====
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor(),
+    # NOTE: Add Normalize here if you used it during training
 ])
 
 # ===== Open webcam =====
 cap = cv2.VideoCapture(0)
-print("[INFO] Press 'r' to switch to ResNet, 'c' to switch to CNN, 'q' to quit")
+print("[INFO] Showing CNN and ResNet predictions together. Press 'q' to quit.")
 
 while True:
     ret, frame = cap.read()
@@ -48,33 +45,41 @@ while True:
     img_pil = Image.fromarray(img)
     input_tensor = transform(img_pil).unsqueeze(0).to(device)
 
-    # Get prediction
+    # ===== Get predictions from BOTH models =====
     with torch.no_grad():
-        outputs = current_model(input_tensor)
-        probabilities = torch.nn.functional.softmax(outputs, dim=1)
-        confidence, pred = torch.max(probabilities, 1)
-        label = class_names[pred.item()]
-        conf_percent = confidence.item() * 100
 
-    # Display prediction text
-    text = f"{current_name}: {label} ({conf_percent:.1f}%)"
-    cv2.putText(frame, text, (30, 60), cv2.FONT_HERSHEY_SIMPLEX,
+        # ----- CNN -----
+        out_cnn = cnn_model(input_tensor)
+        prob_cnn = torch.softmax(out_cnn, dim=1)
+        conf_cnn, pred_cnn = prob_cnn.max(1)
+        label_cnn = class_names[pred_cnn.item()]
+        conf_cnn = conf_cnn.item() * 100
+
+        # ----- ResNet -----
+        out_res = resnet_model(input_tensor)
+        prob_res = torch.softmax(out_res, dim=1)
+        conf_res, pred_res = prob_res.max(1)
+        label_res = class_names[pred_res.item()]
+        conf_res = conf_res.item() * 100
+
+    # ===== Display both predictions on the screen =====
+    cv2.putText(frame,
+                f"CNN: {label_cnn} ({conf_cnn:.1f}%)",
+                (30, 60), cv2.FONT_HERSHEY_SIMPLEX,
                 0.9, (0, 255, 0), 2)
 
-    cv2.imshow("Live Object Detection", frame)
+    cv2.putText(frame,
+                f"ResNet: {label_res} ({conf_res:.1f}%)",
+                (30, 110), cv2.FONT_HERSHEY_SIMPLEX,
+                0.9, (0, 255, 255), 2)
 
-    # Key controls...
+    # Show the frame
+    cv2.imshow("Live Object Detection - CNN vs ResNet", frame)
+
+    # Quit on 'q'
     key = cv2.waitKey(1) & 0xFF
     if key == ord('q'):
         break
-    elif key == ord('r'):
-        current_model = resnet_model
-        current_name = "ResNet"
-        print("[INFO] Switched to ResNet model.")
-    elif key == ord('c'):
-        current_model = cnn_model
-        current_name = "CNN"
-        print("[INFO] Switched to CNN model.")
 
 cap.release()
 cv2.destroyAllWindows()
