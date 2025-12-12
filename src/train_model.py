@@ -13,21 +13,27 @@ train_dir = os.path.join(base_dir, "train")
 test_dir = os.path.join(base_dir, "test") 
 
 # DATA TRANSFORMS
-transform_train = transforms.Compose([
-    transforms.Resize((128, 128)), # Changes every image to 128×128 pixels.
-    transforms.RandomHorizontalFlip(
 
-    ), # Randomly flips the image left↔right so it makes the model learn that direction doesn’t matter.
+transform_train = transforms.Compose([
+    transforms.Resize((128, 128)),  # Changes every image to 128×128 pixels.
+    transforms.RandomHorizontalFlip(),  # Rotate randomly in-between images
     transforms.RandomRotation(20), # Rotates the image randomly up to ±20 degrees.
     transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2), # Randomly changes saturation,brightness,contrast
-    transforms.ToTensor(), # Converts image from PIL format → PyTorch tensor.(numbers)
-    transforms.Normalize((0.5,), (0.5,)) # It shifts numbers from 0–1 → -1 to 1 (HELPS IN BALANCING THE NUMBERS)
+    transforms.ToTensor(),  # Converts image from PIL format → PyTorch tensor.(numbers)
+    transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]
+    ) # It shifts numbers from 0–1 → -1 to 1 (HELPS IN BALANCING THE NUMBERS)
 ])
+
 
 transform_test = transforms.Compose([
     transforms.Resize((128, 128)), # resizing images to 128x128 size
     transforms.ToTensor(), #converts to torch numbers 
-    transforms.Normalize((0.5,), (0.5,)) #same as in train
+    transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]
+    )  #same as in train
 ])
 
 # LOAD DATA
@@ -79,5 +85,5 @@ def train_model(model, model_name, epochs=8,lr=0.001): # model + model name + ep
     torch.save(model.state_dict(), save_path)
     print(f"✅ {model_name} saved to {save_path}\n")
 
-train_model(CNNModel(num_classes=len(train_data.classes)), "CNN",epochs=1,lr=0.01) # training cnn model
-train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18",epochs=1,lr=0.01 ) # for resnet18 model
+train_model(CNNModel(num_classes=len(train_data.classes)), "CNN",epochs=1,lr=0.001) # training cnn model
+train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18",epochs=1,lr=0.001 ) # for resnet18 model

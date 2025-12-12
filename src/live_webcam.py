@@ -26,9 +26,12 @@ class_names = ["bird", "car", "cat", "dog", "watch"]
 
 # ===== Transform for webcam frames =====
 transform = transforms.Compose([
-    transforms.Resize((128, 128)),
-    transforms.ToTensor(),
-    # NOTE: Add Normalize here if you used it during training
+    transforms.Resize((128, 128)), # same as in train
+    transforms.ToTensor(), # same as in train
+    transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]
+    )
 ])
 
 # ===== Open webcam =====
