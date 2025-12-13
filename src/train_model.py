@@ -88,3 +88,5 @@ def train_model(model, model_name, epochs=8,lr=0.001): # model + model name + ep
 # epoch and learning rate for good o/p for models 
 train_model(CNNModel(num_classes=len(train_data.classes)), "CNN",epochs=5,lr=0.001) # training cnn model
 train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18",epochs=5,lr=0.001 ) # for resnet18 model 
+# epoch = how many times the model sees all training images.
+# learning rate = how fast the model learns.
