@@ -77,7 +77,7 @@ def train_model(model, model_name, epochs=8,lr=0.001): # model + model name + ep
             correct += (predicted == labels).sum().item()
 
         acc = 100 * correct / total # here the epoch accuracy will be shown on the screen
-        print(f"Epoch [{epoch+1}/{epochs}] | Loss: {running_loss:.4f} | Accuracy: {acc:.2f}%")
+        print(f"Epoch [{epoch+1}/{epochs}] | Loss: {running_loss:.2f} | Accuracy: {acc:.2f}%")
 
     # save the trained model to checkpoints 
     os.makedirs("checkpoints", exist_ok=True)
