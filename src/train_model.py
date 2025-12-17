@@ -27,7 +27,6 @@ transform_train = transforms.Compose([
     ) # It shifts numbers from 0–1 → -1 to 1 (HELPS IN BALANCING THE NUMBERS)
 ])
 
-
 transform_test = transforms.Compose([
     transforms.Resize((128, 128)), # resizing images to 128x128 size
     transforms.ToTensor(), #converts to torch numbers 
@@ -53,7 +52,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # it will 
 # TRAIN FUNCTION
 def train_model(model, model_name, epochs=8,lr=0.001): # model + model name + epoch + learning rate (ability of model to learn (deep or easy))
     criterion = nn.CrossEntropyLoss() # It tells the model how wrong its predictions are.
-    optimizer = optim.Adam(model.parameters(), lr=0.001) #The adam optimizer updates the model’s weights to reduce the loss.
+    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr) #The adam optimizer updates the model’s weights to reduce the loss.
     model.to(device) # move to gpu or cpu depending on availability
 
   # Actual Training stars from here : 
@@ -89,11 +88,13 @@ def train_model(model, model_name, epochs=8,lr=0.001): # model + model name + ep
 # epoch and learning rate for good o/p for models 
 train_model(CNNModel(num_classes=len(train_data.classes)), "CNN",epochs=8,lr=0.001) # training cnn model
 train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18",epochs=5,lr=0.001 ) # for resnet18 model 
-# epoch = how many times the model sees all training images.
-# learning rate = how fast the model learns.
+
+# MobileNet is a lightweight pretrained CNN designed for speed and efficiency
 train_model(
     get_mobilenet_model(num_classes=len(train_data.classes)),
     "MobileNet",
     epochs=5,
     lr=0.001
 )
+# epoch = how many times the model sees all training images.
+# learning rate = how fast the model learns.

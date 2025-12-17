@@ -54,26 +54,21 @@ def test_model(model, model_path, model_name):
     print(f"\n🎯 {model_name} Accuracy: {acc:.2f}%\n")
     return acc
 
-# LOAD AND TEST BOTH MODELS
+# LOAD AND TEST MODELS
 cnn_model_path = os.path.join(checkpoints_dir, "cnn_model.pth")
 resnet_model_path = os.path.join(checkpoints_dir, "resnet18_model.pth")
+mobilenet_model_path = os.path.join(checkpoints_dir, "mobilenet_model.pth")
 
 cnn_model = CNNModel(num_classes=len(classes))
 resnet_model = get_resnet18_model(num_classes=len(classes))
+mobilenet_model = get_mobilenet_model(num_classes=len(classes))
 
 cnn_acc = test_model(cnn_model, cnn_model_path, "CNN")
 resnet_acc = test_model(resnet_model, resnet_model_path, "ResNet18")
-
-mobilenet_model_path = os.path.join(checkpoints_dir, "mobilenet_model.pth")
-mobilenet_model = get_mobilenet_model(num_classes=len(classes))
-
 mobilenet_acc = test_model(mobilenet_model, mobilenet_model_path, "MobileNet")
 
 # COMPARISON SUMMARY 
 print("📊 Model Comparison Result:")
-if cnn_acc > resnet_acc:
-    print(f"Conclusion : 🥇 CNN performed better than ResNet18 by {cnn_acc - resnet_acc:.2f}%")
-elif resnet_acc > cnn_acc:
-    print(f"Conclusion : 🥇 ResNet18 performed better than CNN by {resnet_acc - cnn_acc:.2f}%")
-else:
-    print("Conclusion : 🤝 Both CNN and ResNet18 performed equally well")
+print(f"CNN Accuracy       : {cnn_acc:.2f}%")
+print(f"ResNet18 Accuracy  : {resnet_acc:.2f}%")
+print(f"MobileNet Accuracy : {mobilenet_acc:.2f}%")

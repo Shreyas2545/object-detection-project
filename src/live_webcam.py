@@ -2,7 +2,6 @@ import torch
 import cv2
 import torchvision.transforms as transforms
 from PIL import Image
-import torch.nn as nn
 from model_cnn import CNNModel
 from model_resnet import get_resnet18_model  # using your ResNet function
 from model_mobilenet import get_mobilenet_model
@@ -21,6 +20,12 @@ resnet_model = get_resnet18_model(num_classes=5)
 resnet_model.load_state_dict(torch.load("checkpoints/resnet18_model.pth", map_location=device))
 resnet_model.to(device)
 resnet_model.eval()
+
+# ===== Load MobileNet model =====
+mobilenet_model = get_mobilenet_model(num_classes=5)
+mobilenet_model.load_state_dict(torch.load("checkpoints/mobilenet_model.pth", map_location=device))
+mobilenet_model.to(device)
+mobilenet_model.eval()
 
 # ===== Class labels =====
 class_names = ["bird", "car", "cat", "dog", "watch"]
@@ -49,7 +54,7 @@ while True:
     img_pil = Image.fromarray(img)
     input_tensor = transform(img_pil).unsqueeze(0).to(device)
 
-    # ===== Get predictions from BOTH models =====
+    # ===== Get predictions from ALL models =====
     with torch.no_grad():
 
         # ----- CNN -----
@@ -66,7 +71,14 @@ while True:
         label_res = class_names[pred_res.item()]
         conf_res = conf_res.item() * 100
 
-    # ===== Display both predictions on the screen =====
+        # ----- MobileNet -----
+        out_mob = mobilenet_model(input_tensor)
+        prob_mob = torch.softmax(out_mob, dim=1)
+        conf_mob, pred_mob = prob_mob.max(1)
+        label_mob = class_names[pred_mob.item()]
+        conf_mob = conf_mob.item() * 100
+
+    # ===== Display predictions on the screen =====
     cv2.putText(frame,
                 f"CNN: {label_cnn} ({conf_cnn:.1f}%)",
                 (30, 60), cv2.FONT_HERSHEY_SIMPLEX,
@@ -77,8 +89,13 @@ while True:
                 (30, 110), cv2.FONT_HERSHEY_SIMPLEX,
                 0.9, (225,255,0), 2)
 
+    cv2.putText(frame,
+                f"MobileNet: {label_mob} ({conf_mob:.1f}%)",
+                (30, 160), cv2.FONT_HERSHEY_SIMPLEX,
+                0.9, (0,255,0), 2)
+
     # Show the frame
-    cv2.imshow("Live Object Detection - CNN vs ResNet", frame)
+    cv2.imshow("Live Object Detection - CNN vs ResNet vs MobileNet", frame)
 
     # Quit on 'q'
     key = cv2.waitKey(1) & 0xFF
