@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from torch import nn
 from model_cnn import CNNModel
 from model_resnet import get_resnet18_model
+from model_mobilenet import get_mobilenet_model
 
 # PATHS
 base_dir = os.path.join(os.getcwd(), "data", "images")
