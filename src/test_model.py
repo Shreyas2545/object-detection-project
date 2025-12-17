@@ -64,6 +64,11 @@ resnet_model = get_resnet18_model(num_classes=len(classes))
 cnn_acc = test_model(cnn_model, cnn_model_path, "CNN")
 resnet_acc = test_model(resnet_model, resnet_model_path, "ResNet18")
 
+mobilenet_model_path = os.path.join(checkpoints_dir, "mobilenet_model.pth")
+mobilenet_model = get_mobilenet_model(num_classes=len(classes))
+
+mobilenet_acc = test_model(mobilenet_model, mobilenet_model_path, "MobileNet")
+
 # COMPARISON SUMMARY 
 print("📊 Model Comparison Result:")
 if cnn_acc > resnet_acc:
