@@ -91,3 +91,9 @@ train_model(CNNModel(num_classes=len(train_data.classes)), "CNN",epochs=8,lr=0.0
 train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18",epochs=5,lr=0.001 ) # for resnet18 model 
 # epoch = how many times the model sees all training images.
 # learning rate = how fast the model learns.
+train_model(
+    get_mobilenet_model(num_classes=len(train_data.classes)),
+    "MobileNet",
+    epochs=5,
+    lr=0.001
+)
