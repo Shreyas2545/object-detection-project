@@ -5,6 +5,7 @@ from PIL import Image
 import torch.nn as nn
 from model_cnn import CNNModel
 from model_resnet import get_resnet18_model  # using your ResNet function
+from model_mobilenet import get_mobilenet_model
 
 # ===== Device setup =====
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
