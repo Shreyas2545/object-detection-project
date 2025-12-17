@@ -69,12 +69,12 @@ while True:
     cv2.putText(frame,
                 f"CNN: {label_cnn} ({conf_cnn:.1f}%)",
                 (30, 60), cv2.FONT_HERSHEY_SIMPLEX,
-                0.9, (17, 195, 86), 2)
+                0.9, (0,0,255), 2)
 
     cv2.putText(frame,
                 f"ResNet: {label_res} ({conf_res:.1f}%)",
                 (30, 110), cv2.FONT_HERSHEY_SIMPLEX,
-                0.9, (0, 255, 255), 2)
+                0.9, (225,255,0), 2)
 
     # Show the frame
     cv2.imshow("Live Object Detection - CNN vs ResNet", frame)
