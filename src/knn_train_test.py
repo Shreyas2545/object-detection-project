@@ -19,8 +19,8 @@ print("Testing shape :", X_test.shape)
 def run_knn_and_get_accuracy():
     # ===== INITIALIZE KNN =====
     knn = KNeighborsClassifier(
-        n_neighbors=5,          # number of nearest neighbors
-        metric="euclidean",     # distance metric
+        n_neighbors=11,          # number of nearest neighbors
+        metric="manhattan",     # distance metric
         weights="distance"      # closer points have more influence
     )
 
