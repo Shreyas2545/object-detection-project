@@ -55,7 +55,7 @@ def test_model(model, model_path, model_name):
     return acc
 
 # LOAD AND TEST MODELS
-cnn_model_path = os.path.join(checkpoints_dir, "cnn_model.pth")
+cnn_model_path = os.path.join(checkpoints_dir, "cnn_model.pth") 
 resnet_model_path = os.path.join(checkpoints_dir, "resnet18_model.pth")
 mobilenet_model_path = os.path.join(checkpoints_dir, "mobilenet_model.pth")
 

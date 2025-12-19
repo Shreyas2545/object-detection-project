@@ -10,25 +10,25 @@ from model_mobilenet import get_mobilenet_model
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # ===== Load CNN model =====
-cnn_model = CNNModel(num_classes=5)
+cnn_model = CNNModel(num_classes=6)
 cnn_model.load_state_dict(torch.load("checkpoints/cnn_model.pth", map_location=device))
 cnn_model.to(device)
 cnn_model.eval()
 
 # ===== Load ResNet model =====
-resnet_model = get_resnet18_model(num_classes=5)
+resnet_model = get_resnet18_model(num_classes=6)
 resnet_model.load_state_dict(torch.load("checkpoints/resnet18_model.pth", map_location=device))
 resnet_model.to(device)
 resnet_model.eval()
 
 # ===== Load MobileNet model =====
-mobilenet_model = get_mobilenet_model(num_classes=5)
+mobilenet_model = get_mobilenet_model(num_classes=6)
 mobilenet_model.load_state_dict(torch.load("checkpoints/mobilenet_model.pth", map_location=device))
 mobilenet_model.to(device)
 mobilenet_model.eval()
 
 # ===== Class labels =====
-class_names = ["bird", "car", "cat", "dog", "watch"]
+class_names = ["bird", "car", "cat", "dog", "human","watch"]
 
 # ===== Transform for webcam frames =====
 transform = transforms.Compose([
