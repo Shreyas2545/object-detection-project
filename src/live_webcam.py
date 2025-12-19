@@ -31,14 +31,15 @@ mobilenet_model.to(device)
 mobilenet_model.eval()
 
 # ===== Load KNN model =====
-# KNN works on extracted features, not raw images
+# KNN works on extracted feature vectors, not raw images
 knn_model = joblib.load("knn_model.pkl")
 
 # ===== Create ResNet feature extractor for KNN =====
-# Removing the final classification layer
+# Removing final classification layer to get deep features
 resnet_feature_extractor = torch.nn.Sequential(
     *list(resnet_model.children())[:-1]
 )
+resnet_feature_extractor.to(device)
 resnet_feature_extractor.eval()
 
 # ===== Class labels =====
@@ -46,8 +47,8 @@ class_names = ["bird", "car", "cat", "dog", "human", "watch"]
 
 # ===== Transform for webcam frames =====
 transform = transforms.Compose([
-    transforms.Resize((128, 128)), # same as in train
-    transforms.ToTensor(), # same as in train
+    transforms.Resize((128, 128)),  # same as in train
+    transforms.ToTensor(),          # same as in train
     transforms.Normalize(
         mean=[0.485, 0.456, 0.406],
         std=[0.229, 0.224, 0.225]
@@ -95,33 +96,38 @@ while True:
         # ----- KNN (via ResNet feature extraction) -----
         # Extract deep features using ResNet
         features = resnet_feature_extractor(input_tensor)
-        features = features.view(features.size(0), -1)  # flatten
+        features = features.view(features.size(0), -1)  # flatten feature map
         features_np = features.cpu().numpy()
 
-        # Predict using KNN
+        # Predict class using KNN
         knn_pred = knn_model.predict(features_np)[0]
+
+        # Get confidence using probability (neighbor voting)
+        knn_probs = knn_model.predict_proba(features_np)
+        knn_conf = knn_probs[0][knn_pred] * 100
+
         label_knn = class_names[knn_pred]
 
     # ===== Display predictions on the screen =====
     cv2.putText(frame,
                 f"CNN: {label_cnn} ({conf_cnn:.1f}%)",
                 (30, 60), cv2.FONT_HERSHEY_SIMPLEX,
-                0.9, (0,0,255), 2)
+                0.9, (0, 0, 255), 2)
 
     cv2.putText(frame,
                 f"ResNet: {label_res} ({conf_res:.1f}%)",
                 (30, 110), cv2.FONT_HERSHEY_SIMPLEX,
-                0.9, (225,255,0), 2)
+                0.9, (225, 255, 0), 2)
 
     cv2.putText(frame,
                 f"MobileNet: {label_mob} ({conf_mob:.1f}%)",
                 (30, 160), cv2.FONT_HERSHEY_SIMPLEX,
-                0.9, (0,255,0), 2)
+                0.9, (0, 255, 0), 2)
 
     cv2.putText(frame,
-                f"KNN: {label_knn}",
+                f"KNN: {label_knn} ({knn_conf:.1f}%)",
                 (30, 210), cv2.FONT_HERSHEY_SIMPLEX,
-                0.9, (255,0,255), 2)
+                0.9, (255, 0, 255), 2)
 
     # Show the frame
     cv2.imshow("Live Object Detection - CNN vs ResNet vs MobileNet vs KNN", frame)
