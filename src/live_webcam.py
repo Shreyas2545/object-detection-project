@@ -2,6 +2,9 @@ import torch
 import cv2
 import torchvision.transforms as transforms
 from PIL import Image
+import numpy as np
+import joblib  # for loading KNN model
+
 from model_cnn import CNNModel
 from model_resnet import get_resnet18_model  # using your ResNet function
 from model_mobilenet import get_mobilenet_model
@@ -27,8 +30,19 @@ mobilenet_model.load_state_dict(torch.load("checkpoints/mobilenet_model.pth", ma
 mobilenet_model.to(device)
 mobilenet_model.eval()
 
+# ===== Load KNN model =====
+# KNN works on extracted features, not raw images
+knn_model = joblib.load("knn_model.pkl")
+
+# ===== Create ResNet feature extractor for KNN =====
+# Removing the final classification layer
+resnet_feature_extractor = torch.nn.Sequential(
+    *list(resnet_model.children())[:-1]
+)
+resnet_feature_extractor.eval()
+
 # ===== Class labels =====
-class_names = ["bird", "car", "cat", "dog", "human","watch"]
+class_names = ["bird", "car", "cat", "dog", "human", "watch"]
 
 # ===== Transform for webcam frames =====
 transform = transforms.Compose([
@@ -78,6 +92,16 @@ while True:
         label_mob = class_names[pred_mob.item()]
         conf_mob = conf_mob.item() * 100
 
+        # ----- KNN (via ResNet feature extraction) -----
+        # Extract deep features using ResNet
+        features = resnet_feature_extractor(input_tensor)
+        features = features.view(features.size(0), -1)  # flatten
+        features_np = features.cpu().numpy()
+
+        # Predict using KNN
+        knn_pred = knn_model.predict(features_np)[0]
+        label_knn = class_names[knn_pred]
+
     # ===== Display predictions on the screen =====
     cv2.putText(frame,
                 f"CNN: {label_cnn} ({conf_cnn:.1f}%)",
@@ -94,8 +118,13 @@ while True:
                 (30, 160), cv2.FONT_HERSHEY_SIMPLEX,
                 0.9, (0,255,0), 2)
 
+    cv2.putText(frame,
+                f"KNN: {label_knn}",
+                (30, 210), cv2.FONT_HERSHEY_SIMPLEX,
+                0.9, (255,0,255), 2)
+
     # Show the frame
-    cv2.imshow("Live Object Detection - CNN vs ResNet vs MobileNet", frame)
+    cv2.imshow("Live Object Detection - CNN vs ResNet vs MobileNet vs KNN", frame)
 
     # Quit on 'q'
     key = cv2.waitKey(1) & 0xFF

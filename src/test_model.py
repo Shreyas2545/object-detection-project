@@ -48,27 +48,36 @@ def test_model(model, model_path, model_name):
             total += labels.size(0)
             correct += (pred == labels).sum().item()
 
-            print(f"🖼️ Predicted: {classes[pred.item()]} ({conf.item() * 100:.2f}%) | Actual: {classes[labels.item()]}")
+            print(
+                f"🖼️ Predicted: {classes[pred.item()]} "
+                f"({conf.item() * 100:.2f}%) | "
+                f"Actual: {classes[labels.item()]}"
+            )
 
     acc = 100 * correct / total # calculates final accuracy test
     print(f"\n🎯 {model_name} Accuracy: {acc:.2f}%\n")
     return acc
 
-# LOAD AND TEST MODELS
-cnn_model_path = os.path.join(checkpoints_dir, "cnn_model.pth") 
-resnet_model_path = os.path.join(checkpoints_dir, "resnet18_model.pth")
-mobilenet_model_path = os.path.join(checkpoints_dir, "mobilenet_model.pth")
 
-cnn_model = CNNModel(num_classes=len(classes))
-resnet_model = get_resnet18_model(num_classes=len(classes))
-mobilenet_model = get_mobilenet_model(num_classes=len(classes))
+# ===== RUN THIS PART ONLY WHEN FILE IS EXECUTED DIRECTLY =====
+# (This prevents duplicate execution when imported in evaluate_all_models.py)
+if __name__ == "__main__":
 
-cnn_acc = test_model(cnn_model, cnn_model_path, "CNN")
-resnet_acc = test_model(resnet_model, resnet_model_path, "ResNet18")
-mobilenet_acc = test_model(mobilenet_model, mobilenet_model_path, "MobileNet")
+    # LOAD AND TEST MODELS
+    cnn_model_path = os.path.join(checkpoints_dir, "cnn_model.pth") 
+    resnet_model_path = os.path.join(checkpoints_dir, "resnet18_model.pth")
+    mobilenet_model_path = os.path.join(checkpoints_dir, "mobilenet_model.pth")
 
-# COMPARISON SUMMARY 
-print("📊 Model Comparison Result:")
-print(f"CNN Accuracy       : {cnn_acc:.2f}%")
-print(f"ResNet18 Accuracy  : {resnet_acc:.2f}%")
-print(f"MobileNet Accuracy : {mobilenet_acc:.2f}%")
+    cnn_model = CNNModel(num_classes=len(classes))
+    resnet_model = get_resnet18_model(num_classes=len(classes))
+    mobilenet_model = get_mobilenet_model(num_classes=len(classes))
+
+    cnn_acc = test_model(cnn_model, cnn_model_path, "CNN")
+    resnet_acc = test_model(resnet_model, resnet_model_path, "ResNet18")
+    mobilenet_acc = test_model(mobilenet_model, mobilenet_model_path, "MobileNet")
+
+    # COMPARISON SUMMARY 
+    print("📊 Model Comparison Result:")
+    print(f"CNN Accuracy       : {cnn_acc:.2f}%")
+    print(f"ResNet18 Accuracy  : {resnet_acc:.2f}%")
+    print(f"MobileNet Accuracy : {mobilenet_acc:.2f}%")
