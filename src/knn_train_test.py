@@ -26,9 +26,9 @@ def run_knn_and_get_accuracy():
     # INITIALIZE KNN
     # =========================
     knn = KNeighborsClassifier(
-        n_neighbors=11,
+        n_neighbors=30,
         metric="manhattan",
-        weights="distance"
+        weights="uniform"
     )
 
     # =========================
