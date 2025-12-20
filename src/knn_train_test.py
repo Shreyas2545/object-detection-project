@@ -26,6 +26,9 @@ print("Original Testing shape :", X_test.shape)
 # =========================
 X_train = X_train[:, :20]
 X_test  = X_test[:, :20]
+ # 🔻 Add noise to test features
+X_test = X_test + 0.05 * np.random.randn(*X_test.shape)
+
 
 print("Reduced Training shape:", X_train.shape)
 print("Reduced Testing shape :", X_test.shape)
