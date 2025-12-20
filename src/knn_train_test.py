@@ -24,8 +24,8 @@ print("Original Testing shape :", X_test.shape)
 # 🔻 REDUCE FEATURE DIMENSION
 # (To avoid overfitting & get realistic accuracy)
 # =========================
-X_train = X_train[:, :2]
-X_test  = X_test[:, :2]
+X_train = X_train[:, :5]
+X_test  = X_test[:, :5]
  # 🔻 Add noise to test features
 X_test = X_test + 0.05 * np.random.randn(*X_test.shape)
 
