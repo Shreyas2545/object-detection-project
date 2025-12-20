@@ -7,7 +7,7 @@ from model_resnet import get_resnet18_model
 from model_mobilenet import get_mobilenet_model
 
 from knn_train_test import run_knn_and_get_accuracy
-from svm_model import run_svm_and_get_accuracy
+from svm_model import train_svm
 
 # ===== PATHS =====
 checkpoints_dir = "checkpoints"
@@ -28,7 +28,7 @@ knn_acc = run_knn_and_get_accuracy()
 
 # ===== STEP 2: SVM =====
 print("\n🚀 Training & Testing SVM...\n")
-svm_acc = run_svm_and_get_accuracy(X_train, y_train, X_test, y_test)
+svm_acc = train_svm(X_train, y_train, X_test, y_test)
 
 # ===== LOAD DL MODELS =====
 cnn_model = CNNModel(num_classes)

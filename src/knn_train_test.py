@@ -3,10 +3,16 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import joblib
 
-# ===== LOAD FEATURE DATA =====
+# =========================
+# CLASS NAMES (SAME AS DL)
+# =========================
+class_names = ["birds", "cars", "cats", "dogs", "human", "watches"]
+
+# =========================
+# LOAD FEATURES
+# =========================
 X_train = np.load("features/X_train.npy")
 y_train = np.load("features/y_train.npy")
-
 X_test = np.load("features/X_test.npy")
 y_test = np.load("features/y_test.npy")
 
@@ -15,41 +21,71 @@ print("Training shape:", X_train.shape)
 print("Testing shape :", X_test.shape)
 
 
-# ===== MAIN KNN FUNCTION (used by evaluate_all_models.py) =====
 def run_knn_and_get_accuracy():
-    # ===== INITIALIZE KNN =====
+    # =========================
+    # INITIALIZE KNN
+    # =========================
     knn = KNeighborsClassifier(
-        n_neighbors=11,          # number of nearest neighbors
-        metric="manhattan",     # distance metric
-        weights="distance"      # closer points have more influence
+        n_neighbors=11,
+        metric="manhattan",
+        weights="distance"
     )
 
-    # ===== TRAIN KNN =====
-    print("\n🚀 Training KNN model...")
+    # =========================
+    # TRAIN
+    # =========================
+    print("\n🚀 Training KNN model...\n")
     knn.fit(X_train, y_train)
 
-    # ===== TEST KNN =====
-    print("\n🧪 Testing KNN model...")
-    y_pred = knn.predict(X_test)
+    # =========================
+    # TEST (DL-LIKE OUTPUT)
+    # =========================
+    print("\n🧪 Testing KNN model...\n")
 
-    # ===== EVALUATION =====
-    accuracy = accuracy_score(y_test, y_pred)
+    correct = 0
+    total = len(y_test)
 
+    for i in range(len(X_test)):
+        sample = X_test[i].reshape(1, -1)
+        actual = y_test[i]
+
+        pred = knn.predict(sample)[0]
+        probs = knn.predict_proba(sample)
+        conf = probs[0][pred] * 100
+
+        if pred == actual:
+            correct += 1
+
+        print(
+            f"🧮 Predicted: {class_names[pred]} ({conf:.2f}%) | "
+            f"Actual: {class_names[actual]}"
+        )
+
+    accuracy = correct / total
     print(f"\n🎯 KNN Accuracy: {accuracy * 100:.2f}%\n")
 
+    # =========================
+    # EXTRA REPORTS (OPTIONAL)
+    # =========================
+    y_pred = knn.predict(X_test)
+
     print("📊 Classification Report:")
-    print(classification_report(y_test, y_pred))
+    print(classification_report(y_test, y_pred, target_names=class_names))
 
     print("🧩 Confusion Matrix:")
     print(confusion_matrix(y_test, y_pred))
 
-    # ===== SAVE MODEL =====
-    joblib.dump(knn, "knn_model.pkl")
+    # =========================
+    # SAVE MODEL
+    # =========================
+    joblib.dump(knn, "checkpoints/knn_model.pkl")
     print("\n💾 KNN model saved as knn_model.pkl")
 
     return accuracy
 
 
-# ===== RUN ONLY WHEN THIS FILE IS EXECUTED DIRECTLY =====
+# =========================
+# RUN DIRECTLY (OPTIONAL)
+# =========================
 if __name__ == "__main__":
     run_knn_and_get_accuracy()
