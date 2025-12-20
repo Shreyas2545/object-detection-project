@@ -34,6 +34,8 @@ mobilenet_model.eval()
 # KNN works on extracted feature vectors, not raw images
 knn_model = joblib.load("knn_model.pkl")
 
+svm_model = joblib.load("checkpoints/svm_model.pkl")
+
 # ===== Create ResNet feature extractor for KNN =====
 # Removing final classification layer to get deep features
 resnet_feature_extractor = torch.nn.Sequential(
@@ -102,6 +104,12 @@ while True:
         # Predict class using KNN
         knn_pred = knn_model.predict(features_np)[0]
 
+        # ----- SVM -----
+        svm_pred = svm_model.predict(features_np)[0]
+        svm_probs = svm_model.predict_proba(features_np)
+        svm_conf = svm_probs[0][svm_pred] * 100
+        label_svm = class_names[svm_pred]
+
         # Get confidence using probability (neighbor voting)
         knn_probs = knn_model.predict_proba(features_np)
         knn_conf = knn_probs[0][knn_pred] * 100
@@ -129,8 +137,13 @@ while True:
                 (30, 210), cv2.FONT_HERSHEY_SIMPLEX,
                 0.9, (255, 0, 255), 2)
 
+    cv2.putText(frame,
+            f"SVM: {label_svm} ({svm_conf:.1f}%)",
+            (30, 260), cv2.FONT_HERSHEY_SIMPLEX,
+            0.9, (0, 165, 255), 2)
+
     # Show the frame
-    cv2.imshow("Live Object Detection - CNN vs ResNet vs MobileNet vs KNN", frame)
+    cv2.imshow("Live Object Detection - CNN vs ResNet vs MobileNet vs KNN vs SVM", frame)
 
     # Quit on 'q'
     key = cv2.waitKey(1) & 0xFF
