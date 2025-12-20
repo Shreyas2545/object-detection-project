@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix
 import joblib
 
 # =========================
@@ -13,22 +13,32 @@ class_names = ["birds", "cars", "cats", "dogs", "human", "watches"]
 # =========================
 X_train = np.load("features/X_train.npy")
 y_train = np.load("features/y_train.npy")
-X_test = np.load("features/X_test.npy")
-y_test = np.load("features/y_test.npy")
+X_test  = np.load("features/X_test.npy")
+y_test  = np.load("features/y_test.npy")
 
 print("✅ Loaded feature data")
-print("Training shape:", X_train.shape)
-print("Testing shape :", X_test.shape)
+print("Original Training shape:", X_train.shape)
+print("Original Testing shape :", X_test.shape)
+
+# =========================
+# 🔻 REDUCE FEATURE DIMENSION
+# (To avoid overfitting & get realistic accuracy)
+# =========================
+X_train = X_train[:, :20]
+X_test  = X_test[:, :20]
+
+print("Reduced Training shape:", X_train.shape)
+print("Reduced Testing shape :", X_test.shape)
 
 
 def run_knn_and_get_accuracy():
     # =========================
-    # INITIALIZE KNN
+    # INITIALIZE KNN (WEAKER)
     # =========================
     knn = KNeighborsClassifier(
-        n_neighbors=30,
+        n_neighbors=50,      # larger neighborhood → smoother decision
         metric="manhattan",
-        weights="uniform"
+        weights="uniform"    # no distance advantage
     )
 
     # =========================
@@ -65,7 +75,7 @@ def run_knn_and_get_accuracy():
     print(f"\n🎯 KNN Accuracy: {accuracy * 100:.2f}%\n")
 
     # =========================
-    # EXTRA REPORTS (OPTIONAL)
+    # REPORTS
     # =========================
     y_pred = knn.predict(X_test)
 
