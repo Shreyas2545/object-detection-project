@@ -170,7 +170,7 @@ from model_mobilenet import get_mobilenet_model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # =========================
-# LOAD MODELS
+# LOAD DEEP LEARNING MODELS
 # =========================
 cnn_model = CNNModel(num_classes=6)
 cnn_model.load_state_dict(torch.load("checkpoints/cnn_model.pth", map_location=device))
@@ -184,6 +184,9 @@ mobilenet_model = get_mobilenet_model(num_classes=6)
 mobilenet_model.load_state_dict(torch.load("checkpoints/mobilenet_model.pth", map_location=device))
 mobilenet_model.to(device).eval()
 
+# =========================
+# LOAD ML MODELS
+# =========================
 knn_model = joblib.load("checkpoints/knn_model.pkl")
 svm_model = joblib.load("checkpoints/svm_model.pkl")
 
@@ -201,7 +204,7 @@ resnet_feature_extractor.to(device).eval()
 class_names = ["bird", "car", "cat", "dog", "human", "watch"]
 
 # =========================
-# TRANSFORM
+# IMAGE TRANSFORM
 # =========================
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
@@ -226,7 +229,7 @@ while True:
     h, w, _ = frame.shape
 
     # =========================
-    # ROI BOX (VISUAL INDICATOR)
+    # ROI (GREEN BOX)
     # =========================
     x1, y1 = int(w * 0.3), int(h * 0.2)
     x2, y2 = int(w * 0.7), int(h * 0.8)
@@ -267,12 +270,12 @@ while True:
         prob_mob = torch.softmax(out_mob, dim=1)
         conf_mob, pred_mob = prob_mob.max(1)
 
-        # ===== FEATURE EXTRACTION FOR ML =====
+        # ===== FEATURE EXTRACTION FOR KNN & SVM =====
         features = resnet_feature_extractor(input_tensor)
         features = features.view(features.size(0), -1).cpu().numpy()
 
-        # 🔴 VERY IMPORTANT: MATCH TRAINING FEATURES
-        features = features[:, :2]   # SAME AS knn_train_test.py
+        # 🔴 MUST MATCH TRAINING (KNN WAS TRAINED WITH 5 FEATURES)
+        features = features[:, :5]
 
         # ===== KNN =====
         knn_pred = knn_model.predict(features)[0]
@@ -283,7 +286,7 @@ while True:
         svm_conf = svm_model.predict_proba(features)[0][svm_pred] * 100
 
     # =========================
-    # DISPLAY OUTPUT
+    # DISPLAY RESULTS
     # =========================
     y_base = y2 + 30
 
