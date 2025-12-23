@@ -65,7 +65,7 @@ transform = transforms.Compose([
 # =========================
 # WEBCAM SETUP
 # =========================
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 print("Press 'q' to quit.")
 
 FRAME_SKIP = 6
@@ -76,10 +76,10 @@ pred_texts = [""] * 7
 colors = [
     (0, 0, 255),     # CNN
     (255, 255, 0),   # ResNet
-    (0, 255, 0),     # MobileNet
+    (124,252,0),     # MobileNet
     (255, 0, 255),   # KNN
     (0, 165, 255),   # SVM
-    (200, 200, 200), # Decision Tree
+    (200, 200, 0), # Decision Tree
     (0, 255, 255)    # Random Forest
 ]
 
