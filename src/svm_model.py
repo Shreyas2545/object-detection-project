@@ -1,61 +1,38 @@
-import joblib
+import numpy as np
 from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+import joblib
 
 # =========================
-# CLASS NAMES (SAME AS DL)
+# LOAD FEATURES
 # =========================
-class_names = ["birds", "cars", "cats", "dogs", "human", "watches"]
+X_train = np.load("features/X_train.npy")
+y_train = np.load("features/y_train.npy")
+X_test  = np.load("features/X_test.npy")
+y_test  = np.load("features/y_test.npy")
 
-
-def train_svm(X_train, y_train, X_test, y_test):
-    print("\n🚀 Training SVM Model...\n")
-
-    # =========================
-    # INITIALIZE SVM
-    # =========================
-    svm_model = SVC(
-        kernel="linear",
-        C=0.1,
+def run_svm_and_get_accuracy():
+    svm = SVC(
+        kernel="rbf",
+        C=10,
         gamma="scale",
-        probability=True   # REQUIRED for confidence output
+        probability=True
     )
 
-    # =========================
-    # TRAIN
-    # =========================
-    svm_model.fit(X_train, y_train)
+    print("\n🚀 Training SVM...\n")
+    svm.fit(X_train, y_train)
 
-    # =========================
-    # TEST (DL-LIKE OUTPUT)
-    # =========================
-    print("\n🧪 Testing SVM model...\n")
+    print("🧪 Testing SVM...\n")
+    y_pred = svm.predict(X_test)
 
-    correct = 0
-    total = len(y_test)
+    acc = accuracy_score(y_test, y_pred)
+    print(f"🎯 SVM Accuracy: {acc * 100:.2f}%")
 
-    for i in range(len(X_test)):
-        sample = X_test[i].reshape(1, -1)
-        actual = y_test[i]
+    joblib.dump(svm, "checkpoints/svm_model.pkl")
+    print("💾 SVM model saved")
 
-        pred = svm_model.predict(sample)[0]
-        probs = svm_model.predict_proba(sample)
-        conf = probs[0][pred] * 100
+    return acc
 
-        if pred == actual:
-            correct += 1
 
-        print(
-            f"🧮 Predicted: {class_names[pred]} ({conf:.2f}%) | "
-            f"Actual: {class_names[actual]}"
-        )
-
-    accuracy = correct / total
-    print(f"\n🎯 SVM Accuracy: {accuracy * 100:.2f}%\n")
-
-    # =========================
-    # SAVE MODEL
-    # =========================
-    joblib.dump(svm_model, "checkpoints/svm_model.pkl")
-    print("💾 SVM model saved successfully!")
-
-    return accuracy
+if __name__ == "__main__":
+    run_svm_and_get_accuracy()
