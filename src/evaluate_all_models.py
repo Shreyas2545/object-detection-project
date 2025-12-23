@@ -1,72 +1,93 @@
-import os
+import numpy as np
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+import joblib
 
 # =========================
-# DL TESTING IMPORTS
+# CLASS NAMES
 # =========================
-from test_model import test_model
-from model_cnn import CNNModel
-from model_resnet import get_resnet18_model
-from model_mobilenet import get_mobilenet_model
+class_names = ["birds", "cars", "cats", "dogs", "human", "watches"]
 
 # =========================
-# ML IMPORTS
+# LOAD FEATURES
 # =========================
-from knn_train_test import run_knn_and_get_accuracy
-from svm_model import run_svm_and_get_accuracy
-from decision_tree_model import run_decision_tree_and_get_accuracy
-from random_forest_model import run_random_forest_and_get_accuracy
+X_train = np.load("features/X_train.npy")
+y_train = np.load("features/y_train.npy")
+X_test  = np.load("features/X_test.npy")
+y_test  = np.load("features/y_test.npy")
+
+print("✅ Loaded feature data for SVM")
+print("Training shape:", X_train.shape)
+print("Testing shape :", X_test.shape)
+
+
+def run_svm_and_get_accuracy():
+    # =========================
+    # INITIALIZE SVM
+    # =========================
+    svm = SVC(
+        kernel="rbf",
+        C=10,
+        gamma="scale",
+        probability=True,   # REQUIRED for confidence scores
+        random_state=42
+    )
+
+    # =========================
+    # TRAIN
+    # =========================
+    print("\n🚀 Training SVM...\n")
+    svm.fit(X_train, y_train)
+
+    # =========================
+    # TEST (DL-LIKE OUTPUT)
+    # =========================
+    print("\n🧪 Testing SVM...\n")
+
+    correct = 0
+    total = len(y_test)
+
+    for i in range(len(X_test)):
+        sample = X_test[i].reshape(1, -1)
+        actual = y_test[i]
+
+        pred = svm.predict(sample)[0]
+        probs = svm.predict_proba(sample)
+        conf = probs[0][pred] * 100
+
+        if pred == actual:
+            correct += 1
+
+        print(
+            f"🧮 Predicted: {class_names[pred]} ({conf:.2f}%) | "
+            f"Actual: {class_names[actual]}"
+        )
+
+    accuracy = correct / total
+    print(f"\n🎯 SVM Accuracy: {accuracy * 100:.2f}%\n")
+
+    # =========================
+    # REPORTS
+    # =========================
+    y_pred = svm.predict(X_test)
+
+    print("📊 Classification Report:")
+    print(classification_report(y_test, y_pred, target_names=class_names))
+
+    print("🧩 Confusion Matrix:")
+    print(confusion_matrix(y_test, y_pred))
+
+    # =========================
+    # SAVE MODEL
+    # =========================
+    joblib.dump(svm, "checkpoints/svm_model.pkl")
+    print("💾 SVM model saved")
+
+    return accuracy
+
 
 # =========================
-# PATHS
+# RUN DIRECTLY (OPTIONAL)
 # =========================
-checkpoints_dir = "checkpoints"
-train_dir = "data/images/train"
-
-# =========================
-# NUMBER OF CLASSES
-# =========================
-num_classes = len(os.listdir(train_dir))
-
-print("\n📚 Classes:", sorted(os.listdir(train_dir)))
-
-# =====================================================
-# STEP 1: TRAIN + TEST ALL CLASSICAL ML MODELS
-# =====================================================
-print("\n================ ML MODELS ================\n")
-
-knn_acc = run_knn_and_get_accuracy()
-svm_acc = run_svm_and_get_accuracy()
-dt_acc  = run_decision_tree_and_get_accuracy()
-rf_acc  = run_random_forest_and_get_accuracy()
-
-# =====================================================
-# STEP 2: TEST ALL DEEP LEARNING MODELS
-# =====================================================
-print("\n================ DL MODELS ================\n")
-
-cnn_model = CNNModel(num_classes=num_classes)
-resnet_model = get_resnet18_model(num_classes=num_classes)
-mobilenet_model = get_mobilenet_model(num_classes=num_classes)
-
-cnn_path = os.path.join(checkpoints_dir, "cnn_model.pth")
-resnet_path = os.path.join(checkpoints_dir, "resnet18_model.pth")
-mobilenet_path = os.path.join(checkpoints_dir, "mobilenet_model.pth")
-
-cnn_acc = test_model(cnn_model, cnn_path, "CNN")
-resnet_acc = test_model(resnet_model, resnet_path, "ResNet18")
-mobilenet_acc = test_model(mobilenet_model, mobilenet_path, "MobileNet")
-
-# =====================================================
-# FINAL COMPARISON SUMMARY
-# =====================================================
-print("\n================ FINAL MODEL COMPARISON ================\n")
-
-print(f"CNN Accuracy           : {cnn_acc:.2f}%")
-print(f"ResNet18 Accuracy      : {resnet_acc:.2f}%")
-print(f"MobileNet Accuracy     : {mobilenet_acc:.2f}%")
-print(f"KNN Accuracy           : {knn_acc * 100:.2f}%")
-print(f"SVM Accuracy           : {svm_acc * 100:.2f}%")
-print(f"Decision Tree Accuracy : {dt_acc * 100:.2f}%")
-print(f"Random Forest Accuracy : {rf_acc * 100:.2f}%")
-
-print("\n✅ Evaluation completed successfully.")
+if __name__ == "__main__":
+    run_svm_and_get_accuracy()
