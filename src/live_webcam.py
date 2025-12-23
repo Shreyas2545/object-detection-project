@@ -32,10 +32,10 @@ mobilenet_model.to(device).eval()
 # =========================
 # LOAD ML MODELS
 # =========================
-knn_model = joblib.load("checkpoints/knn_model.pkl")           # 5 features
-svm_model = joblib.load("checkpoints/svm_model.pkl")           # 512 features
-dt_model  = joblib.load("checkpoints/decision_tree_model.pkl") # 10 features
-rf_model  = joblib.load("checkpoints/random_forest_model.pkl") # 10 features
+knn_model = joblib.load("checkpoints/knn_model.pkl")
+svm_model = joblib.load("checkpoints/svm_model.pkl")
+dt_model  = joblib.load("checkpoints/decision_tree_model.pkl")
+rf_model  = joblib.load("checkpoints/random_forest_model.pkl")
 
 # =========================
 # RESNET FEATURE EXTRACTOR
@@ -68,13 +68,20 @@ transform = transforms.Compose([
 cap = cv2.VideoCapture(0)
 print("Press 'q' to quit.")
 
-FRAME_SKIP = 6     # 🔥 MAIN SPEED BOOST
+FRAME_SKIP = 6
 frame_count = 0
 
-# =========================
-# STORED PREDICTIONS
-# =========================
 pred_texts = [""] * 7
+
+colors = [
+    (0, 0, 255),     # CNN
+    (255, 255, 0),   # ResNet
+    (0, 255, 0),     # MobileNet
+    (255, 0, 255),   # KNN
+    (0, 165, 255),   # SVM
+    (200, 200, 200), # Decision Tree
+    (0, 255, 255)    # Random Forest
+]
 
 while True:
     ret, frame = cap.read()
@@ -83,88 +90,55 @@ while True:
 
     frame_count += 1
 
-    # Convert frame
     img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img_pil = Image.fromarray(img_rgb)
     input_tensor = transform(img_pil).unsqueeze(0).to(device)
 
-    # =========================
-    # RUN MODELS ONLY EVERY N FRAMES
-    # =========================
     if frame_count % FRAME_SKIP == 0:
         with torch.no_grad():
 
-            # ----- CNN -----
             out = cnn_model(input_tensor)
             prob = torch.softmax(out, dim=1)
             conf, pred = prob.max(1)
             pred_texts[0] = f"CNN: {class_names[pred.item()]} ({conf.item()*100:.1f}%)"
-            # ----- ResNet -----
+
             out = resnet_model(input_tensor)
             prob = torch.softmax(out, dim=1)
             conf, pred = prob.max(1)
             pred_texts[1] = f"ResNet: {class_names[pred.item()]} ({conf.item()*100:.1f}%)"
 
-            # ----- MobileNet -----
             out = mobilenet_model(input_tensor)
             prob = torch.softmax(out, dim=1)
             conf, pred = prob.max(1)
             pred_texts[2] = f"MobileNet: {class_names[pred.item()]} ({conf.item()*100:.1f}%)"
 
-            # ----- FEATURES (512) -----
             features = resnet_feature_extractor(input_tensor)
             features = features.view(features.size(0), -1).cpu().numpy()
 
-            # ----- KNN (5) -----
             f5 = features[:, :5]
             p = knn_model.predict(f5)[0]
             c = knn_model.predict_proba(f5)[0][p] * 100
             pred_texts[3] = f"KNN: {class_names[p]} ({c:.1f}%)"
 
-            # ----- SVM (512) -----
             p = svm_model.predict(features)[0]
             c = svm_model.predict_proba(features)[0][p] * 100
             pred_texts[4] = f"SVM: {class_names[p]} ({c:.1f}%)"
 
-            # ----- Decision Tree (10) -----
             f10 = features[:, :10]
             p = dt_model.predict(f10)[0]
             c = dt_model.predict_proba(f10)[0][p] * 100
             pred_texts[5] = f"DT: {class_names[p]} ({c:.1f}%)"
 
-            # ----- Random Forest (10) -----
             p = rf_model.predict(f10)[0]
             c = rf_model.predict_proba(f10)[0][p] * 100
             pred_texts[6] = f"RF: {class_names[p]} ({c:.1f}%)"
 
-    # =========================
-    # DISPLAY (ALWAYS FAST)
-    # =========================
-y = 35
-line_gap = 30
-
-colors = [
-    (0, 0, 255),     # CNN - Red
-    (255, 255, 0),   # ResNet - Cyan
-    (0, 255, 0),     # MobileNet - Green
-    (255, 0, 255),   # KNN - Magenta
-    (0, 165, 255),   # SVM - Orange
-    (200, 200, 200), # Decision Tree - Gray
-    (0, 255, 255)    # Random Forest - Yellow
-]
-
-for text, color in zip(pred_texts, colors):
-    cv2.putText(
-        frame,
-        text,
-        (30, y),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.75,
-        color,
-        2
-    )
-    y += line_gap
-
+    # ===== DISPLAY (INSIDE LOOP) =====
+    y = 35
+    for text, color in zip(pred_texts, colors):
+        cv2.putText(frame, text, (30, y),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.75, color, 2)
+        y += 30
 
     cv2.imshow("Live Classification (Optimized)", frame)
 
