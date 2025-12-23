@@ -99,7 +99,6 @@ while True:
             prob = torch.softmax(out, dim=1)
             conf, pred = prob.max(1)
             pred_texts[0] = f"CNN: {class_names[pred.item()]} ({conf.item()*100:.1f}%)"
-
             # ----- ResNet -----
             out = resnet_model(input_tensor)
             prob = torch.softmax(out, dim=1)
@@ -141,11 +140,31 @@ while True:
     # =========================
     # DISPLAY (ALWAYS FAST)
     # =========================
-    y = 35
-    for text in pred_texts:
-        cv2.putText(frame, text, (30, y),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        y += 30
+y = 35
+line_gap = 30
+
+colors = [
+    (0, 0, 255),     # CNN - Red
+    (255, 255, 0),   # ResNet - Cyan
+    (0, 255, 0),     # MobileNet - Green
+    (255, 0, 255),   # KNN - Magenta
+    (0, 165, 255),   # SVM - Orange
+    (200, 200, 200), # Decision Tree - Gray
+    (0, 255, 255)    # Random Forest - Yellow
+]
+
+for text, color in zip(pred_texts, colors):
+    cv2.putText(
+        frame,
+        text,
+        (30, y),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.75,
+        color,
+        2
+    )
+    y += line_gap
+
 
     cv2.imshow("Live Classification (Optimized)", frame)
 
