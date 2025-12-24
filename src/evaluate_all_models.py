@@ -61,32 +61,49 @@ resnet_acc = test_model(resnet_model, os.path.join(checkpoints_dir, "resnet18_mo
 mobilenet_acc = test_model(mobilenet_model, os.path.join(checkpoints_dir, "mobilenet_model.pth"), "MobileNet")
 
 # =====================================================
-# STEP 3: RUN YOLO (SINGLE-LABEL)
+# STEP 3: RUN YOLO (SINGLE-LABEL, FIXED)
 # =====================================================
 print("\n================ YOLO MODEL ================\n")
 
-total, correct = 0, 0
+# 🔑 CRITICAL: YOLO → Dataset folder mapping
+YOLO_TO_DATASET = {
+    "bird": "birds",
+    "car": "cars",
+    "cat": "cats",
+    "dog": "dogs",
+    "watch": "watches",
+    "human": "human"
+}
 
-for cls in class_names:
-    cls_path = os.path.join(test_dir, cls)
-    if not os.path.isdir(cls_path):
+total = 0
+correct = 0
+
+for actual_class in class_names:
+    class_path = os.path.join(test_dir, actual_class)
+
+    if not os.path.isdir(class_path):
         continue
 
-    for img_name in os.listdir(cls_path):
-        img_path = os.path.join(cls_path, img_name)
+    for img_name in os.listdir(class_path):
+        img_path = os.path.join(class_path, img_name)
         image = cv2.imread(img_path)
 
         if image is None:
             continue
 
-        pred, _ = predict_yolo_single(image)
+        pred_label, conf = predict_yolo_single(image)
+        mapped_pred = YOLO_TO_DATASET.get(pred_label, "unknown")
+
+        print(
+            f"🖼️ Predicted: {mapped_pred} ({conf:.2f}%) | Actual: {actual_class}"
+        )
 
         total += 1
-        if pred == cls:
+        if mapped_pred == actual_class:
             correct += 1
 
 yolo_acc = (correct / total) * 100 if total > 0 else 0.0
-print(f"🎯 YOLO Accuracy (Single-label): {yolo_acc:.2f}%")
+print(f"\n🎯 YOLO Accuracy (Single-label): {yolo_acc:.2f}%")
 
 # =====================================================
 # FINAL SUMMARY
