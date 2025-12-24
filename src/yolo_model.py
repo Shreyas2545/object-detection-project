@@ -91,7 +91,7 @@ def predict_single_object(image_path, show=True):
 # =========================
 if __name__ == "__main__":
     # You can change this path to ANY image safely
-    test_image_path = "images/test1.jpg"
+    test_image_path = "data/images/test/dogs/dog.webp"
 
     label, conf = predict_single_object(test_image_path)
 
