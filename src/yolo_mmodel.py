@@ -2,34 +2,62 @@ from ultralytics import YOLO
 import cv2
 
 # =========================
+# CONFIG
+# =========================
+ALLOWED_CLASSES = ["bird", "car", "cat", "dog", "human", "watch"]
+
+# Map COCO "person" → your dataset "human"
+CLASS_MAPPING = {
+    "person": "human"
+}
+
+# =========================
 # LOAD YOLO MODEL (ONCE)
 # =========================
-model = YOLO("yolov8n.pt")  # nano = fast
+model = YOLO("yolov8n.pt")   # nano = fast
 
 def predict_single_object(image_path, show=True):
     """
-    Predicts a single object (highest confidence) from an image using YOLO.
+    YOLO single-label prediction restricted to 6 dataset classes.
     Returns: (label, confidence)
     """
 
     image = cv2.imread(image_path)
     if image is None:
-        raise FileNotFoundError("❌ Image not found.")
+        raise FileNotFoundError("❌ Image not found")
 
     results = model(image, conf=0.25)
     boxes = results[0].boxes
 
-    if boxes is None or len(boxes) == 0:
-        label = "No object"
-        confidence = 0.0
+    valid_detections = []
+
+    if boxes is not None:
+        for box in boxes:
+            class_id = int(box.cls.item())
+            conf = box.conf.item() * 100
+            coco_label = model.names[class_id]
+
+            # Map COCO → dataset label
+            label = CLASS_MAPPING.get(coco_label, coco_label)
+
+            # Keep ONLY your 6 classes
+            if label in ALLOWED_CLASSES:
+                valid_detections.append((label, conf))
+
+    # =========================
+    # SELECT BEST DETECTION
+    # =========================
+    if len(valid_detections) == 0:
+        final_label = "No object"
+        final_conf = 0.0
     else:
-        best_box = max(boxes, key=lambda b: b.conf.item())
-        class_id = int(best_box.cls.item())
-        confidence = best_box.conf.item() * 100
-        label = model.names[class_id]
+        final_label, final_conf = max(valid_detections, key=lambda x: x[1])
 
-    label_text = f"YOLO: {label} ({confidence:.1f}%)"
+    label_text = f"YOLO: {final_label} ({final_conf:.1f}%)"
 
+    # =========================
+    # DISPLAY (NO BOX)
+    # =========================
     if show:
         display_image = image.copy()
         cv2.putText(
@@ -41,20 +69,20 @@ def predict_single_object(image_path, show=True):
             (0, 255, 0),
             2
         )
-        cv2.imshow("YOLO Single Object Prediction", display_image)
+        cv2.imshow("YOLO Single-Class Prediction", display_image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-    return label, confidence
+    return final_label, final_conf
 
 
 # =========================
-# RUN DIRECTLY (OPTIONAL)
+# RUN DIRECTLY
 # =========================
 if __name__ == "__main__":
-    lbl, conf = predict_single_object("images/test1.jpg")
+    label, conf = predict_single_object("images/test1.jpg")
     print("===================================")
-    print("YOLO SINGLE OBJECT PREDICTION")
+    print("YOLO (6-CLASS RESTRICTED)")
     print("-----------------------------------")
-    print(f"{lbl} ({conf:.2f}%)")
+    print(f"{label} ({conf:.2f}%)")
     print("===================================")
