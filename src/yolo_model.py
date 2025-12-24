@@ -36,7 +36,7 @@ def predict_single_object(image_path, show=True):
     # =========================
     # YOLO INFERENCE
     # =========================
-    results = model(image, conf=0.25)
+    results = model(image, conf=0.25, verbose=false)
     boxes = results[0].boxes
 
     valid_detections = []
