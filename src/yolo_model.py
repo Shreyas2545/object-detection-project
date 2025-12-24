@@ -1,12 +1,13 @@
 from ultralytics import YOLO
 import cv2
+import os
 
 # =========================
 # CONFIG
 # =========================
 ALLOWED_CLASSES = ["bird", "car", "cat", "dog", "human", "watch"]
 
-# Map COCO "person" → your dataset "human"
+# COCO → Dataset mapping
 CLASS_MAPPING = {
     "person": "human"
 }
@@ -14,7 +15,7 @@ CLASS_MAPPING = {
 # =========================
 # LOAD YOLO MODEL (ONCE)
 # =========================
-model = YOLO("yolov8n.pt")   # nano = fast
+model = YOLO("yolov8n.pt")  # nano = fast
 
 def predict_single_object(image_path, show=True):
     """
@@ -22,10 +23,19 @@ def predict_single_object(image_path, show=True):
     Returns: (label, confidence)
     """
 
+    # 🔒 PATH-SAFE FIX (Solution 3)
+    image_path = os.path.abspath(image_path)
+
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"❌ Image not found: {image_path}")
+
     image = cv2.imread(image_path)
     if image is None:
-        raise FileNotFoundError("❌ Image not found")
+        raise ValueError("❌ Failed to load image with OpenCV")
 
+    # =========================
+    # YOLO INFERENCE
+    # =========================
     results = model(image, conf=0.25)
     boxes = results[0].boxes
 
@@ -40,7 +50,7 @@ def predict_single_object(image_path, show=True):
             # Map COCO → dataset label
             label = CLASS_MAPPING.get(coco_label, coco_label)
 
-            # Keep ONLY your 6 classes
+            # Keep only your 6 classes
             if label in ALLOWED_CLASSES:
                 valid_detections.append((label, conf))
 
@@ -56,7 +66,7 @@ def predict_single_object(image_path, show=True):
     label_text = f"YOLO: {final_label} ({final_conf:.1f}%)"
 
     # =========================
-    # DISPLAY (NO BOX)
+    # DISPLAY RESULT (NO BOX)
     # =========================
     if show:
         display_image = image.copy()
@@ -69,7 +79,7 @@ def predict_single_object(image_path, show=True):
             (0, 255, 0),
             2
         )
-        cv2.imshow("YOLO Single-Class Prediction", display_image)
+        cv2.imshow("YOLO Single Object Prediction", display_image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
@@ -77,12 +87,16 @@ def predict_single_object(image_path, show=True):
 
 
 # =========================
-# RUN DIRECTLY
+# RUN DIRECTLY (TEST MODE)
 # =========================
 if __name__ == "__main__":
-    label, conf = predict_single_object("images/test1.jpg")
+    # You can change this path to ANY image safely
+    test_image_path = "images/test1.jpg"
+
+    label, conf = predict_single_object(test_image_path)
+
     print("===================================")
-    print("YOLO (6-CLASS RESTRICTED)")
+    print("YOLO SINGLE OBJECT (6-CLASS ONLY)")
     print("-----------------------------------")
     print(f"{label} ({conf:.2f}%)")
     print("===================================")
