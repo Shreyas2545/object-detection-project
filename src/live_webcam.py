@@ -8,6 +8,7 @@ import joblib
 from model_cnn import CNNModel
 from model_resnet import get_resnet18_model
 from model_mobilenet import get_mobilenet_model
+from yolo_model import predict_yolo_single
 
 # =========================
 # DEVICE
@@ -71,16 +72,18 @@ print("Press 'q' to quit.")
 FRAME_SKIP = 6
 frame_count = 0
 
-pred_texts = [""] * 7
+# CNN, ResNet, MobileNet, KNN, SVM, DT, RF, YOLO
+pred_texts = [""] * 8
 
 colors = [
-    (0, 0, 255),     # CNN
-    (255, 255, 0),   # ResNet
-    (124,252,0),     # MobileNet
-    (255, 0, 255),   # KNN
-    (0, 165, 255),   # SVM
-    (200, 200, 0), # Decision Tree
-    (0, 255, 255)    # Random Forest
+    (0, 0, 255),       # CNN
+    (255, 255, 0),     # ResNet
+    (124, 252, 0),     # MobileNet
+    (255, 0, 255),     # KNN
+    (0, 165, 255),     # SVM
+    (200, 200, 0),     # Decision Tree
+    (0, 255, 255),     # Random Forest
+    (50, 205, 50)      # YOLO
 ]
 
 while True:
@@ -133,7 +136,13 @@ while True:
             c = rf_model.predict_proba(f10)[0][p] * 100
             pred_texts[6] = f"RF: {class_names[p]} ({c:.1f}%)"
 
-    # ===== DISPLAY (INSIDE LOOP) =====
+            # =========================
+            # YOLO
+            # =========================
+            yolo_label, yolo_conf = predict_yolo_single(frame)
+            pred_texts[7] = f"YOLO: {yolo_label} ({yolo_conf:.1f}%)"
+
+    # ===== DISPLAY =====
     y = 35
     for text, color in zip(pred_texts, colors):
         cv2.putText(frame, text, (30, y),

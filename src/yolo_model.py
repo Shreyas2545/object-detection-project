@@ -1,6 +1,4 @@
 from ultralytics import YOLO
-import cv2
-import os
 
 # =========================
 # CONFIG
@@ -15,28 +13,20 @@ CLASS_MAPPING = {
 # =========================
 # LOAD YOLO MODEL (ONCE)
 # =========================
-model = YOLO("yolov8n.pt")  # nano = fast
+YOLO_MODEL_PATH = "yolov8n.pt"   # later replace with custom-trained YOLO
+model = YOLO(YOLO_MODEL_PATH)
 
-def predict_single_object(image_path, show=True):
+def predict_yolo_single(image, conf_thresh=0.25):
     """
     YOLO single-label prediction restricted to 6 dataset classes.
-    Returns: (label, confidence)
+    Input  : OpenCV BGR image (frame or cv2.imread)
+    Output : (label, confidence)
     """
-
-    # 🔒 PATH-SAFE FIX (Solution 3)
-    image_path = os.path.abspath(image_path)
-
-    if not os.path.exists(image_path):
-        raise FileNotFoundError(f"❌ Image not found: {image_path}")
-
-    image = cv2.imread(image_path)
-    if image is None:
-        raise ValueError("❌ Failed to load image with OpenCV")
 
     # =========================
     # YOLO INFERENCE
     # =========================
-    results = model(image, conf=0.25, verbose=false)
+    results = model(image, conf=conf_thresh, verbose=False)
     boxes = results[0].boxes
 
     valid_detections = []
@@ -44,7 +34,7 @@ def predict_single_object(image_path, show=True):
     if boxes is not None:
         for box in boxes:
             class_id = int(box.cls.item())
-            conf = box.conf.item() * 100
+            confidence = box.conf.item() * 100
             coco_label = model.names[class_id]
 
             # Map COCO → dataset label
@@ -52,48 +42,31 @@ def predict_single_object(image_path, show=True):
 
             # Keep only your 6 classes
             if label in ALLOWED_CLASSES:
-                valid_detections.append((label, conf))
+                valid_detections.append((label, confidence))
 
     # =========================
     # SELECT BEST DETECTION
     # =========================
     if len(valid_detections) == 0:
-        final_label = "No object"
-        final_conf = 0.0
-    else:
-        final_label, final_conf = max(valid_detections, key=lambda x: x[1])
+        return "No object", 0.0
 
-    label_text = f"YOLO: {final_label} ({final_conf:.1f}%)"
-
-    # =========================
-    # DISPLAY RESULT (NO BOX)
-    # =========================
-    if show:
-        display_image = image.copy()
-        cv2.putText(
-            display_image,
-            label_text,
-            (30, 40),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1.0,
-            (0, 255, 0),
-            2
-        )
-        cv2.imshow("YOLO Single Object Prediction", display_image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
+    final_label, final_conf = max(valid_detections, key=lambda x: x[1])
     return final_label, final_conf
 
 
 # =========================
-# RUN DIRECTLY (TEST MODE)
+# RUN DIRECTLY (OPTIONAL TEST)
 # =========================
 if __name__ == "__main__":
-    # You can change this path to ANY image safely
-    test_image_path = "data/images/test/dogs/dog.webp"
+    import cv2
 
-    label, conf = predict_single_object(test_image_path)
+    test_image_path = "data/images/test/dogs/dog.webp"
+    image = cv2.imread(test_image_path)
+
+    if image is None:
+        raise FileNotFoundError("Test image not found")
+
+    label, conf = predict_yolo_single(image)
 
     print("===================================")
     print("YOLO SINGLE OBJECT (6-CLASS ONLY)")

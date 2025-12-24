@@ -1,4 +1,5 @@
 import os
+import cv2
 
 # =========================
 # DL IMPORTS
@@ -9,7 +10,7 @@ from model_resnet import get_resnet18_model
 from model_mobilenet import get_mobilenet_model
 
 # =========================
-# ML IMPORTS (FUNCTIONS ONLY)
+# ML IMPORTS
 # =========================
 from knn_train_test import run_knn_and_get_accuracy
 from svm_model import run_svm_and_get_accuracy
@@ -17,10 +18,16 @@ from decision_tree_model import run_decision_tree_and_get_accuracy
 from random_forest_model import run_random_forest_and_get_accuracy
 
 # =========================
+# YOLO IMPORT
+# =========================
+from yolo_model import predict_yolo_single
+
+# =========================
 # PATHS
 # =========================
 checkpoints_dir = "checkpoints"
 train_dir = "data/images/train"
+test_dir = "data/images/test"
 
 # =========================
 # CLASSES
@@ -54,6 +61,34 @@ resnet_acc = test_model(resnet_model, os.path.join(checkpoints_dir, "resnet18_mo
 mobilenet_acc = test_model(mobilenet_model, os.path.join(checkpoints_dir, "mobilenet_model.pth"), "MobileNet")
 
 # =====================================================
+# STEP 3: RUN YOLO (SINGLE-LABEL)
+# =====================================================
+print("\n================ YOLO MODEL ================\n")
+
+total, correct = 0, 0
+
+for cls in class_names:
+    cls_path = os.path.join(test_dir, cls)
+    if not os.path.isdir(cls_path):
+        continue
+
+    for img_name in os.listdir(cls_path):
+        img_path = os.path.join(cls_path, img_name)
+        image = cv2.imread(img_path)
+
+        if image is None:
+            continue
+
+        pred, _ = predict_yolo_single(image)
+
+        total += 1
+        if pred == cls:
+            correct += 1
+
+yolo_acc = (correct / total) * 100 if total > 0 else 0.0
+print(f"🎯 YOLO Accuracy (Single-label): {yolo_acc:.2f}%")
+
+# =====================================================
 # FINAL SUMMARY
 # =====================================================
 print("\n================ FINAL MODEL COMPARISON ================\n")
@@ -65,5 +100,6 @@ print(f"KNN Accuracy           : {knn_acc * 100:.2f}%")
 print(f"SVM Accuracy           : {svm_acc * 100:.2f}%")
 print(f"Decision Tree Accuracy : {dt_acc * 100:.2f}%")
 print(f"Random Forest Accuracy : {rf_acc * 100:.2f}%")
+print(f"YOLO Accuracy          : {yolo_acc:.2f}%")
 
 print("\n✅ ALL MODELS EVALUATED SUCCESSFULLY")
