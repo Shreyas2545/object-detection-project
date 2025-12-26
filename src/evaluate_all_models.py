@@ -72,7 +72,8 @@ YOLO_TO_DATASET = {
     "cat": "cats",
     "dog": "dogs",
     "watch": "watches",
-    "human": "human"
+    "human": "human",
+    "bottle": "bottles"
 }
 
 total = 0
