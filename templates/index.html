@@ -46,22 +46,136 @@
 
   <!-- 🏠 Hero Section -->
   <main class="flex-grow flex flex-col justify-center items-center text-center py-20 px-6">
-    <h1 class="text-4xl sm:text-5xl font-bold mb-6">Welcome to <span class="text-blue-500">ObjectVision</span></h1>
-    <p class="max-w-2xl text-gray-600 dark:text-gray-300 mb-10">
-      Experience real-time and image-based object detection powered by advanced machine learning models.
-    </p>
+  <h1 class="text-4xl sm:text-5xl font-bold mb-6">
+    Welcome to <span class="text-blue-500">ObjectVision</span>
+  </h1>
+  <p class="max-w-2xl text-gray-600 dark:text-gray-300 mb-10">
+    Experience real-time and image-based object detection powered by advanced machine learning models.
+  </p>
 
-    <div class="flex flex-wrap justify-center gap-6">
-      <a href="/live" 
-         class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-md transition">
-         🎥 Live Detection
-      </a>
-      <a href="/upload" 
-         class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-semibold px-6 py-3 rounded-xl shadow-md transition">
-         📸 Upload Detection
-      </a>
+  <!-- CTA Buttons -->
+  <div class="flex flex-wrap justify-center gap-6 mb-16">
+    <a href="/live"
+      class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-md transition">
+      🎥 Live Detection
+    </a>
+    <a href="/upload"
+      class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-semibold px-6 py-3 rounded-xl shadow-md transition">
+      📸 Upload Detection
+    </a>
+  </div>
+
+  <!-- 🔷 3 Feature Cards -->
+  <section class="w-full max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 mb-20">
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 text-left">
+      <i data-lucide="cpu" class="w-8 h-8 text-blue-500 mb-4"></i>
+      <h3 class="font-semibold text-xl mb-2">Multi-Model Analysis</h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Compare 8 machine learning and deep learning models including YOLO, CNN, ResNet-18, and more
+      </p>
     </div>
-  </main>
+
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 text-left">
+      <i data-lucide="bar-chart" class="w-8 h-8 text-blue-500 mb-4"></i>
+      <h3 class="font-semibold text-xl mb-2">Performance Metrics</h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Real-time accuracy comparison with interactive visualizations
+      </p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 text-left">
+      <i data-lucide="zap" class="w-8 h-8 text-blue-500 mb-4"></i>
+      <h3 class="font-semibold text-xl mb-2">Instant Detection</h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Upload images or use webcam for immediate prediction results
+      </p>
+    </div>
+  </section>
+
+  <!-- 🧪 Supported Models -->
+  <h2 class="text-2xl font-bold mb-6">Supported Models</h2>
+
+  <section class="w-full max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+    <!-- YOLO -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
+      <div class="flex justify-between items-center">
+        <span class="font-semibold">YOLO</span>
+        <i data-lucide="check-circle" class="text-green-500"></i>
+      </div>
+      <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300">
+        Deep Learning
+      </span>
+    </div>
+
+    <!-- CNN -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
+      <div class="flex justify-between items-center">
+        <span class="font-semibold">CNN</span>
+        <i data-lucide="check-circle" class="text-green-500"></i>
+      </div>
+      <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300">Deep Learning</span>
+    </div>
+
+    <!-- ResNet -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
+      <div class="flex justify-between items-center">
+        <span class="font-semibold">ResNet-18</span>
+        <i data-lucide="check-circle" class="text-green-500"></i>
+      </div>
+      <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300">Deep Learning</span>
+    </div>
+
+    <!-- MobileNet -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
+      <div class="flex justify-between items-center">
+        <span class="font-semibold">MobileNet</span>
+        <i data-lucide="check-circle" class="text-green-500"></i>
+      </div>
+      <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300">Deep Learning</span>
+    </div>
+
+    <!-- KNN -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
+      <div class="flex justify-between items-center">
+        <span class="font-semibold">KNN</span>
+        <i data-lucide="check-circle" class="text-green-500"></i>
+      </div>
+      <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300">Machine Learning</span>
+    </div>
+
+    <!-- SVM -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
+      <div class="flex justify-between items-center">
+        <span class="font-semibold">SVM</span>
+        <i data-lucide="check-circle" class="text-green-500"></i>
+      </div>
+      <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300">Machine Learning</span>
+    </div>
+
+    <!-- Decision Tree -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
+      <div class="flex justify-between items-center">
+        <span class="font-semibold">Decision Tree</span>
+        <i data-lucide="check-circle" class="text-green-500"></i>
+      </div>
+      <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300">Machine Learning</span>
+    </div>
+
+    <!-- Random Forest -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
+      <div class="flex justify-between items-center">
+        <span class="font-semibold">Random Forest</span>
+        <i data-lucide="check-circle" class="text-green-500"></i>
+      </div>
+      <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300">Machine Learning</span>
+    </div>
+  </section>
+
+  <p class="text-gray-500 dark:text-gray-400 text-sm mb-10">
+    All models are pre-configured and ready for comparative analysis
+  </p>
+</main>
+
 
   <!-- ⚙️ Footer -->
   <footer class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-inner mt-auto py-4">
