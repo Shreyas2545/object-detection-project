@@ -5,28 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>About | ObjectVision</title>
 
-  <!-- ✅ Tailwind via CDN -->
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-    <!-- ✅ Local stylesheet (optional) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+  <style>
+    body { background: #ffffff; }
+    .info-card {
+      background: #f7f9fc;
+      transition: 0.2s;
+    }
+    .info-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.06);
+    }
+    .model-line {
+      border-left: 4px solid #2563eb;
+      padding-left: 1rem;
+      margin-left: 0.5rem;
+    }
+  </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 flex flex-col min-h-screen">
+
+<body class="text-gray-800 flex flex-col min-h-screen">
 
   <!-- 🌐 Header / Navbar -->
-<header class="bg-white/70 backdrop-blur-md shadow-sm sticky top-0 z-50">
+  <header class="bg-gray-100/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
     <nav class="max-w-6xl mx-auto flex justify-between items-center px-6 py-3">
-      
-      <!-- Logo -->
       <div class="flex items-center space-x-2 text-2xl font-bold">
         <span class="text-blue-600">🧠</span>
         <span>AI Object Detection</span>
       </div>
-
-      <!-- Navigation Links (EXACT SAME GAP) -->
       <ul class="flex space-x-14 text-lg">
         <li><a href="/" class="hover:text-blue-500">Home</a></li>
-        <li><a href="/about" class="hover:text-blue-500">About</a></li>
+        <li><a href="/about" class="hover:text-blue-500 text-blue-600 font-semibold">About</a></li>
         <li><a href="/live" class="hover:text-blue-500">Live</a></li>
         <li><a href="/upload" class="hover:text-blue-500">Upload</a></li>
         <li><a href="/help" class="hover:text-blue-500">Help</a></li>
@@ -34,181 +45,169 @@
     </nav>
   </header>
 
-  <!-- 📘 Main Content (unchanged) -->
+  <!-- 📘 Main Content -->
   <main class="flex-grow">
-    <!-- Header -->
+
+    <!-- HEADER -->
     <section class="text-center mt-16 mb-10 px-4">
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100">
+      <h1 class="text-4xl font-bold text-gray-900">
         About <span class="text-blue-500">The Project</span>
       </h1>
-      <p class="text-lg text-gray-600 dark:text-gray-300 mt-3">
+      <p class="text-lg text-gray-600 mt-3">
         AI-powered object detection with multiple neural network models
       </p>
+      <p class="text-lg text-gray-600 mt-4 max-w-4xl mx-auto">
+        ObjectVision is a cutting-edge AI-powered web application engineered for real-time object detection, 
+        multi-class classification and detailed analysis of visual data…
+      </p>
     </section>
-<!-- Project Info Card -->
-<section class="max-w-5xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-10 transition-all duration-300 border border-gray-200 dark:border-gray-700">
-  <div class="flex items-center space-x-8 mb-8">
-    <div class="bg-blue-100 dark:bg-blue-900 p-5 rounded-full shadow-md">💻</div>
-    <div>
-      <h2 class="text-4xl font-extrabold text-gray-900 dark:text-gray-50 tracking-tight">
-        About <span class="text-blue-600 dark:text-blue-400">ObjectVision</span>
-      </h2>
-      <p class="text-gray-600 dark:text-gray-300 text-xl italic mt-1">An intelligent system powered by Deep Learning & Computer Vision</p>
-    </div>
-  </div>
 
-  <div class="prose prose-lg dark:prose-invert max-w-none">
-    <p class="text-gray-700 dark:text-gray-300 leading-relaxed text-base">
-      <span class="font-semibold text-gray-900 dark:text-gray-100">ObjectVision</span> is a cutting-edge AI-powered web application engineered for 
-      <span class="text-blue-600 dark:text-blue-400 font-semibold">real-time object detection</span>, 
-      <span class="text-blue-600 dark:text-blue-400 font-semibold">multi-class classification</span>, and 
-      <span class="text-blue-600 dark:text-blue-400 font-semibold">detailed analysis</span> of visual data. 
-      Built with a focus on precision and usability, it delivers an intuitive, responsive interface that transforms complex AI insights into actionable intelligence.
-    </p>
-
-    <p class="text-gray-700 dark:text-gray-300 mt-6 leading-relaxed text-base">
-      At its core, ObjectVision harnesses the power of 
-      <span class="text-blue-600 dark:text-blue-400 font-semibold">Convolutional Neural Networks (CNNs)</span> 
-      layered with 
-      <span class="text-blue-600 dark:text-blue-400 font-semibold">ResNet18 architecture</span>. 
-      CNNs meticulously extract hierarchical features from images, while ResNet's residual skip connections mitigate vanishing gradients—enabling deeper networks, 
-      <span class="font-medium text-blue-600 dark:text-blue-400">superior accuracy (up to 95% on benchmark datasets)</span>, and 
-      <span class="font-medium text-blue-600 dark:text-blue-400">rapid inference times</span>.
-    </p>
-
-    <div class="mt-8 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 border-l-4 border-blue-600 dark:border-blue-400">
-      <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-        <svg class="w-6 h-6 mr-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        Key Features
-      </h3>
-      <ul class="space-y-3 text-gray-700 dark:text-gray-300 text-base">
-        <li class="flex items-start">
-          <span class="text-blue-600 dark:text-blue-400 mr-2">•</span>
-          <strong>Live Webcam Integration:</strong> Real-time object detection directly from your camera feed using OpenCV for seamless video processing.
-        </li>
-        <li class="flex items-start">
-          <span class="text-blue-600 dark:text-blue-400 mr-2">•</span>
-          <strong>Image Upload & Analysis:</strong> Drag-and-drop uploads with instant bounding boxes, class labels, and confidence scores overlaid on images.
-        </li>
-        <li class="flex items-start">
-          <span class="text-blue-600 dark:text-blue-400 mr-2">•</span>
-          <strong>Pre-trained ResNet18 Model:</strong> Fine-tuned on ImageNet/COCO datasets for 1000+ class recognition with transfer learning.
-        </li>
-        <li class="flex items-start">
-          <span class="text-blue-600 dark:text-blue-400 mr-2">•</span>
-          <strong>Interactive Visualizations:</strong> Dynamic confidence meters, class probability charts (via Chart.js), and downloadable annotated results.
-        </li>
-        <li class="flex items-start">
-          <span class="text-blue-600 dark:text-blue-400 mr-2">•</span>
-          <strong>Performance Metrics Dashboard:</strong> Real-time FPS tracking, accuracy logs, and model inference stats for transparency.
-        </li>
-        <li class="flex items-start">
-          <span class="text-blue-600 dark:text-blue-400 mr-2">•</span>
-          <strong>Dark Mode Support:</strong> Adaptive UI with Tailwind CSS for enhanced accessibility and reduced eye strain.
-        </li>
-      </ul>
-    </div>
-
-    <p class="text-gray-700 dark:text-gray-300 mt-8 leading-relaxed text-base">
-      Engineered with 
-      <span class="text-blue-600 dark:text-blue-400 font-medium">Python</span>, 
-      <span class="text-blue-600 dark:text-blue-400 font-medium">PyTorch</span>, 
-      <span class="text-blue-600 dark:text-blue-400 font-medium">Flask</span>, 
-      <span class="text-blue-600 dark:text-blue-400 font-medium">OpenCV</span>, and 
-      <span class="text-blue-600 dark:text-blue-400 font-medium">Tailwind CSS</span>, 
-      ObjectVision exemplifies production-ready AI deployment. It bridges academic research with practical applications, empowering users in fields like security, retail, and education to harness computer vision effortlessly.
-    </p>
-
-    <div class="mt-10 flex justify-center">
-      <a href="/live" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-transform transform hover:scale-105">
-        Explore Demo
-        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-      </a>
-    </div>
-  </div>
-</section>
-    <!-- Technologies -->
-    <section class="mt-16 text-center px-6">
-      <h2 class="text-3xl font-semibold text-gray-800 dark:text-gray-100 mb-8">Built With Modern Technologies</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 max-w-6xl mx-auto">
-        <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 transition-colors">
-          <div class="text-4xl mb-2">💡</div>
-          <h3 class="font-semibold text-lg">Python</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-sm">Backend processing</p>
+    <!-- 🟦 3 Info Cards -->
+    <section class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 px-6 mb-20">
+      <div class="info-card shadow rounded-xl p-6">
+        <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
+          <span class="text-blue-600 text-xl">🎯</span>
         </div>
-        <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 transition-colors">
-          <div class="text-4xl mb-2">🧠</div>
-          <h3 class="font-semibold text-lg">PyTorch</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-sm">Deep learning framework</p>
+        <h3 class="font-semibold text-xl mb-2">Research Objective</h3>
+        <p class="text-gray-600">
+          Conduct a comprehensive comparative analysis of ML & DL models for object detection, evaluating their performance across multiple metrics.
+        </p>
+      </div>
+
+      <div class="info-card shadow rounded-xl p-6">
+        <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
+          <span class="text-blue-600 text-xl">📊</span>
         </div>
-        <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 transition-colors">
-          <div class="text-4xl mb-2">🔥</div>
-          <h3 class="font-semibold text-lg">Flask</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-sm">Web framework</p>
+        <h3 class="font-semibold text-xl mb-2">Performance Evaluation</h3>
+        <p class="text-gray-600">
+          Assess accuracy, precision, recall, and computational efficiency of YOLO, CNN, ResNet-18, MobileNet, KNN, SVM, Decision Tree & Random Forest.
+        </p>
+      </div>
+
+      <div class="info-card shadow rounded-xl p-6">
+        <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
+          <span class="text-blue-600 text-xl">🧠</span>
         </div>
-        <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 transition-colors">
-          <div class="text-4xl mb-2">📷</div>
-          <h3 class="font-semibold text-lg">OpenCV</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-sm">Computer vision</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 transition-colors">
-          <div class="text-4xl mb-2">🔢</div>
-          <h3 class="font-semibold text-lg">NumPy</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-sm">Efficient numerical computation</p>
-        </div><div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 transition-colors">
-          <div class="text-4xl mb-2">🧩</div>
-          <h3 class="font-semibold text-lg">Git & Github</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-sm">Version control and collaboration</p>
-        </div><div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 transition-colors">
-          <div class="text-4xl mb-2">🛠️</div>
-          <h3 class="font-semibold text-lg">VS Code</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-sm">Main IDE for project development</p>
-        </div><div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 transition-colors">
-          <div class="text-4xl mb-2">⚙️</div>
-          <h3 class="font-semibold text-lg">Adam Optimizer</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-sm">Model training optimization algorithm</p>
+        <h3 class="font-semibold text-xl mb-2">Methodology</h3>
+        <p class="text-gray-600">
+          Utilize standardized datasets and testing environments to ensure fair comparison between ML and DL approaches.
+        </p>
+      </div>
+    </section>
+
+    <!-- 🟩 Deep Learning Models – Wrapped in card -->
+    <section class="max-w-6xl mx-auto px-6 mb-16">
+      <div class="bg-white shadow-lg rounded-2xl p-10 border border-gray-200">
+        <h2 class="text-3xl font-semibold text-gray-900 mb-10">Deep Learning Models</h2>
+
+        <div class="space-y-10">
+          <div class="model-line">
+            <h3 class="font-semibold text-xl text-gray-900">YOLO (You Only Look Once)</h3>
+            <p class="text-gray-600">
+              A state-of-the-art, real-time Object detection system that frames object detection as a regression problem,
+              achieving remarkable speed and accuracy by processing images in a single neural network pass.
+            </p>
+          </div>
+
+          <div class="model-line">
+            <h3 class="font-semibold text-xl text-gray-900">CNN (Convolutional Neural Network)</h3>
+            <p class="text-gray-600">
+              A deep learning architecture designed for processing grid-like topology data such as images,
+              using convolutional layers to automatically extract hierarchical feature representations.
+            </p>
+          </div>
+
+          <div class="model-line">
+            <h3 class="font-semibold text-xl text-gray-900">ResNet-18</h3>
+            <p class="text-gray-600">
+              An 18-layer residual neural network using skip connections to enable training of deep networks,
+              avoiding vanishing gradients and achieving superior accuracy.
+            </p>
+          </div>
+
+          <div class="model-line">
+            <h3 class="font-semibold text-xl text-gray-900">MobileNet</h3>
+            <p class="text-gray-600">
+              A lightweight deep neural network architecture optimized for embedded systems and mobile devices,
+              designed using depthwise separable convolutions for reduced computation cost.
+            </p>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Contact -->
-    <section class="mt-16 mb-20 text-center px-4">
-      <p class="text-lg text-gray-700 dark:text-gray-300 mb-8">Interested in collaboration or have questions?</p>
-      <a href="mailto:shreyashadawale25@gmail.com"
-         class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg transition mt-3">
-         Get in Touch
-      </a>
+    <!-- 🟧 Machine Learning Models – Wrapped in card -->
+    <section class="max-w-6xl mx-auto px-6 mb-20">
+      <div class="bg-white shadow-lg rounded-2xl p-10 border border-gray-200">
+        <h2 class="text-3xl font-semibold text-gray-900 mb-10">Machine Learning Models</h2>
+
+        <div class="space-y-10">
+          <div class="model-line">
+            <h3 class="font-semibold text-xl text-gray-900">KNN (K-Nearest Neighbors)</h3>
+            <p class="text-gray-600">
+              A non-parametric, instance-based learning algorithm that classifies objects based on the majority class
+              among their k nearest neighbors in feature space.
+            </p>
+          </div>
+
+          <div class="model-line">
+            <h3 class="font-semibold text-xl text-gray-900">SVM (Support Vector Machine)</h3>
+            <p class="text-gray-600">
+              A supervised learning algorithm that finds the optimal hyperplane in high-dimensional space
+              to maximize separation between classes, effective for linear & non-linear classification.
+            </p>
+          </div>
+
+          <div class="model-line">
+            <h3 class="font-semibold text-xl text-gray-900">Decision Tree</h3>
+            <p class="text-gray-600">
+              A tree-structured model predicting outcomes using hierarchical splitting of features,
+              enabling interpretable rule-based classification.
+            </p>
+          </div>
+
+          <div class="model-line">
+            <h3 class="font-semibold text-xl text-gray-900">Random Forest</h3>
+            <p class="text-gray-600">
+              An ensemble learning approach that constructs multiple decision trees and outputs aggregated predictions,
+              improving accuracy and reducing overfitting.
+            </p>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 
-  <!-- ⚙️ Footer (same as Home) -->
-  <footer class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-inner mt-auto py-4">
-    <div class="max-w-6xl mx-auto text-center text-sm text-gray-500 dark:text-gray-400">
+  <!-- 🛠 Technologies -->
+  <section class="mt-16 text-center px-6">
+    <h2 class="text-3xl font-semibold text-gray-800 mb-8">Built With Modern Technologies</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 max-w-6xl mx-auto">
+      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">💡</div><h3 class="font-semibold text-lg">Python</h3></div>
+      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">🧠</div><h3 class="font-semibold text-lg">PyTorch</h3></div>
+      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">🔥</div><h3 class="font-semibold text-lg">Flask</h3></div>
+      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">📷</div><h3 class="font-semibold text-lg">OpenCV</h3></div>
+      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">🔢</div><h3 class="font-semibold text-lg">NumPy</h3></div>
+      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">🧩</div><h3 class="font-semibold text-lg">Git & Github</h3></div>
+      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">🛠</div><h3 class="font-semibold text-lg">VS Code</h3></div>
+      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">⚙️</div><h3 class="font-semibold text-lg">Adam Optimizer</h3></div>
+    </div>
+  </section>
+
+  <!-- ✉️ Contact -->
+  <section class="mt-16 mb-20 text-center px-4">
+    <p class="text-lg text-gray-700 mb-8">Interested in collaboration or have questions?</p>
+    <a href="mailto:shreyashadawale25@gmail.com"
+       class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg">
+       Get in Touch
+    </a>
+  </section>
+
+  <!-- ⚙️ Footer -->
+  <footer class="bg-white shadow-inner mt-auto py-4">
+    <div class="max-w-6xl mx-auto text-center text-sm text-gray-500">
       © 2025 ObjectVision | Built with Flask, Tailwind, and Love 💙
     </div>
   </footer>
 
-  <!-- 🌙 Dark Mode Toggle Script -->
-  <script>
-    const toggle = document.getElementById('themeToggle');
-    toggle.addEventListener('click', () => {
-      document.documentElement.classList.toggle('dark');
-      if (document.documentElement.classList.contains('dark')) {
-        localStorage.theme = 'dark';
-        toggle.textContent = '☀️';
-      } else {
-        localStorage.theme = 'light';
-        toggle.textContent = '🌙';
-      }
-    });
-
-    if (localStorage.theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      toggle.textContent = '☀️';
-    } else {
-      document.documentElement.classList.remove('dark');
-      toggle.textContent = '🌙';
-    }
-  </script>
 </body>
 </html>
