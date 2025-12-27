@@ -5,24 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ObjectVision</title>
 
-    <!-- ✅ Tailwind via CDN -->
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- ✅ Local stylesheet (optional) -->
+    <!-- Local CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
+
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 flex flex-col min-h-screen">
 
-<!-- 🌐 Header / Navbar -->
+<!-- 🌐 Header -->
 <header class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
   <nav class="max-w-6xl mx-auto flex justify-between items-center px-6 py-3">
-    <!-- Logo / Title -->
     <div class="flex items-center space-x-2 text-2xl font-bold">
-      <i data-lucide="brain" class="w-7 h-7 text-blue-600"></i>
+      <span class="text-blue-600">🧠</span>
       <span>AI Object Detection</span>
     </div>
 
-    <!-- Navigation Links -->
     <ul class="flex space-x-14 text-lg">
       <li><a href="/" class="hover:text-blue-500">Home</a></li>
       <li><a href="/about" class="hover:text-blue-500">About</a></li>
@@ -31,96 +30,115 @@
       <li><a href="/help" class="hover:text-blue-500">Help</a></li>
     </ul>
 
-    <!-- Theme Toggle -->
-    <button id="themeToggle" class="bg-gray-200 dark:bg-gray-700 rounded-full p-2">
-      🌙
-    </button>
+    <button id="themeToggle" class="bg-gray-200 dark:bg-gray-700 rounded-full p-2">🌙</button>
   </nav>
 </header>
 
-<!-- Lucide Icons Script -->
-<script src="https://unpkg.com/lucide@latest"></script>
-<script>
-  lucide.createIcons();
-</script>
-
-  <!-- 🏠 Hero Section -->
-  <main class="flex-grow flex flex-col justify-center items-center text-center py-20 px-6">
+<!-- 🏠 HERO -->
+<main class="flex-grow flex flex-col justify-center items-center text-center py-20 px-6">
   <h1 class="text-4xl sm:text-5xl font-bold mb-6">
     Welcome to <span class="text-blue-500">ObjectVision</span>
   </h1>
+
   <p class="max-w-2xl text-gray-600 dark:text-gray-300 mb-10">
-    Experience real-time and image-based object detection powered by advanced machine learning models.
+    Experience real-time and image-based object detection powered by advanced machine learning & deep learning models.
   </p>
 
   <!-- CTA Buttons -->
   <div class="flex flex-wrap justify-center gap-6 mb-16">
-    <a href="/live"
-      class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-md transition">
+    <a href="/live" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-md transition">
       🎥 Live Detection
     </a>
-    <a href="/upload"
-      class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-semibold px-6 py-3 rounded-xl shadow-md transition">
+    <a href="/upload" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-semibold px-6 py-3 rounded-xl shadow-md transition">
       📸 Upload Detection
     </a>
   </div>
 
   <!-- 🔷 3 Feature Cards -->
   <section class="w-full max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 mb-20">
-    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 text-left">
-      <i data-lucide="cpu" class="w-8 h-8 text-blue-500 mb-4"></i>
+
+    <!-- 🔹 Multi-Model Analysis -->
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 text-left flex flex-col">
+      <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
+        <!-- CPU CHIP SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-width="2" d="M9 3v2m6-2v2m5 5h-2m2 6h-2M5 10H3m2 6H3m4-8h10v8H7v-8z" />
+        </svg>
+      </div>
       <h3 class="font-semibold text-xl mb-2">Multi-Model Analysis</h3>
       <p class="text-gray-600 dark:text-gray-300">
-        Compare 8 machine learning and deep learning models including YOLO, CNN, ResNet-18, and more
+        Compare 8 machine-learning + deep-learning models including YOLO, CNN, ResNet-18, MobileNet, SVM & more.
       </p>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 text-left">
-      <i data-lucide="bar-chart" class="w-8 h-8 text-blue-500 mb-4"></i>
+    <!-- 📊 Performance Metrics -->
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 text-left flex flex-col">
+      <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
+        <!-- BAR CHART SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-width="2" stroke-linecap="round" d="M5 12h2M5 8h4m-4 8h6m4-4h6m-6-4h4m-4 8h2"/>
+        </svg>
+      </div>
       <h3 class="font-semibold text-xl mb-2">Performance Metrics</h3>
       <p class="text-gray-600 dark:text-gray-300">
-        Real-time accuracy comparison with interactive visualizations
+        Real-time accuracy comparison with interactive visual charts & visualizations.
       </p>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 text-left">
-      <i data-lucide="zap" class="w-8 h-8 text-blue-500 mb-4"></i>
+    <!-- ⚡ Instant Detection -->
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 text-left flex flex-col">
+      <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
+        <!-- LIGHTNING SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-width="2" stroke-linecap="round" d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>
+        </svg>
+      </div>
       <h3 class="font-semibold text-xl mb-2">Instant Detection</h3>
       <p class="text-gray-600 dark:text-gray-300">
-        Upload images or use webcam for immediate prediction results
+        Upload images or use webcam for immediate real-time prediction results.
       </p>
     </div>
+
   </section>
 
   <!-- 🧪 Supported Models -->
   <h2 class="text-2xl font-bold mb-6">Supported Models</h2>
 
   <section class="w-full max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+
+    <!-- 8 Model Cards -->
+    <!-- Example Component -->
+    <!-- (Each includes checkmark badge icon) -->
+
     <!-- YOLO -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
       <div class="flex justify-between items-center">
         <span class="font-semibold">YOLO</span>
-        <i data-lucide="check-circle" class="text-green-500"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" d="M5 13l4 4L19 7"/>
+        </svg>
       </div>
-      <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300">
-        Deep Learning
-      </span>
+      <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300">Deep Learning</span>
     </div>
 
     <!-- CNN -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
       <div class="flex justify-between items-center">
         <span class="font-semibold">CNN</span>
-        <i data-lucide="check-circle" class="text-green-500"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" d="M5 13l4 4L19 7"/>
+        </svg>
       </div>
       <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300">Deep Learning</span>
     </div>
 
-    <!-- ResNet -->
+    <!-- ResNet-18 -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
       <div class="flex justify-between items-center">
         <span class="font-semibold">ResNet-18</span>
-        <i data-lucide="check-circle" class="text-green-500"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" d="M5 13l4 4L19 7"/>
+        </svg>
       </div>
       <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300">Deep Learning</span>
     </div>
@@ -129,16 +147,22 @@
     <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
       <div class="flex justify-between items-center">
         <span class="font-semibold">MobileNet</span>
-        <i data-lucide="check-circle" class="text-green-500"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" d="M5 13l4 4L19 7"/>
+        </svg>
       </div>
       <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300">Deep Learning</span>
     </div>
+
+    <!-- ML Models -->
 
     <!-- KNN -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
       <div class="flex justify-between items-center">
         <span class="font-semibold">KNN</span>
-        <i data-lucide="check-circle" class="text-green-500"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" d="M5 13l4 4L19 7"/>
+        </svg>
       </div>
       <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300">Machine Learning</span>
     </div>
@@ -147,7 +171,9 @@
     <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
       <div class="flex justify-between items-center">
         <span class="font-semibold">SVM</span>
-        <i data-lucide="check-circle" class="text-green-500"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" d="M5 13l4 4L19 7"/>
+        </svg>
       </div>
       <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300">Machine Learning</span>
     </div>
@@ -156,7 +182,9 @@
     <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
       <div class="flex justify-between items-center">
         <span class="font-semibold">Decision Tree</span>
-        <i data-lucide="check-circle" class="text-green-500"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" d="M5 13l4 4L19 7"/>
+        </svg>
       </div>
       <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300">Machine Learning</span>
     </div>
@@ -165,41 +193,42 @@
     <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 text-left">
       <div class="flex justify-between items-center">
         <span class="font-semibold">Random Forest</span>
-        <i data-lucide="check-circle" class="text-green-500"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-width="2" stroke-linecap="round" d="M5 13l4 4L19 7"/>
+        </svg>
       </div>
       <span class="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300">Machine Learning</span>
     </div>
+
   </section>
 
   <p class="text-gray-500 dark:text-gray-400 text-sm mb-10">
-    All models are pre-configured and ready for comparative analysis
+    All models are pre-configured and ready for comparative analysis.
   </p>
 </main>
 
+<!-- FOOTER -->
+<footer class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-inner mt-auto py-4">
+  <div class="max-w-6xl mx-auto text-center text-sm text-gray-500 dark:text-gray-400">
+    © 2025 ObjectVision | Built with Flask, Tailwind, and Love 💙
+  </div>
+</footer>
 
-  <!-- ⚙️ Footer -->
-  <footer class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-inner mt-auto py-4">
-    <div class="max-w-6xl mx-auto text-center text-sm text-gray-500 dark:text-gray-400">
-      © 2025 ObjectVision | Built with Flask, Tailwind, and Love 💙
-    </div>
-  </footer>
+<!-- 🌙 Dark Mode Toggle -->
+<script>
+  const toggle = document.getElementById('themeToggle');
+  toggle.addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+    if (document.documentElement.classList.contains('dark')) {
+      localStorage.theme = 'dark';
+      toggle.textContent = '☀️';
+    } else {
+      localStorage.theme = 'light';
+      toggle.textContent = '🌙';
+    }
+  });
+  toggle.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
+</script>
 
-  <!-- 🌙 Dark Mode Toggle Script -->
-  <script>
-    const toggle = document.getElementById('themeToggle');
-    toggle.addEventListener('click', () => {
-      document.documentElement.classList.toggle('dark');
-      if (document.documentElement.classList.contains('dark')) {
-        localStorage.theme = 'dark';
-        toggle.textContent = '☀️';
-      } else {
-        localStorage.theme = 'light';
-        toggle.textContent = '🌙';
-      }
-    });
-
-    // Set correct icon on load
-    toggle.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
-  </script>
 </body>
 </html>
