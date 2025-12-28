@@ -27,23 +27,76 @@
 </head>
 
 <body class="text-gray-800 flex flex-col min-h-screen">
+<header class="bg-gray-100/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
+  <nav class="max-w-6xl mx-auto flex justify-between items-center px-6 py-3">
+    <!-- Logo -->
+    <div class="flex items-center space-x-2 text-2xl font-bold">
+      <span class="text-blue-600">🧠</span>
+      <span>AI Object Detection</span>
+    </div>
 
-  <!-- 🌐 Header / Navbar -->
-  <header class="bg-gray-100/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
-    <nav class="max-w-6xl mx-auto flex justify-between items-center px-6 py-3">
-      <div class="flex items-center space-x-2 text-2xl font-bold">
-        <span class="text-blue-600">🧠</span>
-        <span>AI Object Detection</span>
-      </div>
-      <ul class="flex space-x-14 text-lg">
-        <li><a href="/" class="hover:text-blue-500">Home</a></li>
-        <li><a href="/about" class="hover:text-blue-500 text-blue-600 font-semibold">About</a></li>
-        <li><a href="/live" class="hover:text-blue-500">Live</a></li>
-        <li><a href="/upload" class="hover:text-blue-500">Upload</a></li>
-        <li><a href="/help" class="hover:text-blue-500">Help</a></li>
-      </ul>
-    </nav>
-  </header>
+    <!-- Navigation with Icons -->
+    <ul class="flex space-x-14 text-lg items-center">
+
+      <!-- HOME -->
+      <li>
+        <a href="/" class="flex items-center space-x-2 px-4 py-2 rounded-xl hover:text-blue-600 hover:bg-blue-50 transition
+           {{ 'bg-blue-600 text-white' if request.path=='/' else '' }}">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 9.75l9-6 9 6M4.5 10.5V19a2.25 2.25 0 002.25 2.25H9.75V15h4.5v6.25h3A2.25 2.25 0 0021 19v-8.5" />
+          </svg>
+          <span>Home</span>
+        </a>
+      </li>
+
+      <!-- ABOUT -->
+      <li>
+        <a href="/about" class="flex items-center space-x-2 hover:text-blue-600 transition
+           {{ 'text-blue-600 font-semibold' if request.path=='/about' else '' }}">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 18a9 9 0 110-18 9 9 0 010 18z" />
+          </svg>
+          <span>About</span>
+        </a>
+      </li>
+
+      <!-- LIVE -->
+      <li>
+        <a href="/live" class="flex items-center space-x-2 hover:text-blue-600 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10l9-7 9 7v10a2 2 0 01-2 2h-4a2 2 0 01-2-2v-6H9v6a2 2 0 01-2 2H5a2 2 0 01-2-2V10z" />
+          </svg>
+          <span>Live Upload</span>
+        </a>
+      </li>
+
+      <!-- UPLOAD -->
+      <li>
+        <a href="/upload" class="flex items-center space-x-2 hover:text-blue-600 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" />
+          </svg>
+          <span>Upload</span>
+        </a>
+      </li>
+
+      <!-- HELP -->
+      <li>
+        <a href="/help" class="flex items-center space-x-2 hover:text-blue-600 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 18h.01M12 14.5a2.5 2.5 0 112.5-2.5h0A2.5 2.5 0 0112 14.5zm0 0v1m0-10a9 9 0 100 18 9 9 0 000-18z" />
+          </svg>
+          <span>Help</span>
+        </a>
+      </li>
+
+    </ul>
+  </nav>
+</header>
+
 
   <!-- 📘 Main Content -->
   <main class="flex-grow">
@@ -179,19 +232,72 @@
   </main>
 
   <!-- 🛠 Technologies -->
-  <section class="mt-16 text-center px-6">
-    <h2 class="text-3xl font-semibold text-gray-800 mb-8">Built With Modern Technologies</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 max-w-6xl mx-auto">
-      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">💡</div><h3 class="font-semibold text-lg">Python</h3></div>
-      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">🧠</div><h3 class="font-semibold text-lg">PyTorch</h3></div>
-      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">🔥</div><h3 class="font-semibold text-lg">Flask</h3></div>
-      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">📷</div><h3 class="font-semibold text-lg">OpenCV</h3></div>
-      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">🔢</div><h3 class="font-semibold text-lg">NumPy</h3></div>
-      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">🧩</div><h3 class="font-semibold text-lg">Git & Github</h3></div>
-      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">🛠</div><h3 class="font-semibold text-lg">VS Code</h3></div>
-      <div class="bg-white shadow rounded-xl p-6"><div class="text-4xl mb-2">⚙️</div><h3 class="font-semibold text-lg">Adam Optimizer</h3></div>
+  <section class="mt-20 px-6">
+  <h2 class="text-3xl font-semibold text-gray-900 text-center mb-12">
+    Built With Modern Technologies
+  </h2>
+
+  <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+
+    <!-- Backend -->
+    <div class="bg-white shadow-md rounded-xl p-6 text-center">
+      <div class="text-4xl mb-2">🔥</div>
+      <h3 class="font-semibold text-lg mb-1">Flask</h3>
+      <p class="text-gray-500 text-sm">Backend REST server powering detection routes</p>
     </div>
-  </section>
+
+    <!-- Deep Learning Framework -->
+    <div class="bg-white shadow-md rounded-xl p-6 text-center">
+      <div class="text-4xl mb-2">🧠</div>
+      <h3 class="font-semibold text-lg mb-1">PyTorch</h3>
+      <p class="text-gray-500 text-sm">Trains CNN / ResNet / YOLO models</p>
+    </div>
+
+    <!-- Computer Vision Library -->
+    <div class="bg-white shadow-md rounded-xl p-6 text-center">
+      <div class="text-4xl mb-2">📷</div>
+      <h3 class="font-semibold text-lg mb-1">OpenCV</h3>
+      <p class="text-gray-500 text-sm">Frame capture & image preprocessing</p>
+    </div>
+
+    <!-- Numerical Engine -->
+    <div class="bg-white shadow-md rounded-xl p-6 text-center">
+      <div class="text-4xl mb-2">🔢</div>
+      <h3 class="font-semibold text-lg mb-1">NumPy</h3>
+      <p class="text-gray-500 text-sm">Matrix operations & dataset vectorization</p>
+    </div>
+
+    <!-- Model Optimization -->
+    <div class="bg-white shadow-md rounded-xl p-6 text-center">
+      <div class="text-4xl mb-2">⚙️</div>
+      <h3 class="font-semibold text-lg mb-1">Adam Optimizer</h3>
+      <p class="text-gray-500 text-sm">Model weight optimization during training</p>
+    </div>
+
+    <!-- IDE -->
+    <div class="bg-white shadow-md rounded-xl p-6 text-center">
+      <div class="text-4xl mb-2">🛠</div>
+      <h3 class="font-semibold text-lg mb-1">VS Code</h3>
+      <p class="text-gray-500 text-sm">Main environment for development</p>
+    </div>
+
+    <!-- Version Control -->
+    <div class="bg-white shadow-md rounded-xl p-6 text-center">
+      <div class="text-4xl mb-2">🧩</div>
+      <h3 class="font-semibold text-lg mb-1">Git & GitHub</h3>
+      <p class="text-gray-500 text-sm">Code management & collaboration</p>
+    </div>
+
+    <!-- Programming Language -->
+    <div class="bg-white shadow-md rounded-xl p-6 text-center">
+      <div class="text-4xl mb-2">💡</div>
+      <h3 class="font-semibold text-lg mb-1">Python</h3>
+      <p class="text-gray-500 text-sm">Core language used across ML & backend</p>
+    </div>
+
+  </div>
+</section>
+
 
   <!-- ✉️ Contact -->
   <section class="mt-16 mb-20 text-center px-4">
