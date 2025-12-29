@@ -76,6 +76,8 @@ def home():
 def live_upload():
     return render_template("live_upload.html")
 
+
+
 @app.route("/detect", methods=["POST"])
 def detect():
     """Handles uploaded image OR webcam frame"""
