@@ -1,157 +1,213 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Help | ObjectVision</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Help | Real-Time Object Classifier</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <style>
+    body { background: #ffffff; }
+  </style>
 </head>
 
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 flex flex-col min-h-screen">
+<body class="text-gray-800 flex flex-col min-h-screen">
+
+<!-- 🌐 NAVBAR -->
 <header class="bg-gray-100/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
   <nav class="max-w-6xl mx-auto flex justify-between items-center px-6 py-3">
-    <!-- Logo -->
     <div class="flex items-center space-x-2 text-2xl font-bold">
       <span class="text-blue-600">🧠</span>
-      <span>AI Object Detection</span>
+      <span>Real-Time Object Classifier</span>
     </div>
 
-    <!-- Navigation with Icons -->
     <ul class="flex space-x-14 text-lg items-center">
-
-      <!-- HOME -->
       <li>
-        <a href="/" class="flex items-center space-x-2 px-4 py-2 rounded-xl hover:text-blue-600 hover:bg-blue-50 transition
-           {{ 'bg-blue-600 text-white' if request.path=='/' else '' }}">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M3 9.75l9-6 9 6M4.5 10.5V19a2.25 2.25 0 002.25 2.25H9.75V15h4.5v6.25h3A2.25 2.25 0 0021 19v-8.5" />
-          </svg>
+        <a href="/" class="flex items-center space-x-2 px-4 py-2 rounded-xl hover:text-blue-600 hover:bg-blue-50 transition">
           <span>Home</span>
         </a>
       </li>
-
-      <!-- ABOUT -->
       <li>
-        <a href="/about" class="flex items-center space-x-2 hover:text-blue-600 transition
-           {{ 'text-blue-600 font-semibold' if request.path=='/about' else '' }}">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 18a9 9 0 110-18 9 9 0 010 18z" />
-          </svg>
+        <a href="/about" class="flex items-center space-x-2 hover:text-blue-600 transition">
           <span>About</span>
         </a>
       </li>
-
-      <!-- LIVE -->
       <li>
         <a href="/live" class="flex items-center space-x-2 hover:text-blue-600 transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10l9-7 9 7v10a2 2 0 01-2 2h-4a2 2 0 01-2-2v-6H9v6a2 2 0 01-2 2H5a2 2 0 01-2-2V10z" />
-          </svg>
           <span>Live Upload</span>
         </a>
       </li>
-
-      <!-- UPLOAD -->
       <li>
         <a href="/upload" class="flex items-center space-x-2 hover:text-blue-600 transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" />
-          </svg>
           <span>Upload</span>
         </a>
       </li>
-
-      <!-- HELP -->
       <li>
-        <a href="/help" class="flex items-center space-x-2 hover:text-blue-600 transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M12 18h.01M12 14.5a2.5 2.5 0 112.5-2.5h0A2.5 2.5 0 0112 14.5zm0 0v1m0-10a9 9 0 100 18 9 9 0 000-18z" />
-          </svg>
+        <a href="/help" class="flex items-center space-x-2 hover:text-blue-600 transition text-blue-600 font-semibold">
           <span>Help</span>
         </a>
       </li>
-
     </ul>
   </nav>
 </header>
 
-
-  <!-- 📘 Help Section -->
-  <main class="flex-grow flex flex-col items-center py-20 px-6">
-    <div class="text-center mb-12">
-      <div class="flex justify-center mb-4">
-        <div class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 w-16 h-16 rounded-full flex items-center justify-center text-3xl">❓</div>
-      </div>
-      <h2 class="text-4xl font-semibold text-gray-800 dark:text-gray-100">Need <span class="text-blue-500">Help?</span></h2>
-      <p class="text-gray-600 dark:text-gray-400 mt-3">Find answers to commonly asked questions</p>
+<!-- 🧭 PAGE HEADER -->
+<main class="flex-grow">
+  <section class="text-center mt-20 mb-14">
+    <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-4xl text-blue-600">
+      ❓
     </div>
+    <h1 class="text-4xl font-bold text-gray-900 mt-4">Help & Support</h1>
+    <p class="text-lg text-gray-600 mt-2 max-w-xl mx-auto">
+      Everything you need to know about using the ML Object Detection Analysis System
+    </p>
+  </section>
 
-    <!-- FAQ Boxes -->
-    <div class="w-full max-w-3xl space-y-5">
-      <div class="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 hover:shadow-lg transition-all">
-        <h3 class="text-lg font-semibold flex items-center text-gray-800 dark:text-gray-100">
-          💡 <span class="ml-2">How do I start detection?</span>
-        </h3>
-        <p class="text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
-          Navigate to the <strong>Live Detection</strong> page and click the “Start Detection” button. The camera will activate and begin real-time object detection. 
-          Alternatively, go to the <strong>Upload Detection</strong> page to analyze a static image.
-        </p>
-      </div>
+  <!-- 🟦 HOW TO USE -->
+  <section class="max-w-6xl mx-auto px-6 mb-20">
+    <div class="bg-white shadow-lg rounded-2xl p-10 border border-gray-200">
+      <h2 class="text-3xl font-semibold text-gray-900">How to Use This System</h2>
 
-      <div class="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 hover:shadow-lg transition-all">
-        <h3 class="text-lg font-semibold flex items-center text-gray-800 dark:text-gray-100">
-          🧠 <span class="ml-2">Which models are used?</span>
-        </h3>
-        <p class="text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
-          ObjectVision uses multiple AI models like <strong>YOLOv8</strong> and <strong>TensorFlow Lite</strong> to ensure accuracy and speed during both live and upload detections.
-        </p>
-      </div>
+      <div class="mt-10 space-y-10">
 
-      <div class="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 hover:shadow-lg transition-all">
-        <h3 class="text-lg font-semibold flex items-center text-gray-800 dark:text-gray-100">
-          🎥 <span class="ml-2">Camera permissions issue?</span>
-        </h3>
-        <p class="text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
-          Make sure your browser allows <strong>camera access</strong> for this website. You can check it in browser settings under "Site Permissions".
-        </p>
-      </div>
+        <!-- Step 1 -->
+        <div class="flex items-start gap-6">
+          <div class="bg-blue-100 w-16 h-16 rounded-xl flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-5-8l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-semibold text-gray-900">Upload Your Image</h3>
+            <p class="text-gray-600 mt-1">Navigate to the "Live Upload" page and either drag-and-drop an image or click to browse your files. You may also capture an image using your webcam.</p>
+          </div>
+        </div>
 
-      <div class="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 hover:shadow-lg transition-all">
-        <h3 class="text-lg font-semibold flex items-center text-gray-800 dark:text-gray-100">
-          ⚙️ <span class="ml-2">Facing errors or model not loading?</span>
-        </h3>
-        <p class="text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
-          If you encounter issues, ensure your model file is correctly loaded and paths are properly configured in your backend or static folder.
-        </p>
+        <!-- Step 2 -->
+        <div class="flex items-start gap-6">
+          <div class="bg-blue-100 w-16 h-16 rounded-xl flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 5h18M4 7h16l-1.4 9.4a2 2 0 01-2 1.6H7.4a2 2 0 01-2-1.6L4 7zm8 4v4m-2-2h4" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-semibold text-gray-900">Preview & Confirm</h3>
+            <p class="text-gray-600 mt-1">Review the uploaded or captured image in the preview window. Ensure the object is clearly visible and well-centered for optimal detection results.</p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="flex items-start gap-6">
+          <div class="bg-blue-100 w-16 h-16 rounded-xl flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M9 17V9m4 8v-6m4 6v-4" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-semibold text-gray-900">Analyze Results</h3>
+            <p class="text-gray-600 mt-1">Click "Analyze Image" — your image is processed by all 8 ML & DL models and results are displayed in an interactive bar graph.</p>
+          </div>
+        </div>
+
       </div>
     </div>
-  </main>
+  </section>
 
-  <!-- ⚙️ Footer -->
-  <footer class="bg-white/70 dark:bg-gray-800/80 backdrop-blur-md shadow-inner mt-auto py-4">
-    <div class="max-w-6xl mx-auto text-center text-sm text-gray-500 dark:text-gray-400">
-      © 2025 ObjectVision | Designed by <span class="text-blue-500 font-semibold">Shreyas Hadawale</span>
+  <!-- ❓ FAQ -->
+  <section class="max-w-4xl mx-auto px-6 mb-20">
+    <h2 class="text-3xl font-semibold text-center mb-8">Frequently Asked Questions</h2>
+
+    <div class="divide-y border rounded-xl bg-white shadow">
+      <details class="p-6">
+        <summary class="text-lg font-semibold cursor-pointer">What types of images can I upload?</summary>
+        <p class="text-gray-600 mt-3 leading-relaxed">
+          You can upload JPG, PNG, or JPEG images up to 10MB. Use clear, well-lit images with a single prominent object. Models detect persons, animals, vehicles, furniture, electronics, food items, sports equipment, and tools.
+        </p>
+      </details>
+
+      <details class="p-6">
+        <summary class="text-lg font-semibold cursor-pointer">How does the comparative analysis work?</summary>
+        <p class="text-gray-600 mt-3 leading-relaxed">
+          Your image is processed through YOLO, CNN, ResNet-18, MobileNet, KNN, SVM, Decision Tree, and Random Forest. Each outputs a confidence score shown in a comparative bar chart.
+        </p>
+      </details>
+
+      <details class="p-6">
+        <summary class="text-lg font-semibold cursor-pointer">Which model is the most accurate?</summary>
+        <p class="text-gray-600 mt-3 leading-relaxed">
+          Deep learning models (YOLO, CNN, ResNet-18, MobileNet) achieve the highest accuracy. YOLO typically performs best due to advanced real-time detection.
+        </p>
+      </details>
+
+      <details class="p-6">
+        <summary class="text-lg font-semibold cursor-pointer">Can I use the webcam on mobile devices?</summary>
+        <p class="text-gray-600 mt-3 leading-relaxed">
+          Yes — works on modern mobile browsers. Allow camera permissions. If unavailable, use file upload instead.
+        </p>
+      </details>
+
+      <details class="p-6">
+        <summary class="text-lg font-semibold cursor-pointer">Is my uploaded data stored or shared?</summary>
+        <p class="text-gray-600 mt-3 leading-relaxed">
+          No — all processing happens locally in your browser. Images are never stored or uploaded.
+        </p>
+      </details>
+
+      <details class="p-6">
+        <summary class="text-lg font-semibold cursor-pointer">What do the accuracy percentages mean?</summary>
+        <p class="text-gray-600 mt-3 leading-relaxed">
+          Accuracy % = model confidence level. Scores above 85% are considered highly reliable.
+        </p>
+      </details>
+
+      <details class="p-6">
+        <summary class="text-lg font-semibold cursor-pointer">Why do different models show different accuracies?</summary>
+        <p class="text-gray-600 mt-3 leading-relaxed">
+          Different algorithms — DL models learn patterns, ML models rely on statistical methods. Accuracy differences reflect model strengths.
+        </p>
+      </details>
+
+      <details class="p-6">
+        <summary class="text-lg font-semibold cursor-pointer">Can I test multiple images in one session?</summary>
+        <p class="text-gray-600 mt-3 leading-relaxed">
+          Yes — after viewing results click “Test Another Image” and repeat as many times as you like.
+        </p>
+      </details>
     </div>
-  </footer>
+  </section>
 
-  <!-- 🌙 Theme Toggle -->
-  <script>
-    const toggle = document.getElementById('themeToggle');
-    toggle.addEventListener('click', () => {
-      document.documentElement.classList.toggle('dark');
-      if (document.documentElement.classList.contains('dark')) {
-        localStorage.theme = 'dark';
-        toggle.textContent = '☀️';
-      } else {
-        localStorage.theme = 'light';
-        toggle.textContent = '🌙';
-      }
-    });
-    toggle.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
-  </script>
+  <!-- ⚠️ TROUBLESHOOTING -->
+  <section class="max-w-4xl mx-auto px-6 mb-20">
+    <h2 class="text-3xl font-semibold text-center mb-8">Troubleshooting</h2>
+    <div class="space-y-5">
+      <div class="bg-orange-50 border-l-4 border-orange-500 p-5 rounded shadow">
+        <h3 class="font-semibold text-orange-700">Webcam not working</h3>
+        <p class="text-gray-600 text-sm">Enable browser camera permissions → refresh page → retry.</p>
+      </div>
+
+      <div class="bg-orange-50 border-l-4 border-orange-500 p-5 rounded shadow">
+        <h3 class="font-semibold text-orange-700">Upload button not responding</h3>
+        <p class="text-gray-600 text-sm">Supported formats only (JPG, PNG under 10MB). Enable JavaScript.</p>
+      </div>
+
+      <div class="bg-orange-50 border-l-4 border-orange-500 p-5 rounded shadow">
+        <h3 class="font-semibold text-orange-700">Low detection accuracy</h3>
+        <p class="text-gray-600 text-sm">Use high-quality, clear images with a single centered object.</p>
+      </div>
+
+      <div class="bg-orange-50 border-l-4 border-orange-500 p-5 rounded shadow">
+        <h3 class="font-semibold text-orange-700">Chart not displaying</h3>
+        <p class="text-gray-600 text-sm">Refresh page — ensure browser supports modern web features.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-white shadow-inner mt-auto py-4">
+  <div class="max-w-6xl mx-auto text-center text-sm text-gray-500">
+    © 2025 Real-Time Object Classifier | 
+  </div>
+</footer>
+
 </body>
 </html>

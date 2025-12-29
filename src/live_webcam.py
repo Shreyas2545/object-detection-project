@@ -18,15 +18,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # =========================
 # LOAD DL MODELS
 # =========================
-cnn_model = CNNModel(num_classes=7)
+cnn_model = CNNModel(num_classes=6)
 cnn_model.load_state_dict(torch.load("checkpoints/cnn_model.pth", map_location=device))
 cnn_model.to(device).eval()
 
-resnet_model = get_resnet18_model(num_classes=7)
+resnet_model = get_resnet18_model(num_classes=6)
 resnet_model.load_state_dict(torch.load("checkpoints/resnet18_model.pth", map_location=device))
 resnet_model.to(device).eval()
 
-mobilenet_model = get_mobilenet_model(num_classes=7)
+
+mobilenet_model = get_mobilenet_model(num_classes=6)
 mobilenet_model.load_state_dict(torch.load("checkpoints/mobilenet_model.pth", map_location=device))
 mobilenet_model.to(device).eval()
 
@@ -49,8 +50,7 @@ resnet_feature_extractor.to(device).eval()
 # =========================
 # CLASS NAMES
 # =========================
-class_names = ["bird", "car", "cat", "dog", "human", "watch","bottle"]
-
+class_names = ["bird", "car", "cat", "dog", "human", "watch"]
 # =========================
 # IMAGE TRANSFORM
 # =========================
