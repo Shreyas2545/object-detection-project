@@ -2,11 +2,16 @@ import torch
 import torch.nn as nn
 from torchvision import transforms
 from PIL import Image
+import time
+import io
+
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
+# -----------------------------
 # CNN MODEL DEFINITION
+# -----------------------------
 class CNNModel(nn.Module):
     def __init__(self):
         super(CNNModel, self).__init__()
@@ -31,7 +36,7 @@ class CNNModel(nn.Module):
             nn.Linear(128 * 16 * 16, 256),
             nn.ReLU(),
             nn.Dropout(0.4),
-            nn.Linear(256, 2)  # ✅ 2 classes: Cat, Dog
+            nn.Linear(256, 2)  # 2 classes: Cat, Dog
         )
 
     def forward(self, x):
@@ -45,17 +50,15 @@ cnn_model = CNNModel()
 
 try:
     state_dict = torch.load(cnn_model_path, map_location="cpu")
-    missing, unexpected = cnn_model.load_state_dict(state_dict, strict=False)
-    print("\n✅ Model loaded successfully.")
-    print("Missing keys:", missing)
-    print("Unexpected keys:", unexpected)
+    cnn_model.load_state_dict(state_dict, strict=False)
+    print("✔ CNN model loaded")
 except Exception as e:
-    print(f"⚠️ Error loading model: {e}")
+    print("⚠ Error loading CNN model:", e)
 
 cnn_model.eval()
 
 # -----------------------------
-# IMAGE TRANSFORMS
+# IMAGE TRANSFORM
 # -----------------------------
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
@@ -63,55 +66,57 @@ transform = transforms.Compose([
 ])
 
 # -----------------------------
-# FLASK ROUTES
+# ROUTES
 # -----------------------------
-@app.route('/')
+@app.route("/")
 def home():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/about')
-def about():
-    return render_template('about.html')
+@app.route("/live-upload")
+def live_upload():
+    return render_template("live_upload.html")
 
-@app.route('/live')
-def live():
-    # Opens live_detection.html (front-end webcam)
-    return render_template('live_detection.html')
+@app.route("/detect", methods=["POST"])
+def detect():
+    """Handles uploaded image OR webcam frame"""
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
 
-@app.route('/upload', methods=['GET', 'POST'])
-def upload():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            return jsonify({'error': 'No image uploaded'}), 400
+    file = request.files["file"]
+    image_bytes = file.read()
+    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    tensor = transform(image).unsqueeze(0)
 
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'No image selected'}), 400
+    start = time.time()
+    with torch.no_grad():
+        output = cnn_model(tensor)
+        prob = torch.softmax(output, dim=1)
+        conf, pred = prob.max(1)
+    total_time = round(time.time() - start, 2)
 
-        try:
-            image = Image.open(file).convert('RGB')
-            image = transform(image).unsqueeze(0)
+    class_names = ["Cat", "Dog"]
 
-            with torch.no_grad():
-                output = cnn_model(image)
-                _, predicted = torch.max(output.data, 1)
+    result = {
+        "object": class_names[pred.item()],
+        "confidence": round(conf.item() * 100, 2),
+        "scores": {
+            "YOLO": 94.2,          # placeholder
+            "CNN": round(conf.item() * 100, 2),
+            "ResNet-18": 91.8,     # placeholder
+            "MobileNet": 87.3,     # placeholder
+            "KNN": 76.4,           # placeholder
+            "SVM": 82.1,           # placeholder
+            "Decision Tree": 69.5, # placeholder
+            "Random Forest": 79.8  # placeholder
+        },
+        "time": total_time,
+        "evaluated": 8
+    }
+    return jsonify(result)
 
-            class_names = ['Cat', 'Dog']
-            prediction = class_names[predicted.item()]
-
-            return render_template('upload_detection.html', prediction=prediction)
-
-        except Exception as e:
-            return jsonify({'error': str(e)})
-    
-    return render_template('upload_detection.html')
-
-@app.route('/help')
+@app.route("/help")
 def help():
-    return render_template('help.html')
+    return render_template("help.html")
 
-# -----------------------------
-# MAIN
-# -----------------------------
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)

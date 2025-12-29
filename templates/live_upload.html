@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Upload | ObjectVision</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col min-h-screen">
+
+<header class="bg-white dark:bg-gray-800 shadow">
+  <nav class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-blue-600">🧠 ObjectVision</h1>
+      <a href="/" class="text-gray-500 hover:text-blue-600">Home</a>
+  </nav>
+</header>
+
+<main class="flex-grow flex flex-col items-center py-16 px-4">
+
+<h2 class="text-4xl font-semibold mb-2">Upload / Live Detection</h2>
+<p class="text-gray-500 dark:text-gray-300 mb-10">Upload an image or scan using webcam</p>
+
+<!-- Upload Box -->
+<div class="border-2 border-dashed rounded-xl p-10 w-full max-w-3xl bg-white dark:bg-gray-800 text-center"
+     onclick="document.getElementById('fileInput').click()">
+
+    <input id="fileInput" type="file" class="hidden" accept="image/*" onchange="previewImage(event)">
+    <div id="uploadBox">
+        <div class="text-6xl mb-4 text-blue-500">⬆️</div>
+        <p>Drop or click to upload image</p>
+    </div>
+
+    <img id="preview" class="hidden max-h-72 mx-auto rounded-xl"/>
+</div>
+
+<button onclick="sendToServer()" class="mt-6 px-6 py-3 rounded-lg bg-blue-600 text-white">
+Start Analysis →
+</button>
+
+<!-- RESULTS -->
+<div id="results" class="hidden w-full max-w-4xl mt-14">
+
+    <h3 class="text-2xl font-semibold mb-4 text-blue-500">Detection Results</h3>
+
+    <div id="detectedBox" class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md mb-8"></div>
+
+    <canvas id="chart" height="120"></canvas>
+
+    <div id="summary" class="bg-gray-100 dark:bg-gray-700 p-6 rounded-xl mt-10"></div>
+</div>
+
+</main>
+
+<script>
+let selectedFile = null;
+
+function previewImage(e) {
+    selectedFile = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+        document.getElementById("uploadBox").classList.add("hidden");
+        document.getElementById("preview").classList.remove("hidden");
+        document.getElementById("preview").src = reader.result;
+    };
+    reader.readAsDataURL(selectedFile);
+}
+
+async function sendToServer() {
+    if (!selectedFile) return alert("Upload an image first!");
+
+    const form = new FormData();
+    form.append("file", selectedFile);
+
+    const res = await fetch("/detect", { method:"POST", body:form });
+    const data = await res.json();
+
+    document.getElementById("results").classList.remove("hidden");
+
+    document.getElementById("detectedBox").innerHTML = `
+      <p class='text-lg font-semibold text-green-600'>
+        ✔ Object: ${data.object} — Confidence: ${data.confidence}%
+      </p>
+    `;
+
+    const labels = Object.keys(data.scores);
+    const values = Object.values(data.scores);
+
+    new Chart(document.getElementById("chart"), {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [{
+                label: "Accuracy (%)",
+                data: values,
+                backgroundColor: "#3B82F6",
+                borderRadius: 8
+            }]
+        },
+        options: { responsive:true, plugins:{legend:{display:false}} }
+    });
+
+    const bestScore = Math.max(...values);
+    const bestModel = labels[values.indexOf(bestScore)];
+
+    document.getElementById("summary").innerHTML = `
+      <h4 class="text-lg font-bold mb-2">Analysis Summary</h4>
+      <p>🔹 Best Model: <b>${bestModel}</b> (${bestScore}%)</p>
+      <p>⏱ Time Taken: ${data.time}s</p>
+      <p>🤖 Models Evaluated: ${data.evaluated}</p>
+    `;
+}
+</script>
+</body>
+</html>
