@@ -1,116 +1,261 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Upload | ObjectVision</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Upload | Real-Time Object Classifier</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body { background: #f9fafb; }
+    .upload-box {
+      transition: all 0.3s ease;
+    }
+    .upload-box:hover {
+      background: #dbeafe;
+      border-color: #3b82f6;
+    }
+  </style>
 </head>
 
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col min-h-screen">
+<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
 
-<header class="bg-white dark:bg-gray-800 shadow">
-  <nav class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-      <h1 class="text-2xl font-bold text-blue-600">🧠 ObjectVision</h1>
-      <a href="/" class="text-gray-500 hover:text-blue-600">Home</a>
+<!-- NAVBAR -->
+<header class="bg-gray-100/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
+  <nav class="max-w-6xl mx-auto flex justify-between items-center px-6 py-3">
+    <div class="flex items-center space-x-2 text-2xl font-bold">
+      <span class="text-blue-600">🧠</span>
+      <span>Real-Time Object Classifier</span>
+    </div>
+    <ul class="flex space-x-14 text-lg items-center">
+      <li>
+        <a href="/" class="flex items-center space-x-2 hover:text-blue-600 transition">
+          <svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1h-6v-6H10v6H4a1 1 0 0 1-1-1V9.5z"/>
+          </svg>
+          <span>Home</span>
+        </a>
+      </li>
+      <li>
+        <a href="/about" class="flex items-center space-x-2 hover:text-blue-600 transition">
+          <svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <circle cx="12" cy="8" r="1"/>
+          </svg>
+          <span>About</span>
+        </a>
+      </li>
+      <li>
+        <a href="/live-upload" class="flex items-center space-x-2 text-blue-600 font-semibold transition">
+          <svg width="18" height="18" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M12 4l6 6h-3v8H9v-8H6l6-6z"/>
+          </svg>
+          <span>Live Upload</span>
+        </a>
+      </li>
+      <li>
+        <a href="/help" class="flex items-center space-x-2 hover:text-blue-600 transition">
+          <svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 17v-.5m0-4.5a2 2 0 1 0-2-2"/>
+          </svg>
+          <span>Help</span>
+        </a>
+      </li>
+    </ul>
   </nav>
 </header>
 
-<main class="flex-grow flex flex-col items-center py-16 px-4">
+<!-- MAIN -->
+<main class="flex-grow py-12 px-6">
+  <div class="max-w-5xl mx-auto">
 
-<h2 class="text-4xl font-semibold mb-2">Upload / Live Detection</h2>
-<p class="text-gray-500 dark:text-gray-300 mb-10">Upload an image or scan using webcam</p>
-
-<!-- Upload Box -->
-<div class="border-2 border-dashed rounded-xl p-10 w-full max-w-3xl bg-white dark:bg-gray-800 text-center"
-     onclick="document.getElementById('fileInput').click()">
-
-    <input id="fileInput" type="file" class="hidden" accept="image/*" onchange="previewImage(event)">
-    <div id="uploadBox">
-        <div class="text-6xl mb-4 text-blue-500">⬆️</div>
-        <p>Drop or click to upload image</p>
+    <!-- Header -->
+    <div class="text-center mb-10">
+      <h1 class="text-4xl font-bold text-gray-900 mb-3">Upload Image for Analysis</h1>
+      <p class="text-gray-600 text-lg">Select an image to analyze using our ML/DL models</p>
     </div>
 
-    <img id="preview" class="hidden max-h-72 mx-auto rounded-xl"/>
-</div>
+    <!-- Upload Section -->
+    <div id="uploadSection">
+      <!-- Upload Box -->
+      <div class="upload-box border-2 border-dashed border-blue-300 bg-blue-50 rounded-2xl w-full h-72 flex flex-col justify-center items-center cursor-pointer mb-6"
+           onclick="document.getElementById('fileInput').click()"
+           id="uploadBox">
+        <input id="fileInput" type="file" class="hidden" accept="image/*">
+        
+        <div class="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mb-4">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+        </div>
+        <p class="text-xl font-semibold text-gray-800 mb-1">Drop your image here</p>
+        <p class="text-gray-600 text-sm mb-3">or click to browse from your computer</p>
+        <p class="text-gray-400 text-xs">PNG, JPG, GIF up to 10MB</p>
+      </div>
 
-<button onclick="sendToServer()" class="mt-6 px-6 py-3 rounded-lg bg-blue-600 text-white">
-Start Analysis →
-</button>
+      <!-- Image Preview -->
+      <img id="preview" class="hidden max-h-80 rounded-xl mx-auto shadow-lg mb-6" />
 
-<!-- RESULTS -->
-<div id="results" class="hidden w-full max-w-4xl mt-14">
+      <!-- OR Divider -->
+      <div class="flex items-center justify-center my-6">
+        <div class="border-t border-gray-300 flex-grow"></div>
+        <span class="px-4 text-gray-500 font-semibold">OR</span>
+        <div class="border-t border-gray-300 flex-grow"></div>
+      </div>
 
-    <h3 class="text-2xl font-semibold mb-4 text-blue-500">Detection Results</h3>
+      <!-- Webcam Button -->
+      <button id="useWebcamBtn"
+              class="w-full border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 rounded-2xl py-8 flex items-center justify-center gap-3 text-gray-700 font-semibold text-lg transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Capture Using Webcam
+      </button>
 
-    <div id="detectedBox" class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md mb-8"></div>
+      <!-- Webcam Video -->
+      <div id="webcamContainer" class="hidden flex flex-col items-center mt-6">
+        <video id="webcam" autoplay class="rounded-xl shadow-lg max-h-96 mb-4"></video>
+        <button id="captureBtn" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">
+          📸 Capture Photo
+        </button>
+      </div>
 
-    <canvas id="chart" height="120"></canvas>
+      <!-- Start Analysis Button -->
+      <button id="analyzeBtn"
+              class="w-full mt-8 py-4 rounded-xl bg-gray-300 text-gray-500 text-lg font-bold transition cursor-not-allowed"
+              disabled>
+        Start Analysis →
+      </button>
 
-    <div id="summary" class="bg-gray-100 dark:bg-gray-700 p-6 rounded-xl mt-10"></div>
-</div>
+      <!-- Privacy Note -->
+      <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p class="text-sm text-gray-700">
+          <span class="font-semibold">Note:</span> Your image will be processed locally for privacy. Analysis results show comparative accuracy metrics across all available models.
+        </p>
+      </div>
+    </div>
 
+    <!-- RESULTS SECTION -->
+    <section id="results" class="hidden mt-12">
+
+      <h2 class="text-3xl font-bold text-gray-900 mb-2">Analysis Results</h2>
+      <p class="text-gray-600 mb-8">Comparative performance metrics across multiple machine learning models</p>
+
+      <!-- Results Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+
+        <!-- Left: Detected Object -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-md p-6">
+          <h3 class="text-xl font-semibold mb-4 text-gray-900">Detected Object</h3>
+          <img id="resultImage" class="rounded-xl w-full object-contain mb-4 shadow" style="max-height: 350px;" />
+          
+          <!-- Detection Status -->
+          <div id="detectionStatus" class="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div class="flex items-start gap-3">
+              <svg class="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <div>
+                <p class="font-semibold text-green-800 text-lg">Detection Complete</p>
+                <p class="text-green-700 mt-1">
+                  Object: <span id="detectedObject" class="font-bold">-</span><br>
+                  Confidence: <span id="detectedConfidence" class="font-bold">-</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Classification Summary -->
+          <div class="mt-6">
+            <h4 class="font-semibold text-lg mb-3">Classification Summary</h4>
+            <p id="classificationSummary" class="text-gray-600 text-sm leading-relaxed">
+              The image has been successfully processed through multiple distinct machine learning and deep learning models.
+            </p>
+          </div>
+        </div>
+
+        <!-- Right: Model Information -->
+        <div class="bg-white rounded-2xl shadow-md p-6">
+          <div class="flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h3 class="text-xl font-semibold text-gray-900">Model Information</h3>
+          </div>
+          
+          <div id="modelScoreList" class="space-y-3 max-h-96 overflow-y-auto">
+            <!-- Model scores will be inserted here -->
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Comparative Chart -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+        <h3 class="text-2xl font-semibold text-gray-900 mb-6">Comparative Model Performance Analysis</h3>
+        <canvas id="chart" height="100"></canvas>
+      </div>
+
+      
+
+      <!-- Analysis Summary -->
+      <div id="summary" class="bg-white border border-gray-200 rounded-2xl p-6 shadow-md">
+        <h3 class="text-2xl font-bold text-gray-900 mb-6">Analysis Summary</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Best Performing Model</p>
+            <p id="bestModel" class="text-2xl font-bold text-blue-600">-</p>
+            <p id="bestModelStats" class="text-sm text-gray-600 mt-1">-</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Analysis Time</p>
+            <p id="analysisTime" class="text-2xl font-bold text-blue-600">-</p>
+            <p class="text-sm text-gray-600 mt-1">Average across all models</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Models Evaluated</p>
+            <p id="modelsEvaluated" class="text-2xl font-bold text-blue-600">4</p>
+            <p class="text-sm text-gray-600 mt-1">Deep learning & machine learning</p>
+          </div>
+        </div>
+        <p id="summaryText" class="text-gray-700 text-sm leading-relaxed">
+          <!-- Summary text will be inserted here -->
+        </p>
+      </div>
+
+      <!-- Analysis Insights -->
+      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-8">
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">Analysis Insights</h3>
+        <ul id="insightsList" class="space-y-2 text-gray-700">
+          <!-- Insights will be inserted here -->
+        </ul>
+      </div>
+
+      <!-- Test Another Button -->
+      <button id="testAnotherBtn" class="w-full mt-8 py-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-lg font-bold transition">
+        ← Test Another Image
+      </button>
+
+    </section>
+
+  </div>
 </main>
 
-<script>
-let selectedFile = null;
+<!-- FOOTER -->
+<footer class="bg-white shadow-inner mt-auto py-4">
+  <div class="max-w-6xl mx-auto text-center text-sm text-gray-500">
+    © 2025 Real-Time Object Classifier | Shreyas Hadawale
+  </div>
+</footer>
 
-function previewImage(e) {
-    selectedFile = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = () => {
-        document.getElementById("uploadBox").classList.add("hidden");
-        document.getElementById("preview").classList.remove("hidden");
-        document.getElementById("preview").src = reader.result;
-    };
-    reader.readAsDataURL(selectedFile);
-}
+<!-- JS -->
+<script src="{{ url_for('static', filename='js/live_detect.js') }}"></script>
 
-async function sendToServer() {
-    if (!selectedFile) return alert("Upload an image first!");
-
-    const form = new FormData();
-    form.append("file", selectedFile);
-
-    const res = await fetch("/detect", { method:"POST", body:form });
-    const data = await res.json();
-
-    document.getElementById("results").classList.remove("hidden");
-
-    document.getElementById("detectedBox").innerHTML = `
-      <p class='text-lg font-semibold text-green-600'>
-        ✔ Object: ${data.object} — Confidence: ${data.confidence}%
-      </p>
-    `;
-
-    const labels = Object.keys(data.scores);
-    const values = Object.values(data.scores);
-
-    new Chart(document.getElementById("chart"), {
-        type: "bar",
-        data: {
-            labels,
-            datasets: [{
-                label: "Accuracy (%)",
-                data: values,
-                backgroundColor: "#3B82F6",
-                borderRadius: 8
-            }]
-        },
-        options: { responsive:true, plugins:{legend:{display:false}} }
-    });
-
-    const bestScore = Math.max(...values);
-    const bestModel = labels[values.indexOf(bestScore)];
-
-    document.getElementById("summary").innerHTML = `
-      <h4 class="text-lg font-bold mb-2">Analysis Summary</h4>
-      <p>🔹 Best Model: <b>${bestModel}</b> (${bestScore}%)</p>
-      <p>⏱ Time Taken: ${data.time}s</p>
-      <p>🤖 Models Evaluated: ${data.evaluated}</p>
-    `;
-}
-</script>
 </body>
 </html>
