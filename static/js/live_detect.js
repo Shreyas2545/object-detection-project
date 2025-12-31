@@ -1,395 +1,310 @@
-console.log("✅ Live Detect JS Loaded!");
-
-let selectedFile = null;
-let webcamStream = null;
-let capturedImage = null;
+let selectedImage = null;
 let chartInstance = null;
+let liveInterval = null;
+const { jsPDF } = window.jspdf;
 
-// HTML Elements
-const fileInput = document.getElementById("fileInput");
-const preview = document.getElementById("preview");
-const uploadBox = document.getElementById("uploadBox");
-const analyzeBtn = document.getElementById("analyzeBtn");
-const webcam = document.getElementById("webcam");
-const webcamContainer = document.getElementById("webcamContainer");
-const camBtn = document.getElementById("useWebcamBtn");
-const captureBtn = document.getElementById("captureBtn");
-const uploadSection = document.getElementById("uploadSection");
-const results = document.getElementById("results");
-const testAnotherBtn = document.getElementById("testAnotherBtn");
+document.addEventListener('DOMContentLoaded', () => {
+  const fileInput = document.getElementById('fileInput');
+  const preview = document.getElementById('preview');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const useWebcamBtn = document.getElementById('useWebcamBtn');
+  const webcam = document.getElementById('webcam');
+  const captureBtn = document.getElementById('captureBtn');
+  const liveToggleBtn = document.getElementById('liveToggleBtn');
+  const videoOverlay = document.getElementById('videoOverlay');
+  const uploadSection = document.getElementById('uploadSection');
+  const results = document.getElementById('results');
+  const resultImage = document.getElementById('resultImage');
+  const detectedObject = document.getElementById('detectedObject');
+  const detectedConfidence = document.getElementById('detectedConfidence');
+  const modelScoreList = document.getElementById('modelScoreList');
+  const bestModel = document.getElementById('bestModel');
+  const bestModelStats = document.getElementById('bestModelStats');
+  const analysisTime = document.getElementById('analysisTime');
+  const modelsEvaluated = document.getElementById('modelsEvaluated');
+  const summaryText = document.getElementById('summaryText');
+  const insightsList = document.getElementById('insightsList');
+  const testAnotherBtn = document.getElementById('testAnotherBtn');
+  const downloadReportBtn = document.getElementById('downloadReportBtn');
+  const uploadContainer = document.getElementById('uploadContainer');
+  const orDivider = document.getElementById('orDivider');
+  const webcamContainer = document.getElementById('webcamContainer');
+  const classificationSummary = document.getElementById('classificationSummary');
 
-// =========================
-// FILE UPLOAD HANDLER
-// =========================
-fileInput.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  selectedFile = file;
-  const reader = new FileReader();
-  
-  reader.onload = () => {
-    preview.classList.remove("hidden");
-    preview.src = reader.result;
-    uploadBox.classList.add("hidden");
-    
-    // Hide webcam if open
-    if (webcamStream) {
-      stopWebcam();
+  // Handle file upload
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        preview.src = event.target.result;
+        preview.classList.remove('hidden');
+        selectedImage = file;
+        enableAnalyzeBtn();
+        hideOtherOptions('upload');
+      };
+      reader.readAsDataURL(file);
     }
-    
-    // Enable analyze button
-    enableAnalyzeButton();
-  };
-  
-  reader.readAsDataURL(file);
-});
+  });
 
-// Drag and Drop
-uploadBox.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  uploadBox.style.borderColor = "#3b82f6";
-  uploadBox.style.background = "#dbeafe";
-});
-
-uploadBox.addEventListener("dragleave", () => {
-  uploadBox.style.borderColor = "#93c5fd";
-  uploadBox.style.background = "#eff6ff";
-});
-
-uploadBox.addEventListener("drop", (e) => {
-  e.preventDefault();
-  uploadBox.style.borderColor = "#93c5fd";
-  uploadBox.style.background = "#eff6ff";
-  
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith("image/")) {
-    fileInput.files = e.dataTransfer.files;
-    fileInput.dispatchEvent(new Event("change"));
-  }
-});
-
-// =========================
-// WEBCAM HANDLER
-// =========================
-camBtn.addEventListener("click", async () => {
-  try {
-    // Hide upload box and preview
-    uploadBox.classList.add("hidden");
-    preview.classList.add("hidden");
-    
-    // Show webcam
-    webcamContainer.classList.remove("hidden");
-    
-    // Request webcam access
-    webcamStream = await navigator.mediaDevices.getUserMedia({ 
-      video: { width: 1280, height: 720 } 
+  // Handle drag and drop
+  const uploadBox = document.getElementById('uploadBox');
+  if (uploadBox) {
+    uploadBox.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadBox.classList.add('border-blue-500', 'bg-blue-100');
     });
-    webcam.srcObject = webcamStream;
-    
-  } catch (error) {
-    alert("❌ Webcam access denied. Please enable camera permissions.");
-    console.error("Webcam error:", error);
-    webcamContainer.classList.add("hidden");
-  }
-});
-
-// Capture Photo from Webcam
-captureBtn.addEventListener("click", () => {
-  const canvas = document.createElement("canvas");
-  canvas.width = webcam.videoWidth;
-  canvas.height = webcam.videoHeight;
-  canvas.getContext("2d").drawImage(webcam, 0, 0);
-  
-  capturedImage = canvas.toDataURL("image/jpeg");
-  
-  // Show captured image in preview
-  preview.src = capturedImage;
-  preview.classList.remove("hidden");
-  
-  // Stop and hide webcam
-  stopWebcam();
-  
-  // Enable analyze button
-  enableAnalyzeButton();
-});
-
-function stopWebcam() {
-  if (webcamStream) {
-    webcamStream.getTracks().forEach(track => track.stop());
-    webcamStream = null;
-  }
-  webcamContainer.classList.add("hidden");
-}
-
-// =========================
-// ENABLE ANALYZE BUTTON
-// =========================
-function enableAnalyzeButton() {
-  analyzeBtn.disabled = false;
-  analyzeBtn.classList.remove("bg-gray-300", "text-gray-500", "cursor-not-allowed");
-  analyzeBtn.classList.add("bg-blue-500", "hover:bg-blue-600", "text-white", "cursor-pointer");
-}
-
-// =========================
-// ANALYZE IMAGE
-// =========================
-analyzeBtn.addEventListener("click", async () => {
-  if (!selectedFile && !capturedImage) {
-    alert("⚠️ Please upload an image or capture from webcam first!");
-    return;
+    uploadBox.addEventListener('dragleave', () => {
+      uploadBox.classList.remove('border-blue-500', 'bg-blue-100');
+    });
+    uploadBox.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadBox.classList.remove('border-blue-500', 'bg-blue-100');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        fileInput.files = e.dataTransfer.files;
+        fileInput.dispatchEvent(new Event('change'));
+      }
+    });
   }
 
-  // Show loading state
-  analyzeBtn.textContent = "⏳ Analyzing...";
-  analyzeBtn.disabled = true;
+  // Handle webcam
+  useWebcamBtn.addEventListener('click', async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      webcam.srcObject = stream;
+      webcamContainer.classList.remove('hidden');
+      hideOtherOptions('webcam');
+      analyzeBtn.classList.add('hidden'); // Hide for webcam, use capture/live instead
+    } catch (err) {
+      alert('Error accessing webcam: ' + err.message);
+    }
+  });
 
-  try {
-    let response;
+  // Capture photo from webcam
+  captureBtn.addEventListener('click', () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = webcam.videoWidth;
+    canvas.height = webcam.videoHeight;
+    canvas.getContext('2d').drawImage(webcam, 0, 0);
+    preview.src = canvas.toDataURL('image/jpeg');
+    preview.classList.remove('hidden');
+    selectedImage = dataURLToFile(preview.src, 'captured.jpg');
+    enableAnalyzeBtn();
+  });
 
-    if (selectedFile) {
-      // Upload file
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      
-      response = await fetch("/detect", {
-        method: "POST",
+  // Live detection toggle
+  liveToggleBtn.addEventListener('click', () => {
+    if (liveInterval) {
+      clearInterval(liveInterval);
+      liveInterval = null;
+      videoOverlay.classList.add('hidden');
+      liveToggleBtn.textContent = 'Start Live Detection';
+      liveToggleBtn.classList.remove('bg-red-500');
+      liveToggleBtn.classList.add('bg-green-500');
+    } else {
+      liveInterval = setInterval(sendWebcamFrame, 500);
+      liveToggleBtn.textContent = 'Stop Live Detection';
+      liveToggleBtn.classList.remove('bg-green-500');
+      liveToggleBtn.classList.add('bg-red-500');
+    }
+  });
+
+  // Send webcam frame for live prediction
+  async function sendWebcamFrame() {
+    const canvas = document.createElement('canvas');
+    canvas.width = webcam.videoWidth;
+    canvas.height = webcam.videoHeight;
+    canvas.getContext('2d').drawImage(webcam, 0, 0);
+    const frameData = canvas.toDataURL('image/jpeg');
+
+    try {
+      const response = await fetch('/detect-webcam', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frame: frameData })
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      // Overlay live prediction
+      videoOverlay.textContent = `${data.object} (${data.confidence}%) - Best: ${data.best_model}`;
+      videoOverlay.classList.remove('hidden');
+    } catch (err) {
+      console.error('Live detection error:', err);
+      videoOverlay.textContent = 'Error detecting';
+      videoOverlay.classList.remove('hidden');
+    }
+  }
+
+  // Analyze button
+  analyzeBtn.addEventListener('click', async () => {
+    if (!selectedImage) return;
+
+    const formData = new FormData();
+    formData.append('file', selectedImage);
+
+    try {
+      const response = await fetch('/detect', {
+        method: 'POST',
         body: formData
       });
-    } else if (capturedImage) {
-      // Send webcam capture
-      response = await fetch("/detect-webcam", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frame: capturedImage })
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      // Show results
+      uploadSection.classList.add('hidden');
+      results.classList.remove('hidden');
+
+      // Populate results
+      resultImage.src = preview.src;
+      detectedObject.textContent = data.object;
+      detectedConfidence.textContent = `${data.confidence}%`;
+      analysisTime.textContent = `${data.time}s`;
+      modelsEvaluated.textContent = data.evaluated;
+      bestModel.textContent = data.best_model;
+      bestModelStats.textContent = `Confidence: ${data.confidence}%`;
+
+      // Model scores list (highlight best)
+      modelScoreList.innerHTML = '';
+      Object.entries(data.scores).forEach(([model, score]) => {
+        const div = document.createElement('div');
+        div.className = 'flex justify-between items-center p-2 rounded bg-gray-50';
+        div.innerHTML = `<span class="font-medium ${model === data.best_model ? 'text-green-600' : ''}">${model}</span><span class="text-gray-600">${score}%</span>`;
+        modelScoreList.appendChild(div);
       });
+
+      // Chart
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(document.getElementById('chart'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(data.scores),
+          datasets: [{
+            label: 'Confidence (%)',
+            data: Object.values(data.scores),
+            backgroundColor: Object.keys(data.scores).map(model => model === data.best_model ? 'rgba(34,197,94,0.7)' : 'rgba(59,130,246,0.7)'),
+          }]
+        },
+        options: {
+          scales: { y: { beginAtZero: true, max: 100 } },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      // Summary text
+      classificationSummary.textContent = `The system evaluated the image using ${data.evaluated} models. The highest confidence prediction is "${data.object}" from ${data.best_model}.`;
+      summaryText.textContent = `Overall, deep learning models performed well, with ${data.best_model} leading. Processing took ${data.time} seconds.`;
+
+      // Insights (example, customize based on data)
+      insightsList.innerHTML = '';
+      const insights = [
+        `Best model (${data.best_model}) achieved ${data.confidence}% confidence.`,
+        'YOLO is great for real-time, while ResNet-18 excels in accuracy.',
+        'For better results, ensure good lighting and centered objects.'
+      ];
+      insights.forEach(insight => {
+        const li = document.createElement('li');
+        li.textContent = insight;
+        insightsList.appendChild(li);
+      });
+    } catch (err) {
+      alert('Error during analysis: ' + err.message);
     }
+  });
 
-    if (!response.ok) throw new Error("Analysis failed");
+  // Download PDF Report
+  downloadReportBtn.addEventListener('click', async () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('Object Detection Report', 105, 20, { align: 'center' });
 
-    const data = await response.json();
-    console.log("📊 Analysis Results:", data);
+    // Add image
+    const imgData = resultImage.src;
+    doc.addImage(imgData, 'JPEG', 10, 30, 80, 60);
 
-    // Display results
-    displayResults(data);
+    // Add details
+    doc.setFontSize(12);
+    doc.text(`Detected Object: ${detectedObject.textContent}`, 10, 100);
+    doc.text(`Confidence: ${detectedConfidence.textContent}`, 10, 110);
+    doc.text(`Best Model: ${bestModel.textContent}`, 10, 120);
+    doc.text(`Analysis Time: ${analysisTime.textContent}`, 10, 130);
+    doc.text(`Models Evaluated: ${modelsEvaluated.textContent}`, 10, 140);
 
-  } catch (error) {
-    console.error("❌ Error:", error);
-    alert("Analysis failed. Please try again.");
-    analyzeBtn.textContent = "Start Analysis →";
+    // Add scores
+    doc.text('Model Scores:', 10, 150);
+    let y = 160;
+    Object.entries(JSON.parse(localStorage.getItem('scores') || '{}')).forEach(([model, score]) => {
+      doc.text(`${model}: ${score}%`, 10, y);
+      y += 10;
+    });
+
+    // Add chart as image
+    const chartImg = document.getElementById('chart').toDataURL('image/png');
+    doc.addImage(chartImg, 'PNG', 10, y, 190, 80);
+    y += 90;
+
+    // Add summary and insights
+    doc.text('Summary:', 10, y);
+    y += 10;
+    doc.text(summaryText.textContent, 10, y, { maxWidth: 190 });
+    y += 30;
+    doc.text('Insights:', 10, y);
+    y += 10;
+    Array.from(insightsList.children).forEach((li, i) => {
+      doc.text(`${i+1}. ${li.textContent}`, 10, y);
+      y += 10;
+    });
+
+    // Add timestamp
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 10, y + 10);
+
+    doc.save('object_detection_report.pdf');
+  });
+
+  // Test another
+  testAnotherBtn.addEventListener('click', () => {
+    location.reload();
+  });
+
+  // Helper: Enable analyze button
+  function enableAnalyzeBtn() {
     analyzeBtn.disabled = false;
-  }
-});
-
-// =========================
-// DISPLAY RESULTS
-// =========================
-function displayResults(data) {
-  // Hide upload section
-  uploadSection.classList.add("hidden");
-  
-  // Show results section
-  results.classList.remove("hidden");
-  
-  // Scroll to results
-  results.scrollIntoView({ behavior: "smooth", block: "start" });
-
-  // Set result image
-  document.getElementById("resultImage").src = preview.src;
-
-  // Set detection info
-  document.getElementById("detectedObject").textContent = data.object || "Unknown";
-  document.getElementById("detectedConfidence").textContent = `${data.confidence || 0}%`;
-
-  // Update classification summary
-  const summaryText = `The image has been successfully processed through four distinct machine learning and deep learning models. The ${data.best_model || 'YOLO'} algorithm achieved the highest detection accuracy at ${data.confidence || 0}%, demonstrating superior performance in this particular classification task.`;
-  document.getElementById("classificationSummary").textContent = summaryText;
-
-  // Display model scores
-  displayModelScores(data.scores);
-
-  // Create chart
-  createChart(data.scores);
-
-  // Generate insights
-  generateInsights(data.scores, data.best_model);
-
-  // Update summary
-  updateSummary(data);
-}
-
-// =========================
-// DISPLAY MODEL SCORES
-// =========================
-function displayModelScores(scores) {
-  const modelList = document.getElementById("modelScoreList");
-  modelList.innerHTML = "";
-
-  // Only show the 4 models: YOLO, CNN, ResNet-18, MobileNet
-  const modelsToShow = ["YOLO", "CNN", "ResNet-18", "MobileNet"];
-  
-  modelsToShow.forEach(modelName => {
-    const score = scores[modelName] || 0;
-    
-    const div = document.createElement("div");
-    div.className = "flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition";
-    div.innerHTML = `
-      <span class="font-semibold text-gray-800">${modelName}</span>
-      <span class="text-blue-600 font-bold text-lg">${score.toFixed(1)}%</span>
-    `;
-    modelList.appendChild(div);
-  });
-}
-
-// =========================
-// CREATE CHART
-// =========================
-function createChart(scores) {
-  const ctx = document.getElementById("chart").getContext("2d");
-
-  // Destroy previous chart if exists
-  if (chartInstance) {
-    chartInstance.destroy();
+    analyzeBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+    analyzeBtn.classList.add('bg-blue-500', 'hover:bg-blue-600', 'text-white');
+    analyzeBtn.classList.remove('hidden');
   }
 
-  // Only show the 4 models
-  const modelsToShow = ["YOLO", "CNN", "ResNet-18", "MobileNet"];
-  const labels = modelsToShow;
-  const values = modelsToShow.map(model => scores[model] || 0);
-
-  chartInstance = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "Model Accuracy",
-        data: values,
-        backgroundColor: "#3b82f6",
-        borderColor: "#2563eb",
-        borderWidth: 1,
-        borderRadius: 8
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: {
-          display: true,
-          position: "bottom",
-          labels: {
-            font: { size: 14 },
-            color: "#374151"
-          }
-        },
-        tooltip: {
-          backgroundColor: "#1f2937",
-          titleColor: "#fff",
-          bodyColor: "#fff",
-          padding: 12,
-          displayColors: false,
-          callbacks: {
-            label: (context) => `Accuracy: ${context.parsed.y.toFixed(1)}%`
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 100,
-          ticks: {
-            callback: (value) => value + "%",
-            font: { size: 12 },
-            color: "#6b7280"
-          },
-          grid: {
-            color: "#e5e7eb"
-          },
-          title: {
-            display: true,
-            text: "Accuracy (%)",
-            font: { size: 14, weight: "bold" },
-            color: "#374151"
-          }
-        },
-        x: {
-          ticks: {
-            font: { size: 12 },
-            color: "#6b7280"
-          },
-          grid: {
-            display: false
-          }
-        }
-      }
+  // Hide other options after selection
+  function hideOtherOptions(mode) {
+    if (mode === 'upload') {
+      useWebcamBtn.classList.add('hidden');
+      orDivider.classList.add('hidden');
+      webcamContainer.classList.add('hidden');
+    } else if (mode === 'webcam') {
+      uploadContainer.classList.add('hidden');
+      orDivider.classList.add('hidden');
+      preview.classList.add('hidden');
+      captureBtn.classList.remove('hidden');
+      liveToggleBtn.classList.remove('hidden');
     }
-  });
-}
+  }
 
-// =========================
-// GENERATE INSIGHTS
-// =========================
-function generateInsights(scores, bestModel) {
-  const insightsList = document.getElementById("insightsList");
-  insightsList.innerHTML = "";
+  // DataURL to File
+  function dataURLToFile(dataurl, filename) {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new File([u8arr], filename, { type: mime });
+  }
 
-  const insights = [
-    `Deep Learning models (YOLO, CNN, ResNet-18, MobileNet) demonstrate superior accuracy compared to traditional ML algorithms`,
-    `${bestModel || 'YOLO'} achieves the highest accuracy with real-time detection capabilities`,
-    `ResNet-18 shows strong performance due to its residual connections enabling deeper feature learning`,
-    `MobileNet provides efficient performance optimized for speed and lower computational requirements`
-  ];
-
-  insights.forEach(insight => {
-    const li = document.createElement("li");
-    li.className = "flex items-start gap-2";
-    li.innerHTML = `
-      <span class="text-blue-600 mt-1">•</span>
-      <span>${insight}</span>
-    `;
-    insightsList.appendChild(li);
-  });
-}
-
-// =========================
-// UPDATE SUMMARY
-// =========================
-function updateSummary(data) {
-  document.getElementById("bestModel").textContent = data.best_model || "YOLO";
-  document.getElementById("bestModelStats").textContent = `${data.confidence || 0}% accuracy`;
-  document.getElementById("analysisTime").textContent = `${data.time || 2.3}s`;
-  
-  const summaryText = `This analysis compares performance across YOLO, CNN, ResNet-18, and MobileNet algorithms. Results demonstrate varying levels of accuracy, with ${data.best_model || 'YOLO'} leading at ${data.confidence || 0}% confidence. The deep learning models consistently outperform traditional approaches in complex image recognition tasks, showcasing the advantages of neural network architectures for visual classification.`;
-  
-  document.getElementById("summaryText").textContent = summaryText;
-}
-
-// =========================
-// TEST ANOTHER IMAGE
-// =========================
-testAnotherBtn.addEventListener("click", () => {
-  // Reset everything
-  selectedFile = null;
-  capturedImage = null;
-  
-  // Clear inputs
-  fileInput.value = "";
-  preview.src = "";
-  preview.classList.add("hidden");
-  
-  // Show upload section
-  uploadBox.classList.remove("hidden");
-  uploadSection.classList.remove("hidden");
-  
-  // Hide results
-  results.classList.add("hidden");
-  
-  // Reset button
-  analyzeBtn.textContent = "Start Analysis →";
-  analyzeBtn.disabled = true;
-  analyzeBtn.classList.remove("bg-blue-500", "hover:bg-blue-600", "text-white");
-  analyzeBtn.classList.add("bg-gray-300", "text-gray-500", "cursor-not-allowed");
-  
-  // Scroll to top
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  // Store scores for PDF (temp)
+  // In analyze, after data: localStorage.setItem('scores', JSON.stringify(data.scores));
+  // Add this line in analyze success: localStorage.setItem('scores', JSON.stringify(data.scores));
 });
+
+// Add to analyze success block:
+localStorage.setItem('scores', JSON.stringify(data.scores));

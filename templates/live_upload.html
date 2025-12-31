@@ -8,6 +8,7 @@
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     body { background: #f9fafb; }
@@ -17,6 +18,17 @@
     .upload-box:hover {
       background: #dbeafe;
       border-color: #3b82f6;
+    }
+    #videoOverlay {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0,0,0,0.6);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -31,41 +43,10 @@
       <span>Real-Time Object Classifier</span>
     </div>
     <ul class="flex space-x-14 text-lg items-center">
-      <li>
-        <a href="/" class="flex items-center space-x-2 hover:text-blue-600 transition">
-          <svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1h-6v-6H10v6H4a1 1 0 0 1-1-1V9.5z"/>
-          </svg>
-          <span>Home</span>
-        </a>
-      </li>
-      <li>
-        <a href="/about" class="flex items-center space-x-2 hover:text-blue-600 transition">
-          <svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="16" x2="12" y2="12"/>
-            <circle cx="12" cy="8" r="1"/>
-          </svg>
-          <span>About</span>
-        </a>
-      </li>
-      <li>
-        <a href="/live-upload" class="flex items-center space-x-2 text-blue-600 font-semibold transition">
-          <svg width="18" height="18" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <path d="M12 4l6 6h-3v8H9v-8H6l6-6z"/>
-          </svg>
-          <span>Live Upload</span>
-        </a>
-      </li>
-      <li>
-        <a href="/help" class="flex items-center space-x-2 hover:text-blue-600 transition">
-          <svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M12 17v-.5m0-4.5a2 2 0 1 0-2-2"/>
-          </svg>
-          <span>Help</span>
-        </a>
-      </li>
+      <li><a href="/" class="flex items-center space-x-2 hover:text-blue-600 transition"><svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1h-6v-6H10v6H4a1 1 0 0 1-1-1V9.5z"/></svg><span>Home</span></a></li>
+      <li><a href="/about" class="flex items-center space-x-2 hover:text-blue-600 transition"><svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><circle cx="12" cy="8" r="1"/></svg><span>About</span></a></li>
+      <li><a href="/live-upload" class="flex items-center space-x-2 text-blue-600 font-semibold transition"><svg width="18" height="18" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4l6 6h-3v8H9v-8H6l6-6z"/></svg><span>Live Upload</span></a></li>
+      <li><a href="/help" class="flex items-center space-x-2 hover:text-blue-600 transition"><svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 17v-.5m0-4.5a2 2 0 1 0-2-2"/></svg><span>Help</span></a></li>
     </ul>
   </nav>
 </header>
@@ -77,17 +58,21 @@
     <!-- Header -->
     <div class="text-center mb-10">
       <h1 class="text-4xl font-bold text-gray-900 mb-3">Upload Image for Analysis</h1>
-      <p class="text-gray-600 text-lg">Select an image to analyze using our ML/DL models</p>
+      <p class="text-gray-600 text-lg">Select an image to analyze using our deep learning models</p>
     </div>
 
     <!-- Upload Section -->
     <div id="uploadSection">
+
+      <!-- Back Button -->
+      <button id="backBtn" class="hidden mb-6 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-xl font-semibold transition">
+        ← Back to Selection
+      </button>
+
       <!-- Upload Box -->
-      <div class="upload-box border-2 border-dashed border-blue-300 bg-blue-50 rounded-2xl w-full h-72 flex flex-col justify-center items-center cursor-pointer mb-6"
-           onclick="document.getElementById('fileInput').click()"
-           id="uploadBox">
+      <div id="uploadContainer" class="upload-box border-2 border-dashed border-blue-300 bg-blue-50 rounded-2xl w-full h-72 flex flex-col justify-center items-center cursor-pointer mb-6"
+           onclick="document.getElementById('fileInput').click()">
         <input id="fileInput" type="file" class="hidden" accept="image/*">
-        
         <div class="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mb-4">
           <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
@@ -99,10 +84,10 @@
       </div>
 
       <!-- Image Preview -->
-      <img id="preview" class="hidden max-h-80 rounded-xl mx-auto shadow-lg mb-6" />
+      <img id="preview" class="hidden max-h-96 rounded-xl mx-auto shadow-lg mb-6" />
 
       <!-- OR Divider -->
-      <div class="flex items-center justify-center my-6">
+      <div id="orDivider" class="flex items-center justify-center my-6">
         <div class="border-t border-gray-300 flex-grow"></div>
         <span class="px-4 text-gray-500 font-semibold">OR</span>
         <div class="border-t border-gray-300 flex-grow"></div>
@@ -118,25 +103,30 @@
         Capture Using Webcam
       </button>
 
-      <!-- Webcam Video -->
-      <div id="webcamContainer" class="hidden flex flex-col items-center mt-6">
-        <video id="webcam" autoplay class="rounded-xl shadow-lg max-h-96 mb-4"></video>
-        <button id="captureBtn" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">
-          📸 Capture Photo
-        </button>
+      <!-- Webcam Container -->
+      <div id="webcamContainer" class="hidden relative flex flex-col items-center mt-6">
+        <video id="webcam" autoplay playsinline class="rounded-xl shadow-lg max-h-96 mb-6"></video>
+        <div id="videoOverlay" class="hidden"></div>
+        <div class="flex gap-4">
+          <button id="liveToggleBtn" class="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold">
+            Start Live Detection
+          </button>
+          <button id="captureBtn" class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">
+            📸 Capture & Analyze
+          </button>
+        </div>
       </div>
 
-      <!-- Start Analysis Button -->
+      <!-- Start Analysis Button (only for uploaded image) -->
       <button id="analyzeBtn"
-              class="w-full mt-8 py-4 rounded-xl bg-gray-300 text-gray-500 text-lg font-bold transition cursor-not-allowed"
-              disabled>
+              class="hidden w-full mt-8 py-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-lg font-bold transition">
         Start Analysis →
       </button>
 
       <!-- Privacy Note -->
       <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p class="text-sm text-gray-700">
-          <span class="font-semibold">Note:</span> Your image will be processed locally for privacy. Analysis results show comparative accuracy metrics across all available models.
+          <span class="font-semibold">Note:</span> Your image is processed securely. Results show comparative confidence across 4 deep learning models.
         </p>
       </div>
     </div>
@@ -145,17 +135,14 @@
     <section id="results" class="hidden mt-12">
 
       <h2 class="text-3xl font-bold text-gray-900 mb-2">Analysis Results</h2>
-      <p class="text-gray-600 mb-8">Comparative performance metrics across multiple machine learning models</p>
+      <p class="text-gray-600 mb-8">Comparative performance across deep learning models</p>
 
       <!-- Results Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-
         <!-- Left: Detected Object -->
         <div class="lg:col-span-2 bg-white rounded-2xl shadow-md p-6">
           <h3 class="text-xl font-semibold mb-4 text-gray-900">Detected Object</h3>
           <img id="resultImage" class="rounded-xl w-full object-contain mb-4 shadow" style="max-height: 350px;" />
-          
-          <!-- Detection Status -->
           <div id="detectionStatus" class="bg-green-50 border border-green-200 rounded-lg p-4">
             <div class="flex items-start gap-3">
               <svg class="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,92 +157,322 @@
               </div>
             </div>
           </div>
-
-          <!-- Classification Summary -->
           <div class="mt-6">
             <h4 class="font-semibold text-lg mb-3">Classification Summary</h4>
-            <p id="classificationSummary" class="text-gray-600 text-sm leading-relaxed">
-              The image has been successfully processed through multiple distinct machine learning and deep learning models.
-            </p>
+            <p id="classificationSummary" class="text-gray-600 text-sm leading-relaxed">-</p>
           </div>
         </div>
 
-        <!-- Right: Model Information -->
+        <!-- Right: Model Scores -->
         <div class="bg-white rounded-2xl shadow-md p-6">
           <div class="flex items-center gap-2 mb-4">
             <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            <h3 class="text-xl font-semibold text-gray-900">Model Information</h3>
+            <h3 class="text-xl font-semibold text-gray-900">Model Confidence</h3>
           </div>
-          
-          <div id="modelScoreList" class="space-y-3 max-h-96 overflow-y-auto">
-            <!-- Model scores will be inserted here -->
-          </div>
-
+          <div id="modelScoreList" class="space-y-3 max-h-96 overflow-y-auto"></div>
         </div>
       </div>
 
-      <!-- Comparative Chart -->
+      <!-- Chart -->
       <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
-        <h3 class="text-2xl font-semibold text-gray-900 mb-6">Comparative Model Performance Analysis</h3>
+        <h3 class="text-2xl font-semibold text-gray-900 mb-6">Comparative Model Performance</h3>
         <canvas id="chart" height="100"></canvas>
       </div>
 
-      
-
-      <!-- Analysis Summary -->
-      <div id="summary" class="bg-white border border-gray-200 rounded-2xl p-6 shadow-md">
-        <h3 class="text-2xl font-bold text-gray-900 mb-6">Analysis Summary</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div>
-            <p class="text-sm text-gray-600 mb-1">Best Performing Model</p>
-            <p id="bestModel" class="text-2xl font-bold text-blue-600">-</p>
-            <p id="bestModelStats" class="text-sm text-gray-600 mt-1">-</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-600 mb-1">Analysis Time</p>
-            <p id="analysisTime" class="text-2xl font-bold text-blue-600">-</p>
-            <p class="text-sm text-gray-600 mt-1">Average across all models</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-600 mb-1">Models Evaluated</p>
-            <p id="modelsEvaluated" class="text-2xl font-bold text-blue-600">4</p>
-            <p class="text-sm text-gray-600 mt-1">Deep learning & machine learning</p>
-          </div>
-        </div>
-        <p id="summaryText" class="text-gray-700 text-sm leading-relaxed">
-          <!-- Summary text will be inserted here -->
-        </p>
-      </div>
-
-      <!-- Analysis Insights -->
-      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-8">
-        <h3 class="text-xl font-semibold text-gray-900 mb-4">Analysis Insights</h3>
-        <ul id="insightsList" class="space-y-2 text-gray-700">
-          <!-- Insights will be inserted here -->
-        </ul>
-      </div>
-
-      <!-- Test Another Button -->
-      <button id="testAnotherBtn" class="w-full mt-8 py-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-lg font-bold transition">
-        ← Test Another Image
+      <!-- Download Report -->
+      <button id="downloadReportBtn" class="w-full mb-8 py-4 rounded-xl bg-green-500 hover:bg-green-600 text-white text-lg font-bold transition">
+        📄 Download Report (PDF)
       </button>
 
-    </section>
+      <!-- Summary -->
+      <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-md mb-8">
+        <h3 class="text-2xl font-bold text-gray-900 mb-6">Analysis Summary</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div><p class="text-sm text-gray-600 mb-1">Best Model</p><p id="bestModel" class="text-2xl font-bold text-blue-600">-</p></div>
+          <div><p class="text-sm text-gray-600 mb-1">Processing Time</p><p id="analysisTime" class="text-2xl font-bold text-blue-600">-</p></div>
+          <div><p class="text-sm text-gray-600 mb-1">Models Evaluated</p><p id="modelsEvaluated" class="text-2xl font-bold text-blue-600">4</p></div>
+        </div>
+        <p id="summaryText" class="text-gray-700 text-sm leading-relaxed">-</p>
+      </div>
 
+      <!-- Insights -->
+      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-8">
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">Key Insights</h3>
+        <ul id="insightsList" class="space-y-2 text-gray-700"></ul>
+      </div>
+
+      <!-- Test Another -->
+      <button id="testAnotherBtn" class="w-full py-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-lg font-bold transition">
+        ← Test Another Image
+      </button>
+    </section>
   </div>
 </main>
 
 <!-- FOOTER -->
 <footer class="bg-white shadow-inner mt-auto py-4">
   <div class="max-w-6xl mx-auto text-center text-sm text-gray-500">
-    © 2025 Real-Time Object Classifier | Shreyas Hadawale
+    © 2025 Real-Time Object Classifier
   </div>
 </footer>
 
-<!-- JS -->
-<script src="{{ url_for('static', filename='js/live_detect.js') }}"></script>
+<script>
+let selectedImage = null;
+let chartInstance = null;
+let liveInterval = null;
+const { jsPDF } = window.jspdf;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const fileInput = document.getElementById('fileInput');
+  const preview = document.getElementById('preview');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const useWebcamBtn = document.getElementById('useWebcamBtn');
+  const webcam = document.getElementById('webcam');
+  const captureBtn = document.getElementById('captureBtn');
+  const liveToggleBtn = document.getElementById('liveToggleBtn');
+  const videoOverlay = document.getElementById('videoOverlay');
+  const uploadSection = document.getElementById('uploadSection');
+  const results = document.getElementById('results');
+  const resultImage = document.getElementById('resultImage');
+  const detectedObject = document.getElementById('detectedObject');
+  const detectedConfidence = document.getElementById('detectedConfidence');
+  const modelScoreList = document.getElementById('modelScoreList');
+  const bestModel = document.getElementById('bestModel');
+  const analysisTime = document.getElementById('analysisTime');
+  const summaryText = document.getElementById('summaryText');
+  const insightsList = document.getElementById('insightsList');
+  const testAnotherBtn = document.getElementById('testAnotherBtn');
+  const downloadReportBtn = document.getElementById('downloadReportBtn');
+  const uploadContainer = document.getElementById('uploadContainer');
+  const orDivider = document.getElementById('orDivider');
+  const webcamContainer = document.getElementById('webcamContainer');
+  const classificationSummary = document.getElementById('classificationSummary');
+  const backBtn = document.getElementById('backBtn');
+
+  // Back button - restart everything
+  backBtn.addEventListener('click', () => location.reload());
+
+  // File upload
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        preview.src = ev.target.result;
+        preview.classList.remove('hidden');
+        selectedImage = file;
+        analyzeBtn.classList.remove('hidden');
+        hideInputScreen();
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Drag & drop
+  uploadContainer.addEventListener('dragover', e => { e.preventDefault(); uploadContainer.classList.add('border-blue-500', 'bg-blue-100'); });
+  uploadContainer.addEventListener('dragleave', () => uploadContainer.classList.remove('border-blue-500', 'bg-blue-100'));
+  uploadContainer.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadContainer.classList.remove('border-blue-500', 'bg-blue-100');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      fileInput.files = e.dataTransfer.files;
+      fileInput.dispatchEvent(new Event('change'));
+    }
+  });
+
+  // Open webcam
+  useWebcamBtn.addEventListener('click', async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      webcam.srcObject = stream;
+      webcamContainer.classList.remove('hidden');
+      hideInputScreen();
+    } catch (err) {
+      alert('Webcam access denied or unavailable: ' + err.message);
+    }
+  });
+
+  // Capture photo from webcam → direct analysis
+  captureBtn.addEventListener('click', () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = webcam.videoWidth;
+    canvas.height = webcam.videoHeight;
+    canvas.getContext('2d').drawImage(webcam, 0, 0);
+    const dataUrl = canvas.toDataURL('image/jpeg');
+    selectedImage = dataURLToFile(dataUrl, 'capture.jpg');
+    analyzeImage(dataUrl);
+  });
+
+  // Live detection (every 2.5 seconds)
+  liveToggleBtn.addEventListener('click', () => {
+    if (liveInterval) {
+      clearInterval(liveInterval);
+      liveInterval = null;
+      videoOverlay.classList.add('hidden');
+      liveToggleBtn.textContent = 'Start Live Detection';
+      liveToggleBtn.classList.replace('bg-red-500', 'bg-green-500');
+      liveToggleBtn.classList.replace('hover:bg-red-600', 'hover:bg-green-600');
+    } else {
+      results.classList.remove('hidden');
+      liveInterval = setInterval(sendLiveFrame, 1000);
+      liveToggleBtn.textContent = 'Stop Live Detection';
+      liveToggleBtn.classList.replace('bg-green-500', 'bg-red-500');
+      liveToggleBtn.classList.replace('hover:bg-green-600', 'hover:bg-red-600');
+    }
+  });
+
+  async function sendLiveFrame() {
+    const canvas = document.createElement('canvas');
+    canvas.width = webcam.videoWidth;
+    canvas.height = webcam.videoHeight;
+    canvas.getContext('2d').drawImage(webcam, 0, 0);
+    const frameData = canvas.toDataURL('image/jpeg');
+
+    try {
+      const res = await fetch('/detect-webcam', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frame: frameData })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      updateResults(data, frameData);
+    } catch (err) {
+      console.error('Live error:', err);
+    }
+  }
+
+  // Static image analysis
+  analyzeBtn.addEventListener('click', () => {
+    if (!selectedImage) return;
+    analyzeImage(preview.src);
+  });
+
+  async function analyzeImage(imageDataUrl) {
+    const formData = new FormData();
+    formData.append('file', selectedImage || dataURLToFile(imageDataUrl, 'img.jpg'));
+
+    try {
+      const res = await fetch('/detect', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      updateResults(data, imageDataUrl);
+    } catch (err) {
+      alert('Analysis error: ' + err.message);
+    }
+  }
+
+  // Shared result updater (static + live)
+  function updateResults(data, imageSrc) {
+    uploadSection.classList.add('hidden');
+    results.classList.remove('hidden');
+
+    resultImage.src = imageSrc;
+    detectedObject.textContent = data.object;
+    detectedConfidence.textContent = `${data.confidence}%`;
+    analysisTime.textContent = `${data.time}s`;
+    bestModel.textContent = data.best_model;
+
+    // Model list
+    modelScoreList.innerHTML = '';
+    Object.entries(data.scores).forEach(([model, score]) => {
+      const div = document.createElement('div');
+      div.className = 'flex justify-between items-center p-3 rounded-lg bg-gray-50';
+      div.innerHTML = `<span class="font-medium ${model === data.best_model ? 'text-green-600 font-bold' : ''}">${model}</span>
+                       <span class="text-lg font-semibold">${score}%</span>`;
+      modelScoreList.appendChild(div);
+    });
+
+    // Smooth chart update (no reset from 0)
+    const labels = Object.keys(data.scores);
+    const values = Object.values(data.scores);
+    if (chartInstance) {
+      chartInstance.data.labels = labels;
+      chartInstance.data.datasets[0].data = values;
+      chartInstance.data.datasets[0].backgroundColor = labels.map(m => m === data.best_model ? 'rgba(34,197,94,0.8)' : 'rgba(59,130,246,0.7)');
+      chartInstance.update(); // Smooth transition from previous values
+    } else {
+      chartInstance = new Chart(document.getElementById('chart'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Confidence (%)',
+            data: values,
+            backgroundColor: labels.map(m => m === data.best_model ? 'rgba(34,197,94,0.8)' : 'rgba(59,130,246,0.7)'),
+            borderRadius: 8,
+          }]
+        },
+        options: {
+          animation: { duration: 1000, easing: 'easeOutQuart' },
+          scales: { y: { beginAtZero: true, max: 100 } },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // Text updates
+    classificationSummary.textContent = `Highest confidence prediction: "${data.object}" by ${data.best_model}.`;
+    summaryText.textContent = `Analysis completed in ${data.time}s across 4 deep learning models.`;
+
+    insightsList.innerHTML = `
+      <li>✓ Best model: <strong>${data.best_model}</strong> (${data.confidence}% confidence)</li>
+      <li>✓ Processing time: <strong>${data.time}s</strong></li>
+      <li>✓ All 4 models evaluated successfully</li>
+    `;
+
+    localStorage.setItem('scores', JSON.stringify(data.scores));
+  }
+
+  // PDF Report
+  downloadReportBtn.addEventListener('click', () => {
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.text('Object Detection Report', 105, 20, { align: 'center' });
+    doc.addImage(resultImage.src, 'JPEG', 15, 35, 180, 120);
+
+    doc.setFontSize(12);
+    let y = 170;
+    doc.text(`Detected Object: ${detectedObject.textContent}`, 15, y);
+    doc.text(`Confidence: ${detectedConfidence.textContent}`, 15, y += 10);
+    doc.text(`Best Model: ${bestModel.textContent}`, 15, y += 10);
+    doc.text(`Processing Time: ${analysisTime.textContent}`, 15, y += 10);
+
+    doc.text('Model Scores:', 15, y += 20);
+    Object.entries(JSON.parse(localStorage.getItem('scores') || '{}')).forEach(([m, s]) => {
+      doc.text(`• ${m}: ${s}%`, 25, y += 10);
+    });
+
+    const chartImg = document.getElementById('chart').toDataURL('image/png');
+    doc.addImage(chartImg, 'PNG', 15, y += 10, 180, 90);
+
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 15, y += 100);
+    doc.save('Object_Detection_Report.pdf');
+  });
+
+  testAnotherBtn.addEventListener('click', () => location.reload());
+
+  function hideInputScreen() {
+    backBtn.classList.remove('hidden');
+    uploadContainer.classList.add('hidden');
+    orDivider.classList.add('hidden');
+    useWebcamBtn.classList.add('hidden');
+  }
+
+  function dataURLToFile(dataurl, filename) {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new File([u8arr], filename, { type: mime });
+  }
+});
+</script>
 
 </body>
 </html>
