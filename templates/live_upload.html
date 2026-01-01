@@ -30,6 +30,21 @@
       font-size: 18px;
       font-weight: bold;
     }
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    #webcam {
+      transform: scaleX(-1);
+    }
   </style>
 </head>
 
@@ -43,10 +58,41 @@
       <span>Real-Time Object Classifier</span>
     </div>
     <ul class="flex space-x-14 text-lg items-center">
-      <li><a href="/" class="flex items-center space-x-2 hover:text-blue-600 transition"><svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1h-6v-6H10v6H4a1 1 0 0 1-1-1V9.5z"/></svg><span>Home</span></a></li>
-      <li><a href="/about" class="flex items-center space-x-2 hover:text-blue-600 transition"><svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><circle cx="12" cy="8" r="1"/></svg><span>About</span></a></li>
-      <li><a href="/live-upload" class="flex items-center space-x-2 text-blue-600 font-semibold transition"><svg width="18" height="18" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4l6 6h-3v8H9v-8H6l6-6z"/></svg><span>Live Upload</span></a></li>
-      <li><a href="/help" class="flex items-center space-x-2 hover:text-blue-600 transition"><svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 17v-.5m0-4.5a2 2 0 1 0-2-2"/></svg><span>Help</span></a></li>
+      <li>
+        <a href="/" class="flex items-center space-x-2 hover:text-blue-600 transition">
+          <svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1h-6v-6H10v6H4a1 1 0 0 1-1-1V9.5z"/>
+          </svg>
+          <span>Home</span>
+        </a>
+      </li>
+      <li>
+        <a href="/about" class="flex items-center space-x-2 hover:text-blue-600 transition">
+          <svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <circle cx="12" cy="8" r="1"/>
+          </svg>
+          <span>About</span>
+        </a>
+      </li>
+      <li>
+        <a href="/live-upload" class="flex items-center space-x-2 text-blue-600 font-semibold">
+          <svg width="18" height="18" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M12 4l6 6h-3v8H9v-8H6l6-6z"/>
+          </svg>
+          <span>Live Upload</span>
+        </a>
+      </li>
+      <li>
+        <a href="/help" class="flex items-center space-x-2 hover:text-blue-600 transition">
+          <svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 17v-.5m0-4.5a2 2 0 1 0-2-2"/>
+          </svg>
+          <span>Help</span>
+        </a>
+      </li>
     </ul>
   </nav>
 </header>
@@ -59,6 +105,15 @@
     <div class="text-center mb-10">
       <h1 class="text-4xl font-bold text-gray-900 mb-3">Upload Image for Analysis</h1>
       <p class="text-gray-600 text-lg">Select an image to analyze using our deep learning models</p>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl p-8 shadow-2xl text-center">
+        <div class="loader mx-auto mb-4"></div>
+        <p class="text-xl font-semibold text-gray-800">Analyzing Image...</p>
+        <p class="text-gray-600 mt-2">Please wait while our models process your image</p>
+      </div>
     </div>
 
     <!-- Upload Section -->
@@ -117,7 +172,7 @@
         </div>
       </div>
 
-      <!-- Start Analysis Button (only for uploaded image) -->
+      <!-- Start Analysis Button -->
       <button id="analyzeBtn"
               class="hidden w-full mt-8 py-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-lg font-bold transition">
         Start Analysis →
@@ -139,11 +194,10 @@
 
       <!-- Results Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-        <!-- Left: Detected Object -->
         <div class="lg:col-span-2 bg-white rounded-2xl shadow-md p-6">
           <h3 class="text-xl font-semibold mb-4 text-gray-900">Detected Object</h3>
           <img id="resultImage" class="rounded-xl w-full object-contain mb-4 shadow" style="max-height: 350px;" />
-          <div id="detectionStatus" class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div class="bg-green-50 border border-green-200 rounded-lg p-4">
             <div class="flex items-start gap-3">
               <svg class="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -152,18 +206,17 @@
                 <p class="font-semibold text-green-800 text-lg">Detection Complete</p>
                 <p class="text-green-700 mt-1">
                   Object: <span id="detectedObject" class="font-bold">-</span><br>
-                  Confidence: <span id="detectedConfidence" class="font-bold">-</span>
+                  Confidence: <span id="detectedConfidence" class="font-bold text-2xl">0%</span>
                 </p>
               </div>
             </div>
           </div>
           <div class="mt-6">
-            <h4 class="font-semibold text-lg mb-3">Classification Summary</h4>
+            <h4 class="font-semibold text-lg mb-3 text-gray-900">Classification Summary</h4>
             <p id="classificationSummary" class="text-gray-600 text-sm leading-relaxed">-</p>
           </div>
         </div>
 
-        <!-- Right: Model Scores -->
         <div class="bg-white rounded-2xl shadow-md p-6">
           <div class="flex items-center gap-2 mb-4">
             <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,7 +224,7 @@
             </svg>
             <h3 class="text-xl font-semibold text-gray-900">Model Confidence</h3>
           </div>
-          <div id="modelScoreList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+          <div id="modelScoreList" class="space-y-4"></div>
         </div>
       </div>
 
@@ -181,12 +234,7 @@
         <canvas id="chart" height="100"></canvas>
       </div>
 
-      <!-- Download Report -->
-      <button id="downloadReportBtn" class="w-full mb-8 py-4 rounded-xl bg-green-500 hover:bg-green-600 text-white text-lg font-bold transition">
-        📄 Download Report (PDF)
-      </button>
-
-      <!-- Summary -->
+      <!-- Analysis Summary -->
       <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-md mb-8">
         <h3 class="text-2xl font-bold text-gray-900 mb-6">Analysis Summary</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -194,7 +242,28 @@
           <div><p class="text-sm text-gray-600 mb-1">Processing Time</p><p id="analysisTime" class="text-2xl font-bold text-blue-600">-</p></div>
           <div><p class="text-sm text-gray-600 mb-1">Models Evaluated</p><p id="modelsEvaluated" class="text-2xl font-bold text-blue-600">4</p></div>
         </div>
-        <p id="summaryText" class="text-gray-700 text-sm leading-relaxed">-</p>
+        <p id="summaryText" class="text-gray-700 text-sm leading-relaxed mb-4">-</p>
+       <div class="flex justify-between items-center">
+         <button id="viewMoreBtn" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition">
+            View More Details
+          </button>
+          <button id="downloadReportBtn" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition">
+           📄 Download Report
+          </button>
+</div>
+        <div id="moreDetails" class="hidden mt-4 overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-gray-300">
+                <th class="py-3 px-4 font-semibold">Model</th>
+                <th class="py-3 px-4 font-semibold">Prediction</th>
+                <th class="py-3 px-4 font-semibold">Confidence</th>
+                <th class="py-3 px-4 font-semibold">Processing Time</th>
+              </tr>
+            </thead>
+            <tbody id="modelDetailsList"></tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Insights -->
@@ -214,7 +283,7 @@
 <!-- FOOTER -->
 <footer class="bg-white shadow-inner mt-auto py-4">
   <div class="max-w-6xl mx-auto text-center text-sm text-gray-500">
-    © 2025 Real-Time Object Classifier
+    © 2026 Real-Time Object Classifier
   </div>
 </footer>
 
@@ -222,6 +291,9 @@
 let selectedImage = null;
 let chartInstance = null;
 let liveInterval = null;
+let prevScores = {};
+let isLiveMode = false;
+let modelPredictions = {}; // Will be filled from backend if available
 const { jsPDF } = window.jspdf;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -233,6 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const captureBtn = document.getElementById('captureBtn');
   const liveToggleBtn = document.getElementById('liveToggleBtn');
   const videoOverlay = document.getElementById('videoOverlay');
+  const loadingOverlay = document.getElementById('loadingOverlay');
   const uploadSection = document.getElementById('uploadSection');
   const results = document.getElementById('results');
   const resultImage = document.getElementById('resultImage');
@@ -250,11 +323,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const webcamContainer = document.getElementById('webcamContainer');
   const classificationSummary = document.getElementById('classificationSummary');
   const backBtn = document.getElementById('backBtn');
+  const viewMoreBtn = document.getElementById('viewMoreBtn');
+  const moreDetails = document.getElementById('moreDetails');
+  const modelDetailsList = document.getElementById('modelDetailsList');
 
-  // Back button - restart everything
   backBtn.addEventListener('click', () => location.reload());
 
-  // File upload
+  viewMoreBtn.addEventListener('click', () => {
+    moreDetails.classList.toggle('hidden');
+    viewMoreBtn.textContent = moreDetails.classList.contains('hidden') ? 'View More Details' : 'Show Less';
+  });
+
+  function animateCounter(element, startValue, targetValue, duration = 800) {
+    let current = startValue;
+    const diff = targetValue - startValue;
+    const increment = diff / (duration / 16);
+    const timer = setInterval(() => {
+      current += increment;
+      if ((diff > 0 && current >= targetValue) || (diff < 0 && current <= targetValue) || diff === 0) {
+        element.textContent = `${targetValue}%`;
+        clearInterval(timer);
+      } else {
+        element.textContent = `${Math.round(current)}%`;
+      }
+    }, 16);
+  }
+
   fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -270,7 +364,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Drag & drop
   uploadContainer.addEventListener('dragover', e => { e.preventDefault(); uploadContainer.classList.add('border-blue-500', 'bg-blue-100'); });
   uploadContainer.addEventListener('dragleave', () => uploadContainer.classList.remove('border-blue-500', 'bg-blue-100'));
   uploadContainer.addEventListener('drop', e => {
@@ -283,7 +376,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Open webcam
   useWebcamBtn.addEventListener('click', async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -291,11 +383,10 @@ document.addEventListener('DOMContentLoaded', () => {
       webcamContainer.classList.remove('hidden');
       hideInputScreen();
     } catch (err) {
-      alert('Webcam access denied or unavailable: ' + err.message);
+      alert('Webcam access denied: ' + err.message);
     }
   });
 
-  // Capture photo from webcam → direct analysis
   captureBtn.addEventListener('click', () => {
     const canvas = document.createElement('canvas');
     canvas.width = webcam.videoWidth;
@@ -303,10 +394,10 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.getContext('2d').drawImage(webcam, 0, 0);
     const dataUrl = canvas.toDataURL('image/jpeg');
     selectedImage = dataURLToFile(dataUrl, 'capture.jpg');
+    isLiveMode = false;
     analyzeImage(dataUrl);
   });
 
-  // Live detection (every 2.5 seconds)
   liveToggleBtn.addEventListener('click', () => {
     if (liveInterval) {
       clearInterval(liveInterval);
@@ -315,8 +406,10 @@ document.addEventListener('DOMContentLoaded', () => {
       liveToggleBtn.textContent = 'Start Live Detection';
       liveToggleBtn.classList.replace('bg-red-500', 'bg-green-500');
       liveToggleBtn.classList.replace('hover:bg-red-600', 'hover:bg-green-600');
+      isLiveMode = false;
     } else {
       results.classList.remove('hidden');
+      isLiveMode = true;
       liveInterval = setInterval(sendLiveFrame, 1000);
       liveToggleBtn.textContent = 'Stop Live Detection';
       liveToggleBtn.classList.replace('bg-green-500', 'bg-red-500');
@@ -330,7 +423,6 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.height = webcam.videoHeight;
     canvas.getContext('2d').drawImage(webcam, 0, 0);
     const frameData = canvas.toDataURL('image/jpeg');
-
     try {
       const res = await fetch('/detect-webcam', {
         method: 'POST',
@@ -345,13 +437,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Static image analysis
   analyzeBtn.addEventListener('click', () => {
     if (!selectedImage) return;
+    isLiveMode = false;
     analyzeImage(preview.src);
   });
 
   async function analyzeImage(imageDataUrl) {
+    loadingOverlay.classList.remove('hidden');
+    analyzeBtn.disabled = true;
+    liveToggleBtn.disabled = true;
+    captureBtn.disabled = true;
+
     const formData = new FormData();
     formData.append('file', selectedImage || dataURLToFile(imageDataUrl, 'img.jpg'));
 
@@ -362,38 +459,80 @@ document.addEventListener('DOMContentLoaded', () => {
       updateResults(data, imageDataUrl);
     } catch (err) {
       alert('Analysis error: ' + err.message);
+    } finally {
+      loadingOverlay.classList.add('hidden');
+      analyzeBtn.disabled = false;
+      liveToggleBtn.disabled = false;
+      captureBtn.disabled = false;
     }
   }
 
-  // Shared result updater (static + live)
   function updateResults(data, imageSrc) {
     uploadSection.classList.add('hidden');
     results.classList.remove('hidden');
 
     resultImage.src = imageSrc;
     detectedObject.textContent = data.object;
-    detectedConfidence.textContent = `${data.confidence}%`;
     analysisTime.textContent = `${data.time}s`;
     bestModel.textContent = data.best_model;
 
-    // Model list
+    const mainStart = isLiveMode ? (prevScores['main'] || 0) : 0;
+    detectedConfidence.textContent = `${mainStart}%`;
+    setTimeout(() => animateCounter(detectedConfidence, mainStart, data.confidence), 300);
+    prevScores['main'] = data.confidence;
+
     modelScoreList.innerHTML = '';
     Object.entries(data.scores).forEach(([model, score]) => {
       const div = document.createElement('div');
-      div.className = 'flex justify-between items-center p-3 rounded-lg bg-gray-50';
-      div.innerHTML = `<span class="font-medium ${model === data.best_model ? 'text-green-600 font-bold' : ''}">${model}</span>
-                       <span class="text-lg font-semibold">${score}%</span>`;
+      div.className = 'flex justify-between items-center p-4 rounded-lg bg-gray-50';
+      const startScore = isLiveMode ? (prevScores[model] || 0) : 0;
+      div.innerHTML = `
+        <span class="font-medium text-lg">${model}</span>
+        <span class="text-3xl font-bold text-gray-800 odometer">${startScore}%</span>
+      `;
       modelScoreList.appendChild(div);
+
+      setTimeout(() => {
+        const odometer = div.querySelector('.odometer');
+        animateCounter(odometer, startScore, score);
+      }, 600);
+      prevScores[model] = score;
     });
 
-    // Smooth chart update (no reset from 0)
+    // Use actual per-model predictions if backend provides them
+    // Expected format: data.model_predictions = { "CNN": "human", "YOLO": "person", ... }
+    modelPredictions = data.model_predictions || {};
+    if (Object.keys(modelPredictions).length === 0) {
+      // Fallback: use overall object for all (your current backend behavior)
+      Object.keys(data.scores).forEach(model => {
+        modelPredictions[model] = data.object;
+      });
+    }
+
+    // Table with real predictions
+    modelDetailsList.innerHTML = '';
+    Object.entries(data.scores).forEach(([model, score]) => {
+      const pred = modelPredictions[model] || data.object;
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-gray-200';
+      tr.innerHTML = `
+        <td class="py-3 px-4">${model}</td>
+        <td class="py-3 px-4 font-medium">${pred}</td>
+        <td class="py-3 px-4 font-semibold">${score}%</td>
+        <td class="py-3 px-4">${data.time}s</td>
+      `;
+      modelDetailsList.appendChild(tr);
+    });
+
+    // Bar chart
     const labels = Object.keys(data.scores);
     const values = Object.values(data.scores);
     if (chartInstance) {
       chartInstance.data.labels = labels;
       chartInstance.data.datasets[0].data = values;
-      chartInstance.data.datasets[0].backgroundColor = labels.map(m => m === data.best_model ? 'rgba(34,197,94,0.8)' : 'rgba(59,130,246,0.7)');
-      chartInstance.update(); // Smooth transition from previous values
+      chartInstance.data.datasets[0].backgroundColor = 'rgba(59,130,246,0.7)';
+      chartInstance.data.datasets[0].barThickness = 40;
+      chartInstance.update();
     } else {
       chartInstance = new Chart(document.getElementById('chart'), {
         type: 'bar',
@@ -402,7 +541,8 @@ document.addEventListener('DOMContentLoaded', () => {
           datasets: [{
             label: 'Confidence (%)',
             data: values,
-            backgroundColor: labels.map(m => m === data.best_model ? 'rgba(34,197,94,0.8)' : 'rgba(59,130,246,0.7)'),
+            backgroundColor: 'rgba(59,130,246,0.7)',
+            barThickness: 40,
             borderRadius: 8,
           }]
         },
@@ -414,7 +554,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Text updates
     classificationSummary.textContent = `Highest confidence prediction: "${data.object}" by ${data.best_model}.`;
     summaryText.textContent = `Analysis completed in ${data.time}s across 4 deep learning models.`;
 
@@ -425,33 +564,136 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     localStorage.setItem('scores', JSON.stringify(data.scores));
+    localStorage.setItem('resultData', JSON.stringify(data));
+    localStorage.setItem('resultImage', imageSrc);
+    localStorage.setItem('modelPredictions', JSON.stringify(modelPredictions));
   }
+downloadReportBtn.addEventListener('click', async () => {
+    // 1. Safe Data Retrieval from localStorage
+    const data = JSON.parse(localStorage.getItem('resultData')) || {};
+    const imageSrc = localStorage.getItem('resultImage');
+    const modelPredictions = JSON.parse(localStorage.getItem('modelPredictions')) || {};
+    
+    // 2. Capture Chart Canvas
+    const chartCanvas = document.getElementById('chart');
+    let chartImg = "";
+    if (chartCanvas) {
+        chartImg = chartCanvas.toDataURL('image/png');
+    }
 
-  // PDF Report
-  downloadReportBtn.addEventListener('click', () => {
-    const doc = new jsPDF();
-    doc.setFontSize(20);
-    doc.text('Object Detection Report', 105, 20, { align: 'center' });
-    doc.addImage(resultImage.src, 'JPEG', 15, 35, 180, 120);
+    // 3. Initialize PDF (Using your existing script's jsPDF setup)
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 15;
 
-    doc.setFontSize(12);
-    let y = 170;
-    doc.text(`Detected Object: ${detectedObject.textContent}`, 15, y);
-    doc.text(`Confidence: ${detectedConfidence.textContent}`, 15, y += 10);
-    doc.text(`Best Model: ${bestModel.textContent}`, 15, y += 10);
-    doc.text(`Processing Time: ${analysisTime.textContent}`, 15, y += 10);
+    // --- PAGE 1: IMAGE & DETAILED PERFORMANCE ---
+    // Header
+    pdf.setFillColor(59, 130, 246);
+    pdf.rect(0, 0, pageWidth, 40, 'F');
+    pdf.setFontSize(24);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text('Object Detection Analysis Report', pageWidth / 2, 22, { align: 'center' });
 
-    doc.text('Model Scores:', 15, y += 20);
-    Object.entries(JSON.parse(localStorage.getItem('scores') || '{}')).forEach(([m, s]) => {
-      doc.text(`• ${m}: ${s}%`, 25, y += 10);
-    });
+    pdf.setFontSize(10);
+    pdf.text(`Generated on: ${new Date().toLocaleString()}`, pageWidth / 2, 30, { align: 'center' });
 
-    const chartImg = document.getElementById('chart').toDataURL('image/png');
-    doc.addImage(chartImg, 'PNG', 15, y += 10, 180, 90);
+    // 1. Analyzed Image Source
+    pdf.setTextColor(0);
+    pdf.setFontSize(16);
+    pdf.setFont("helvetica", "bold");
+    pdf.text('1. Analyzed Image Source', margin, 52);
+    if (imageSrc) {
+        // Positioned to leave enough room for the table below
+        pdf.addImage(imageSrc, 'JPEG', margin, 57, pageWidth - (margin * 2), 85);
+    }
 
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 15, y += 100);
-    doc.save('Object_Detection_Report.pdf');
-  });
+    // 2. Detailed Model Performance
+    let tableY = 155;
+    pdf.setFontSize(16);
+    pdf.text('2. Detailed Model Performance', margin, tableY);
+
+    // Table Header (Removed 'View', Renamed 'Processing Time')
+    tableY += 8;
+    pdf.setFillColor(230, 237, 249);
+    pdf.rect(margin, tableY, pageWidth - (margin * 2), 10, 'F');
+    pdf.setFontSize(10);
+    pdf.text('Model', margin + 5, tableY + 7);
+    pdf.text('Prediction', margin + 60, tableY + 7);
+    pdf.text('Confidence', margin + 110, tableY + 7);
+    pdf.text('Processing Time', margin + 150, tableY + 7);
+
+    // Table Rows
+    tableY += 10;
+    pdf.setFont("helvetica", "normal");
+    if (data.scores) {
+        Object.entries(data.scores).forEach(([model, score]) => {
+            const prediction = modelPredictions[model] || data.object || 'N/A';
+            pdf.text(model, margin + 5, tableY + 7);
+            pdf.text(prediction, margin + 60, tableY + 7);
+            pdf.text(`${score}%`, margin + 110, tableY + 7);
+            pdf.text(`${data.time || 0}s`, margin + 150, tableY + 7);
+            
+            pdf.setDrawColor(230);
+            pdf.line(margin, tableY + 11, pageWidth - margin, tableY + 11);
+            tableY += 12;
+        });
+    }
+
+    pdf.setFontSize(9);
+    pdf.setTextColor(150);
+    pdf.text('Page 1 of 2', pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    // --- PAGE 2: CHART & SUMMARY ---
+    pdf.addPage();
+    
+    // Page 2 Header Blue Strip
+    pdf.setFillColor(59, 130, 246);
+    pdf.rect(0, 0, pageWidth, 15, 'F');
+    
+    // 1. Performance Visualization
+    pdf.setTextColor(0);
+    pdf.setFontSize(16);
+    pdf.setFont("helvetica", "bold");
+    pdf.text('1. Performance Visualization', margin, 30);
+    if (chartImg) {
+        pdf.addImage(chartImg, 'PNG', margin, 35, pageWidth - (margin * 2), 80);
+    }
+
+    // 2. Detection Summary Note (Professional Box Design)
+    const noteY = 135;
+    pdf.setFontSize(16);
+    pdf.text('2. Detection Summary Note', margin, noteY);
+
+    pdf.setDrawColor(59, 130, 246);
+    pdf.setFillColor(248, 250, 252); // Light Professional Blue
+    pdf.setLineWidth(0.5);
+    // Draw a box for the summary
+    pdf.rect(margin, noteY + 5, pageWidth - (margin * 2), 45, 'FD');
+
+    pdf.setFontSize(12);
+    pdf.setTextColor(30, 58, 138); // Strong blue for title
+    pdf.text('Inference Conclusion:', margin + 8, noteY + 15);
+
+    pdf.setFontSize(11);
+    pdf.setTextColor(0);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(`• Primary identification for analyzed media: "${data.object || 'N/A'}"`, margin + 12, noteY + 25);
+    pdf.text(`• Peak model accuracy: ${data.confidence || 0}% using ${data.best_model || 'N/A'}`, margin + 12, noteY + 32);
+    pdf.text(`• Total multi-model classification time: ${data.time || 0} seconds`, margin + 12, noteY + 39);
+
+    // Final Footer
+    pdf.setDrawColor(59, 130, 246);
+    pdf.line(margin, pageHeight - 20, pageWidth - margin, pageHeight - 20);
+    pdf.setFontSize(9);
+    pdf.setTextColor(150);
+    pdf.text('Real-Time Object Classifier © 2026', pageWidth / 2, pageHeight - 12, { align: 'center' });
+    pdf.text('Page 2 of 2', pageWidth - 25, pageHeight - 12);
+
+    // Save the PDF
+    pdf.save('Object_Detection_Report.pdf');
+});
 
   testAnotherBtn.addEventListener('click', () => location.reload());
 
