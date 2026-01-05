@@ -7,19 +7,22 @@ import io
 import numpy as np
 import cv2
 import base64
+import os
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS # Added for deployment compatibility
 
 # Import models (adjust path if needed)
 try:
     from model_resnet import get_resnet18_model
     from model_mobilenet import get_mobilenet_model
     from yolo_model import predict_yolo_single
-except:
+except ImportError:
     from src.model_resnet import get_resnet18_model
     from src.model_mobilenet import get_mobilenet_model
     from src.yolo_model import predict_yolo_single
 
 app = Flask(__name__)
+CORS(app) # Enable CORS to prevent browser blocking during hosting
 
 # =========================
 # Classes
@@ -27,7 +30,7 @@ app = Flask(__name__)
 CLASS_NAMES = ["bird", "car", "cat", "dog", "human", "watch"]
 
 # =========================
-# Load CNN Model
+# Load CNN Model Architecture (Original 260-line logic)
 # =========================
 class CNNModel(nn.Module):
     def __init__(self):
@@ -65,18 +68,22 @@ class CNNModel(nn.Module):
         return self.network(x)
 
 # Load models
+device = torch.device("cpu") # Forced CPU for standard cloud hosting
 print("🔄 Loading models...")
 
 cnn_model = CNNModel()
-cnn_model.load_state_dict(torch.load("checkpoints/cnn_model.pth", map_location="cpu"), strict=False)
+if os.path.exists("checkpoints/cnn_model.pth"):
+    cnn_model.load_state_dict(torch.load("checkpoints/cnn_model.pth", map_location=device), strict=False)
 cnn_model.eval()
 
 resnet_model = get_resnet18_model(num_classes=6)
-resnet_model.load_state_dict(torch.load("checkpoints/resnet18_model.pth", map_location="cpu"), strict=False)
+if os.path.exists("checkpoints/resnet18_model.pth"):
+    resnet_model.load_state_dict(torch.load("checkpoints/resnet18_model.pth", map_location=device), strict=False)
 resnet_model.eval()
 
 mobilenet_model = get_mobilenet_model(num_classes=6)
-mobilenet_model.load_state_dict(torch.load("checkpoints/mobilenet_model.pth", map_location="cpu"), strict=False)
+if os.path.exists("checkpoints/mobilenet_model.pth"):
+    mobilenet_model.load_state_dict(torch.load("checkpoints/mobilenet_model.pth", map_location=device), strict=False)
 mobilenet_model.eval()
 
 print("✅ All models loaded successfully!")
@@ -152,7 +159,7 @@ def detect():
 
         elapsed = round(time.time() - start, 2)
 
-        # Prepare scores (only 4 models)
+        # Prepare scores
         scores = {
             "YOLO": round(y_conf, 1),
             "CNN": round(cnn_conf.item() * 100, 1),
@@ -164,16 +171,21 @@ def detect():
         best_model = max(scores, key=scores.get)
         best_confidence = scores[best_model]
 
-        # Determine predicted object (use best model's prediction)
-        if best_model == "YOLO":
-            detected_object = y_label
-        else:
-            detected_object = CLASS_NAMES[cnn_pred.item()]
+        # Determine predicted object
+        model_predictions = {
+            "YOLO": y_label,
+            "CNN": CLASS_NAMES[cnn_pred.item()],
+            "ResNet-18": CLASS_NAMES[res_pred.item()],
+            "MobileNet": CLASS_NAMES[mob_pred.item()]
+        }
+        
+        detected_object = model_predictions[best_model]
 
         return jsonify({
             "object": detected_object,
             "confidence": best_confidence,
             "scores": scores,
+            "model_predictions": model_predictions,
             "best_model": best_model,
             "time": elapsed,
             "evaluated": 4
@@ -238,15 +250,20 @@ def detect_webcam():
         best_confidence = scores[best_model]
 
         # Determine predicted object
-        if best_model == "YOLO":
-            detected_object = y_label
-        else:
-            detected_object = CLASS_NAMES[cnn_pred.item()]
+        model_predictions = {
+            "YOLO": y_label,
+            "CNN": CLASS_NAMES[cnn_pred.item()],
+            "ResNet-18": CLASS_NAMES[res_pred.item()],
+            "MobileNet": CLASS_NAMES[mob_pred.item()]
+        }
+        
+        detected_object = model_predictions[best_model]
 
         return jsonify({
             "object": detected_object,
             "confidence": best_confidence,
             "scores": scores,
+            "model_predictions": model_predictions,
             "best_model": best_model,
             "time": elapsed,
             "evaluated": 4
@@ -257,4 +274,6 @@ def detect_webcam():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    # Use environment PORT for Render/Heroku compatibility
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True, host="0.0.0.0", port=port)
