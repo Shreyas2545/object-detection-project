@@ -1,6 +1,11 @@
+flask
+flask-cors
 torch
 torchvision
-opencv-python
-matplotlib
+ultralytics
+opencv-python-headless
 numpy
-pandas
+pillow
+joblib
+scikit-learn
+gunicorn
