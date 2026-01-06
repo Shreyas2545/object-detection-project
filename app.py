@@ -12,7 +12,7 @@ from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 import joblib
 
-# Import custom model modules
+# Import your custom model functions
 try:
     from model_resnet import get_resnet18_model
     from model_mobilenet import get_mobilenet_model
@@ -80,12 +80,12 @@ if os.path.exists("checkpoints/mobilenet_model.pth"):
     mobilenet_model.load_state_dict(torch.load("checkpoints/mobilenet_model.pth", map_location=device))
 mobilenet_model.eval()
 
-# Load Traditional ML models
-print("Loading traditional ML models...")
+# Load traditional ML models
 decision_tree = joblib.load("checkpoints/decision_tree_model.pkl")
 knn = joblib.load("checkpoints/knn_model.pkl")
 random_forest = joblib.load("checkpoints/random_forest_model.pkl")
 svm = joblib.load("checkpoints/svm_model.pkl")
+
 print("All 8 models loaded!")
 
 # Transform for DL
@@ -95,21 +95,13 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-# Simple feature extraction for traditional ML: resize + flatten
-def extract_simple_features(img_pil):
+# Feature extraction for traditional ML (flattened image)
+def extract_features_for_ml(img_pil):
     img = img_pil.resize((128, 128))
-    img_array = np.array(img).flatten()
-    return img_array.reshape(1, -1)
+    arr = np.array(img)
+    return arr.flatten().reshape(1, -1)
 
-# Routes
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-@app.route("/live-upload")
-def live_upload():
-    return render_template("live_upload.html")
-
+# Unified prediction
 def run_all_predictions(img_bytes):
     try:
         image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
@@ -135,23 +127,19 @@ def run_all_predictions(img_bytes):
 
         y_label, y_conf = predict_yolo_single(cv_img)
 
-        # Traditional ML predictions using flattened pixels
-        features = extract_simple_features(image)
+        # Traditional ML
+        features = extract_features_for_ml(image)
         dt_pred = decision_tree.predict(features)[0]
-        dt_prob = decision_tree.predict_proba(features)[0]
-        dt_conf = round(np.max(dt_prob) * 100, 1)
+        dt_conf = round(np.max(decision_tree.predict_proba(features)[0]) * 100, 1)
 
         knn_pred = knn.predict(features)[0]
-        knn_prob = knn.predict_proba(features)[0]
-        knn_conf = round(np.max(knn_prob) * 100, 1)
+        knn_conf = round(np.max(knn.predict_proba(features)[0]) * 100, 1)
 
         rf_pred = random_forest.predict(features)[0]
-        rf_prob = random_forest.predict_proba(features)[0]
-        rf_conf = round(np.max(rf_prob) * 100, 1)
+        rf_conf = round(np.max(random_forest.predict_proba(features)[0]) * 100, 1)
 
         svm_pred = svm.predict(features)[0]
-        svm_prob = svm.predict_proba(features)[0]
-        svm_conf = round(np.max(svm_prob) * 100, 1)
+        svm_conf = round(np.max(svm.predict_proba(features)[0]) * 100, 1)
 
         elapsed = round(time.time() - start, 2)
 
@@ -198,23 +186,17 @@ def run_all_predictions(img_bytes):
 @app.route("/detect", methods=["POST"])
 def detect():
     if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-
+        return jsonify({"error": "No file"}), 400
     file = request.files["file"]
     img_bytes = file.read()
     result = run_all_predictions(img_bytes)
-    if "error" in result:
-        return jsonify(result), 500
     return jsonify(result)
 
 @app.route("/detect-webcam", methods=["POST"])
 def detect_webcam():
     data = request.json
-    img_data = data["frame"].split(",")[1]
-    img_bytes = base64.b64decode(img_data)
+    img_bytes = base64.b64decode(data["frame"].split(",")[1])
     result = run_all_predictions(img_bytes)
-    if "error" in result:
-        return jsonify(result), 500
     return jsonify(result)
 
 if __name__ == "__main__":
