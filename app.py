@@ -10,9 +10,9 @@ import base64
 import os
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
-import joblib  # For loading .pkl models
+import joblib  # For .pkl models
 
-# Import your model definitions
+# Import custom model modules
 try:
     from model_resnet import get_resnet18_model
     from model_mobilenet import get_mobilenet_model
@@ -25,14 +25,10 @@ except ImportError:
 app = Flask(__name__)
 CORS(app)
 
-# =========================
 # Classes
-# =========================
 CLASS_NAMES = ["bird", "car", "cat", "dog", "human", "watch"]
 
-# =========================
 # CNN Architecture
-# =========================
 class CNNModel(nn.Module):
     def __init__(self):
         super().__init__()
@@ -41,18 +37,22 @@ class CNNModel(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
+
             nn.Conv2d(32, 64, 3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
+
             nn.Conv2d(64, 128, 3, padding=1),
             nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
+
             nn.Conv2d(128, 256, 3, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
+
             nn.Dropout(0.3),
             nn.Flatten(),
             nn.Linear(256 * 8 * 8, 256),
@@ -64,11 +64,10 @@ class CNNModel(nn.Module):
     def forward(self, x):
         return self.network(x)
 
-# Device
-device = torch.device("cpu")
-print("Loading models...")
-
 # Load DL models
+device = torch.device("cpu")
+print("🔄 Loading models...")
+
 cnn_model = CNNModel()
 if os.path.exists("checkpoints/cnn_model.pth"):
     cnn_model.load_state_dict(torch.load("checkpoints/cnn_model.pth", map_location=device))
@@ -84,34 +83,44 @@ if os.path.exists("checkpoints/mobilenet_model.pth"):
     mobilenet_model.load_state_dict(torch.load("checkpoints/mobilenet_model.pth", map_location=device))
 mobilenet_model.eval()
 
-# Load Traditional ML models (.pkl)
-print("Loading traditional ML models...")
+# Load Traditional ML models
 decision_tree = joblib.load("checkpoints/decision_tree_model.pkl")
 knn = joblib.load("checkpoints/knn_model.pkl")
 random_forest = joblib.load("checkpoints/random_forest_model.pkl")
 svm = joblib.load("checkpoints/svm_model.pkl")
-print("All 8 models loaded!")
 
-# Transformation for DL models
+print("✅ All 8 models loaded successfully!")
+
+# Image transformation for DL
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-# Feature extractor for sklearn models (using MobileNet backbone without classifier)
-feature_extractor = nn.Sequential(*list(mobilenet_model.children())[:-1])  # Remove final layer
-feature_extractor.eval()
+# Feature extraction for traditional ML (using MobileNet without classifier)
+feature_extractor = nn.Sequential(*list(mobilenet_model.children())[:-1])  # Extract features
 
 def extract_features(img_tensor):
     with torch.no_grad():
-        features = feature_extractor(img_tensor.unsqueeze(0))
+        features = feature_extractor(img_tensor.unsqueeze(0).to(device))
         features = features.view(features.size(0), -1)
     return features.cpu().numpy()
 
-# =========================
+def predict_torch_model(model, img_tensor):
+    with torch.no_grad():
+        output = model(img_tensor)
+        prob = torch.softmax(output[0], dim=0)
+        conf, idx = torch.max(prob, 0)
+    return CLASS_NAMES[idx.item()], round(conf.item() * 100, 1)
+
+def predict_sklearn_model(model, features):
+    pred_idx = model.predict(features)[0]
+    prob = model.predict_proba(features)[0]
+    conf = round(np.max(prob) * 100, 1)
+    return CLASS_NAMES[pred_idx], conf
+
 # Routes
-# =========================
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -120,52 +129,40 @@ def home():
 def live_upload():
     return render_template("live_upload.html")
 
-# =========================
-# Detection Endpoint
-# =========================
-def run_all_predictions(img_pil, cv_img):
-    tensor = transform(img_pil).to(device)
+@app.route("/help")
+def help_page():
+    return render_template("help.html")
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
+# Unified Prediction Function
+def perform_predictions(img_bytes):
+    image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+    nparr = np.frombuffer(img_bytes, np.uint8)
+    cv_img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    tensor = transform(image).to(device)
     features = extract_features(tensor)
 
-    start = time.time()
-
-    with torch.no_grad():
-        # DL Models
-        cnn_out = cnn_model(tensor.unsqueeze(0))
-        cnn_prob = torch.softmax(cnn_out, dim=1)
-        cnn_conf, cnn_pred = cnn_prob.max(1)
-
-        res_out = resnet_model(tensor.unsqueeze(0))
-        res_prob = torch.softmax(res_out, dim=1)
-        res_conf, res_pred = res_prob.max(1)
-
-        mob_out = mobilenet_model(tensor.unsqueeze(0))
-        mob_prob = torch.softmax(mob_out, dim=1)
-        mob_conf, mob_pred = mob_prob.max(1)
-
-    # YOLO
+    # DL Predictions
+    cnn_pred, cnn_conf = predict_torch_model(cnn_model, tensor.unsqueeze(0))
+    res_pred, res_conf = predict_torch_model(resnet_model, tensor.unsqueeze(0))
+    mob_pred, mob_conf = predict_torch_model(mobilenet_model, tensor.unsqueeze(0))
     y_label, y_conf = predict_yolo_single(cv_img)
 
-    # Traditional ML
-    dt_pred = decision_tree.predict(features)[0]
-    dt_conf = round(np.max(decision_tree.predict_proba(features)[0]) * 100, 1)
-
-    knn_pred = knn.predict(features)[0]
-    knn_conf = round(np.max(knn.predict_proba(features)[0]) * 100, 1)
-
-    rf_pred = random_forest.predict(features)[0]
-    rf_conf = round(np.max(random_forest.predict_proba(features)[0]) * 100, 1)
-
-    svm_pred = svm.predict(features)[0]
-    svm_conf = round(np.max(svm.predict_proba(features)[0]) * 100, 1)
-
-    elapsed = round(time.time() - start, 2)
+    # Traditional ML Predictions
+    dt_pred, dt_conf = predict_sklearn_model(decision_tree, features)
+    knn_pred, knn_conf = predict_sklearn_model(knn, features)
+    rf_pred, rf_conf = predict_sklearn_model(random_forest, features)
+    svm_pred, svm_conf = predict_sklearn_model(svm, features)
 
     scores = {
-        "CNN": round(cnn_conf.item() * 100, 1),
-        "ResNet-18": round(res_conf.item() * 100, 1),
-        "MobileNet": round(mob_conf.item() * 100, 1),
-        "YOLO": round(y_conf, 1),
+        "CNN": cnn_conf,
+        "ResNet-18": res_conf,
+        "MobileNet": mob_conf,
+        "YOLO": y_conf,
         "Decision Tree": dt_conf,
         "KNN": knn_conf,
         "Random Forest": rf_conf,
@@ -173,17 +170,16 @@ def run_all_predictions(img_pil, cv_img):
     }
 
     model_predictions = {
-        "CNN": CLASS_NAMES[cnn_pred.item()],
-        "ResNet-18": CLASS_NAMES[res_pred.item()],
-        "MobileNet": CLASS_NAMES[mob_pred.item()],
+        "CNN": cnn_pred,
+        "ResNet-18": res_pred,
+        "MobileNet": mob_pred,
         "YOLO": y_label,
-        "Decision Tree": CLASS_NAMES[dt_pred],
-        "KNN": CLASS_NAMES[knn_pred],
-        "Random Forest": CLASS_NAMES[rf_pred],
-        "SVM": CLASS_NAMES[svm_pred]
+        "Decision Tree": dt_pred,
+        "KNN": knn_pred,
+        "Random Forest": rf_pred,
+        "SVM": svm_pred
     }
 
-    # Best model (you can choose DL only or all)
     best_model = max(scores, key=scores.get)
     confidence = scores[best_model]
     detected_object = model_predictions[best_model]
@@ -192,7 +188,6 @@ def run_all_predictions(img_pil, cv_img):
         "object": detected_object,
         "confidence": confidence,
         "best_model": best_model,
-        "time": elapsed,
         "scores": scores,
         "model_predictions": model_predictions,
         "evaluated": 8
@@ -200,27 +195,24 @@ def run_all_predictions(img_pil, cv_img):
 
 @app.route("/detect", methods=["POST"])
 def detect():
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-
+    start = time.time()
     file = request.files["file"]
     img_bytes = file.read()
-    image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-    nparr = np.frombuffer(img_bytes, np.uint8)
-    cv_img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-    result = run_all_predictions(image, cv_img)
+    result = perform_predictions(img_bytes)
+    result['time'] = round(time.time() - start, 2)
+
     return jsonify(result)
 
 @app.route("/detect-webcam", methods=["POST"])
 def detect_webcam():
-    data = request.json.get("frame")
-    img_bytes = base64.b64decode(data.split(",")[1])
-    image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-    nparr = np.frombuffer(img_bytes, np.uint8)
-    cv_img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    start = time.time()
+    data = request.json
+    img_bytes = base64.b64decode(data["frame"].split(",")[1])
 
-    result = run_all_predictions(image, cv_img)
+    result = perform_predictions(img_bytes)
+    result['time'] = round(time.time() - start, 2)
+
     return jsonify(result)
 
 if __name__ == "__main__":
