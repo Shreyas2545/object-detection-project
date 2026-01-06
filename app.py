@@ -10,7 +10,7 @@ import base64
 import os
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
-import joblib  # For .pkl models
+import joblib
 
 # Import custom model modules
 try:
@@ -25,14 +25,10 @@ except ImportError:
 app = Flask(__name__)
 CORS(app)
 
-# =========================
 # Classes
-# =========================
 CLASS_NAMES = ["bird", "car", "cat", "dog", "human", "watch"]
 
-# =========================
 # CNN Architecture
-# =========================
 class CNNModel(nn.Module):
     def __init__(self):
         super().__init__()
@@ -41,22 +37,18 @@ class CNNModel(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-
             nn.Conv2d(32, 64, 3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-
             nn.Conv2d(64, 128, 3, padding=1),
             nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-
             nn.Conv2d(128, 256, 3, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-
             nn.Dropout(0.3),
             nn.Flatten(),
             nn.Linear(256 * 8 * 8, 256),
@@ -70,7 +62,7 @@ class CNNModel(nn.Module):
 
 # Device
 device = torch.device("cpu")
-print("🔄 Loading models...")
+print("Loading models...")
 
 # Load DL models
 cnn_model = CNNModel()
@@ -88,43 +80,26 @@ if os.path.exists("checkpoints/mobilenet_model.pth"):
     mobilenet_model.load_state_dict(torch.load("checkpoints/mobilenet_model.pth", map_location=device))
 mobilenet_model.eval()
 
-# Load Traditional ML models (.pkl)
+# Load Traditional ML models
 print("Loading traditional ML models...")
 decision_tree = joblib.load("checkpoints/decision_tree_model.pkl")
 knn = joblib.load("checkpoints/knn_model.pkl")
 random_forest = joblib.load("checkpoints/random_forest_model.pkl")
 svm = joblib.load("checkpoints/svm_model.pkl")
+print("All 8 models loaded!")
 
-print("✅ All 8 models loaded successfully!")
-
-# Image transformation for DL
+# Transform for DL
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-# Feature extractor for traditional ML (using MobileNet without classifier)
-feature_extractor = nn.Sequential(*list(mobilenet_model.children())[:-1])  # Extract features
-
-def extract_features(img_tensor):
-    with torch.no_grad():
-        features = feature_extractor(img_tensor.unsqueeze(0).to(device))
-        features = features.view(features.size(0), -1)
-    return features.cpu().numpy()
-
-def predict_torch_model(model, img_tensor):
-    with torch.no_grad():
-        output = model(img_tensor)
-        prob = torch.softmax(output[0], dim=0)
-        conf, idx = torch.max(prob, 0)
-    return CLASS_NAMES[idx.item()], round(conf.item() * 100, 1)
-
-def predict_sklearn_model(model, features):
-    pred_idx = model.predict(features)[0]
-    prob = model.predict_proba(features)[0]
-    conf = round(np.max(prob) * 100, 1)
-    return CLASS_NAMES[pred_idx], conf
+# Simple feature extraction for traditional ML: resize + flatten
+def extract_simple_features(img_pil):
+    img = img_pil.resize((128, 128))
+    img_array = np.array(img).flatten()
+    return img_array.reshape(1, -1)
 
 # Routes
 @app.route("/")
@@ -135,29 +110,17 @@ def home():
 def live_upload():
     return render_template("live_upload.html")
 
-@app.route("/help")
-def help_page():
-    return render_template("help.html")
-
-@app.route("/about")
-def about():
-    return render_template("about.html")
-
-# Unified Prediction Function
-def perform_predictions(img_bytes):
+def run_all_predictions(img_bytes):
     try:
-        # Load image
         image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
         tensor = transform(image).unsqueeze(0)
 
-        # OpenCV for YOLO
         nparr = np.frombuffer(img_bytes, np.uint8)
         cv_img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         start = time.time()
 
         with torch.no_grad():
-            # DL Models
             cnn_out = cnn_model(tensor)
             cnn_prob = torch.softmax(cnn_out, dim=1)
             cnn_conf, cnn_pred = cnn_prob.max(1)
@@ -170,15 +133,25 @@ def perform_predictions(img_bytes):
             mob_prob = torch.softmax(mob_out, dim=1)
             mob_conf, mob_pred = mob_prob.max(1)
 
-        # YOLO
         y_label, y_conf = predict_yolo_single(cv_img)
 
-        # Traditional ML
-        features = extract_features(tensor)
-        dt_pred, dt_conf = predict_sklearn_model(decision_tree, features)
-        knn_pred, knn_conf = predict_sklearn_model(knn, features)
-        rf_pred, rf_conf = predict_sklearn_model(random_forest, features)
-        svm_pred, svm_conf = predict_sklearn_model(svm, features)
+        # Traditional ML predictions using flattened pixels
+        features = extract_simple_features(image)
+        dt_pred = decision_tree.predict(features)[0]
+        dt_prob = decision_tree.predict_proba(features)[0]
+        dt_conf = round(np.max(dt_prob) * 100, 1)
+
+        knn_pred = knn.predict(features)[0]
+        knn_prob = knn.predict_proba(features)[0]
+        knn_conf = round(np.max(knn_prob) * 100, 1)
+
+        rf_pred = random_forest.predict(features)[0]
+        rf_prob = random_forest.predict_proba(features)[0]
+        rf_conf = round(np.max(rf_prob) * 100, 1)
+
+        svm_pred = svm.predict(features)[0]
+        svm_prob = svm.predict_proba(features)[0]
+        svm_conf = round(np.max(svm_prob) * 100, 1)
 
         elapsed = round(time.time() - start, 2)
 
@@ -229,7 +202,7 @@ def detect():
 
     file = request.files["file"]
     img_bytes = file.read()
-    result = perform_predictions(img_bytes)
+    result = run_all_predictions(img_bytes)
     if "error" in result:
         return jsonify(result), 500
     return jsonify(result)
@@ -239,7 +212,7 @@ def detect_webcam():
     data = request.json
     img_data = data["frame"].split(",")[1]
     img_bytes = base64.b64decode(img_data)
-    result = perform_predictions(img_bytes)
+    result = run_all_predictions(img_bytes)
     if "error" in result:
         return jsonify(result), 500
     return jsonify(result)
