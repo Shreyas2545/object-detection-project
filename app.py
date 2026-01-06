@@ -25,7 +25,7 @@ except ImportError:
 app = Flask(__name__)
 CORS(app)
 
-# Classes
+# Standardized Classes (Matches your dataset folders)
 CLASS_NAMES = ["bird", "car", "cat", "dog", "human", "watch"]
 
 # CNN Architecture
@@ -60,33 +60,34 @@ class CNNModel(nn.Module):
     def forward(self, x):
         return self.network(x)
 
-# Device
-device = torch.device("cpu")
-print("Loading models...")
+# Device setup
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Load DL models
+# 1. Load Deep Learning Models
 cnn_model = CNNModel()
 if os.path.exists("checkpoints/cnn_model.pth"):
     cnn_model.load_state_dict(torch.load("checkpoints/cnn_model.pth", map_location=device))
-cnn_model.eval()
+cnn_model.to(device).eval()
 
 resnet_model = get_resnet18_model(num_classes=6)
 if os.path.exists("checkpoints/resnet18_model.pth"):
     resnet_model.load_state_dict(torch.load("checkpoints/resnet18_model.pth", map_location=device))
-resnet_model.eval()
+resnet_model.to(device).eval()
 
 mobilenet_model = get_mobilenet_model(num_classes=6)
 if os.path.exists("checkpoints/mobilenet_model.pth"):
     mobilenet_model.load_state_dict(torch.load("checkpoints/mobilenet_model.pth", map_location=device))
-mobilenet_model.eval()
+mobilenet_model.to(device).eval()
 
-# Load traditional ML models
+# 2. ResNet Feature Extractor for ML Models
+resnet_feature_extractor = torch.nn.Sequential(*list(resnet_model.children())[:-1])
+resnet_feature_extractor.to(device).eval()
+
+# 3. Load Traditional ML Models
 decision_tree = joblib.load("checkpoints/decision_tree_model.pkl")
 knn = joblib.load("checkpoints/knn_model.pkl")
 random_forest = joblib.load("checkpoints/random_forest_model.pkl")
 svm = joblib.load("checkpoints/svm_model.pkl")
-
-print("All 8 models loaded!")
 
 # Transform for DL
 transform = transforms.Compose([
@@ -95,28 +96,22 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-# Feature extraction for traditional ML (flattened image)
-def extract_features_for_ml(img_pil):
-    img = img_pil.resize((128, 128))
-    arr = np.array(img)
-    return arr.flatten().reshape(1, -1)
-
-# Unified prediction
 def run_all_predictions(img_bytes):
     try:
-        image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        tensor = transform(image).unsqueeze(0)
+        image_pil = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        tensor = transform(image_pil).unsqueeze(0).to(device)
 
         nparr = np.frombuffer(img_bytes, np.uint8)
         cv_img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-        start = time.time()
+        start_time = time.time()
 
         with torch.no_grad():
+            # --- Deep Learning Predictions ---
             cnn_out = cnn_model(tensor)
             cnn_prob = torch.softmax(cnn_out, dim=1)
             cnn_conf, cnn_pred = cnn_prob.max(1)
-
+            
             res_out = resnet_model(tensor)
             res_prob = torch.softmax(res_out, dim=1)
             res_conf, res_pred = res_prob.max(1)
@@ -125,54 +120,62 @@ def run_all_predictions(img_bytes):
             mob_prob = torch.softmax(mob_out, dim=1)
             mob_conf, mob_pred = mob_prob.max(1)
 
+            # --- ML Feature Extraction ---
+            features_tensor = resnet_feature_extractor(tensor)
+            features_np = features_tensor.view(features_tensor.size(0), -1).cpu().numpy()
+
+        # --- YOLO Prediction ---
         y_label, y_conf = predict_yolo_single(cv_img)
 
-        # Traditional ML
-        features = extract_features_for_ml(image)
-        dt_pred = decision_tree.predict(features)[0]
-        dt_conf = round(np.max(decision_tree.predict_proba(features)[0]) * 100, 1)
+        # --- Traditional ML Predictions ---
+        # Using feature slicing logic from your ML scripts
+        f5 = features_np[:, :5]
+        knn_p = knn.predict(f5)[0]
+        knn_c = np.max(knn.predict_proba(f5)[0]) * 100
 
-        knn_pred = knn.predict(features)[0]
-        knn_conf = round(np.max(knn.predict_proba(features)[0]) * 100, 1)
+        f10 = features_np[:, :10]
+        dt_p = decision_tree.predict(f10)[0]
+        dt_c = np.max(decision_tree.predict_proba(f10)[0]) * 100
 
-        rf_pred = random_forest.predict(features)[0]
-        rf_conf = round(np.max(random_forest.predict_proba(features)[0]) * 100, 1)
+        rf_p = random_forest.predict(f10)[0]
+        rf_c = np.max(random_forest.predict_proba(f10)[0]) * 100
 
-        svm_pred = svm.predict(features)[0]
-        svm_conf = round(np.max(svm.predict_proba(features)[0]) * 100, 1)
+        svm_p = svm.predict(features_np)[0]
+        svm_c = np.max(svm.predict_proba(features_np)[0]) * 100
 
-        elapsed = round(time.time() - start, 2)
+        elapsed = round(time.time() - start_time, 2)
 
+        # Scores dictionary for the Bar Chart
         scores = {
             "CNN": round(cnn_conf.item() * 100, 1),
             "ResNet-18": round(res_conf.item() * 100, 1),
             "MobileNet": round(mob_conf.item() * 100, 1),
             "YOLO": round(y_conf, 1),
-            "Decision Tree": dt_conf,
-            "KNN": knn_conf,
-            "Random Forest": rf_conf,
-            "SVM": svm_conf
+            "Decision Tree": round(dt_c, 1),
+            "KNN": round(knn_c, 1),
+            "Random Forest": round(rf_c, 1),
+            "SVM": round(svm_c, 1)
         }
 
+        # Model Predictions for the Details Table
         model_predictions = {
             "CNN": CLASS_NAMES[cnn_pred.item()],
             "ResNet-18": CLASS_NAMES[res_pred.item()],
             "MobileNet": CLASS_NAMES[mob_pred.item()],
             "YOLO": y_label,
-            "Decision Tree": CLASS_NAMES[dt_pred],
-            "KNN": CLASS_NAMES[knn_pred],
-            "Random Forest": CLASS_NAMES[rf_pred],
-            "SVM": CLASS_NAMES[svm_pred]
+            "Decision Tree": CLASS_NAMES[dt_p],
+            "KNN": CLASS_NAMES[knn_p],
+            "Random Forest": CLASS_NAMES[rf_p],
+            "SVM": CLASS_NAMES[svm_p]
         }
 
-        best_model = max(scores, key=scores.get)
-        confidence = scores[best_model]
-        detected_object = model_predictions[best_model]
-
+        best_model_name = max(scores, key=scores.get)
+        
+        # Format the response exactly as required by live_detect.js
         return {
-            "object": detected_object,
-            "confidence": confidence,
-            "best_model": best_model,
+            "object": model_predictions[best_model_name],
+            "confidence": scores[best_model_name],
+            "best_model": best_model_name,
             "time": elapsed,
             "scores": scores,
             "model_predictions": model_predictions,
@@ -183,22 +186,36 @@ def run_all_predictions(img_bytes):
         print(f"Error: {e}")
         return {"error": str(e)}
 
+# --- Flask Routes ---
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
+@app.route("/help")
+def help_page():
+    return render_template("help.html")
+
+@app.route("/live-upload")
+def live_upload():
+    return render_template("live_upload.html")
+
 @app.route("/detect", methods=["POST"])
 def detect():
     if "file" not in request.files:
         return jsonify({"error": "No file"}), 400
     file = request.files["file"]
     img_bytes = file.read()
-    result = run_all_predictions(img_bytes)
-    return jsonify(result)
+    return jsonify(run_all_predictions(img_bytes))
 
 @app.route("/detect-webcam", methods=["POST"])
 def detect_webcam():
     data = request.json
     img_bytes = base64.b64decode(data["frame"].split(",")[1])
-    result = run_all_predictions(img_bytes)
-    return jsonify(result)
+    return jsonify(run_all_predictions(img_bytes))
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(debug=True, host="0.0.0.0", port=port)
+    app.run(debug=True, host="0.0.0.0", port=5000)
