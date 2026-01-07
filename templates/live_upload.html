@@ -513,10 +513,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     pdf.setFontSize(14);
     pdf.setFont("helvetica", "bold");
-    pdf.text('1. Performance Visualization', 15, 20);
+    pdf.text('3. Performance Visualization', 15, 20);
     pdf.addImage(chartImg, 'PNG', 15, 30, 180, 90);
 
-    pdf.text('2. Detection Summary Note', 15, 140);
+    pdf.text('4. Detection Summary Note', 15, 140);
     pdf.setFontSize(11);
     pdf.setFont("helvetica", "normal");
     pdf.setFillColor(245, 247, 250);
@@ -538,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
     pdf.text('Real-Time Object Classifier © 2026', 15, 278);
     pdf.text('Page 2 of 2', 105, 285, { align: 'center' });
 
-    pdf.save(`Object_Detection_Report_${data.object}.pdf`);
+    pdf.save(`Analysis_Report.pdf`);
   });
   testAnotherBtn.addEventListener('click', () => location.reload());
 
