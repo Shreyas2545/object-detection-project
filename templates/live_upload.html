@@ -460,86 +460,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageWidth = pdf.internal.pageSize.getWidth();
     const timestamp = new Date().toLocaleString();
 
-    // --- PAGE 1: HEADER & IMAGE ---
-    pdf.setFillColor(59, 130, 246); // Blue Header
+    // --- PAGE 1: HEADER ---
+    pdf.setFillColor(59, 130, 246);
     pdf.rect(0, 0, pageWidth, 40, 'F');
     pdf.setTextColor(255, 255, 255);
     pdf.setFontSize(22);
     pdf.setFont("helvetica", "bold");
     pdf.text('Object Detection Analysis Report', 105, 20, { align: 'center' });
-    
     pdf.setFontSize(10);
-    pdf.setFont("helvetica", "normal");
     pdf.text(`Generated on: ${timestamp}`, 105, 30, { align: 'center' });
 
-    // Section 1: Analyzed Image
+    // --- SMART IMAGE SCALING (Prevents "Flexy" Look) ---
+    const imgProps = pdf.getImageProperties(imageSrc); // Get original dimensions 
+    const maxWidth = 170; // Set max width for the page
+    const maxHeight = 100; // Set max height for the page
+    
+    // Calculate aspect ratio
+    const ratio = imgProps.width / imgProps.height;
+    let finalWidth = maxWidth;
+    let finalHeight = maxWidth / ratio;
+
+    // If height is too tall for the box, scale based on height instead
+    if (finalHeight > maxHeight) {
+        finalHeight = maxHeight;
+        finalWidth = maxHeight * ratio;
+    }
+
+    // Center the image horizontally
+    const xPos = (pageWidth - finalWidth) / 2;
+
     pdf.setTextColor(0, 0, 0);
     pdf.setFontSize(14);
     pdf.text('1. Analyzed Image Source', 15, 55);
-    pdf.addImage(imageSrc, 'JPEG', 15, 60, 180, 100);
-
-    // Section 2: Model Performance Table
-    pdf.text('2. Detailed Model Performance', 15, 175);
-    let startY = 185;
     
-    // Table Headers
-    pdf.setFillColor(240, 240, 240);
-    pdf.rect(15, startY - 5, 180, 8, 'F');
-    pdf.setFontSize(10);
-    pdf.setFont("helvetica", "bold");
-    pdf.text('Model', 20, startY);
-    pdf.text('Prediction', 70, startY);
-    pdf.text('Confidence', 120, startY);
-    pdf.text('Processing Time', 160, startY);
+    // Add image with calculated dimensions 
+    pdf.addImage(imageSrc, 'JPEG', xPos, 60, finalWidth, finalHeight);
 
-    // Table Data
-    pdf.setFont("helvetica", "normal");
-    Object.entries(data.scores).forEach(([model, score], index) => {
-        const rowY = startY + 10 + (index * 8);
-        const pred = data.model_predictions[model] || data.object;
-        pdf.text(model, 20, rowY);
-        pdf.text(pred, 70, rowY);
-        pdf.text(`${score}%`, 120, rowY);
-        pdf.text(`${data.time}s`, 160, rowY);
-        pdf.setDrawColor(220, 220, 220);
-        pdf.line(15, rowY + 2, 195, rowY + 2);
-    });
-
-    pdf.setFontSize(8);
-    pdf.text('Page 1 of 2', 105, 285, { align: 'center' });
-
-    // --- PAGE 2: VISUALIZATION & SUMMARY ---
-    pdf.addPage();
+    // --- REST OF THE REPORT (TABLES & CHART) ---
+    // Start the table below the dynamic image height
+    let startY = 60 + finalHeight + 15;
+    pdf.text('2. Detailed Model Performance', 15, startY);
     
-    pdf.setFontSize(14);
-    pdf.setFont("helvetica", "bold");
-    pdf.text('3. Performance Visualization', 15, 20);
-    pdf.addImage(chartImg, 'PNG', 15, 30, 180, 90);
-
-    pdf.text('4. Detection Summary Note', 15, 140);
-    pdf.setFontSize(11);
-    pdf.setFont("helvetica", "normal");
-    pdf.setFillColor(245, 247, 250);
-    pdf.rect(15, 145, 180, 40, 'F');
+    // (Keep the rest of your table and Page 2 code here...)
     
-    const conclusion = [
-        `Inference Conclusion:`,
-        `• Primary identification for analyzed media: "${data.object}"`,
-        `• Peak model accuracy: ${data.confidence}% using ${data.best_model}`,
-        `• Total multi-model classification time: ${data.time} seconds`
-    ];
-    pdf.text(conclusion, 20, 155);
-
-    // Footer
-    pdf.setDrawColor(59, 130, 246);
-    pdf.setLineWidth(1);
-    pdf.line(15, 270, 195, 270);
-    pdf.setFontSize(10);
-    pdf.text('Real-Time Object Classifier © 2026', 15, 278);
-    pdf.text('Page 2 of 2', 105, 285, { align: 'center' });
-
-    pdf.save(`Analysis_Report.pdf`);
+    pdf.save('Analysis_report.pdf');
   });
+
   testAnotherBtn.addEventListener('click', () => location.reload());
 
   function hideInputScreen() {
