@@ -5,7 +5,7 @@ import cv2
 # CONFIG
 # =========================
 # Dataset classes (SINGULAR)
-class_names = ["bird", "bottle", "car", "cat", "dog", "human", "shoe", "watch","laptop","book"]
+class_names = ["bird", "bottle", "car", "cat", "dog", "human", "shoe", "watch","laptop","book","mobile"]
 
 # COCO → Dataset label mapping
 CLASS_MAPPING = {
@@ -18,7 +18,8 @@ CLASS_MAPPING = {
     "bottle": "bottle",
     "shoe": "shoe",
     "laptop":"laptop",
-    "book":"book"
+    "book":"book",
+    "mobile":"mobile"
 }
 
 # =========================
