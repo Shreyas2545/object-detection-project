@@ -9,10 +9,9 @@ from model_resnet import get_resnet18_model
 from model_mobilenet import get_mobilenet_model
 
 # setting PathS
-base_dir = os.path.join(os.getcwd(), "data", "images")
-train_dir = os.path.join(base_dir, "train")
-test_dir = os.path.join(base_dir, "test") 
-
+# Use full paths based on current project root
+train_dir = os.path.join(os.getcwd(), "data", "images", "train")
+test_dir = os.path.join(os.getcwd(), "data", "images", "test")
 # DATA TRANSFORMS
 
 transform_train = transforms.Compose([

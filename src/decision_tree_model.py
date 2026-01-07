@@ -82,7 +82,7 @@ def run_decision_tree_and_get_accuracy():
     # =========================
     y_pred = dt.predict(X_test)
 
-    print("📊 Classification Report:")
+    p3rint("📊 Classification Report:")
     print(classification_report(y_test, y_pred, target_names=class_names))
 
     print("🧩 Confusion Matrix:")

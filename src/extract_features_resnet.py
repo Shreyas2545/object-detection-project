@@ -6,10 +6,8 @@ from torch.utils.data import DataLoader
 from model_resnet import get_resnet18_model
 
 # ===== PATHS =====
-base_dir = os.path.join(os.getcwd(), "data", "images")
-train_dir = os.path.join(base_dir, "train")
-test_dir = os.path.join(base_dir, "test")
-
+train_dir = os.path.join(os.getcwd(), "data", "images", "train")
+test_dir = os.path.join(os.getcwd(), "data", "images", "test")
 features_dir = "features"
 os.makedirs(features_dir, exist_ok=True)
 

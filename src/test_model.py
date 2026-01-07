@@ -8,9 +8,8 @@ from model_resnet import get_resnet18_model
 from model_mobilenet import get_mobilenet_model
 
 # PATHS
-base_dir = os.path.join(os.getcwd(), "data", "images")
-test_dir = os.path.join(base_dir, "test")
-checkpoints_dir = os.path.join("checkpoints")
+train_dir = os.path.join(os.getcwd(), "data", "images", "train")
+test_dir = os.path.join(os.getcwd(), "data", "images", "test")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # it will use the gpu if available otherwise cpu 
 
