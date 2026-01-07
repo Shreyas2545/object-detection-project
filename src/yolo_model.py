@@ -5,7 +5,7 @@ import cv2
 # CONFIG
 # =========================
 # Dataset classes (SINGULAR)
-ALLOWED_CLASSES = ["bird", "car", "cat", "dog", "human", "watch","bottle"]
+class_names = ["bird", "bottle", "car", "cat", "dog", "human", "shoe", "watch"]
 
 # COCO → Dataset label mapping
 CLASS_MAPPING = {
@@ -16,6 +16,7 @@ CLASS_MAPPING = {
     "dog": "dog",
     "watch": "watch" ,
     "bottle": "bottle",
+    "shoe": "shoe"
 }
 
 # =========================
@@ -30,7 +31,7 @@ model = YOLO("yolov8n.pt")
 def predict_yolo_single(image):
     """
     YOLO single-object prediction.
-    Picks highest-confidence object from allowed 7 classes.
+    Picks highest-confidence object from allowed 8 classes.
 
     Args:
         image (numpy.ndarray): OpenCV image (BGR)
