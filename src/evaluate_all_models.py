@@ -76,7 +76,9 @@ YOLO_TO_DATASET = {
     "bottle": "bottle",
     "shoe": "shoe",
     "laptop":"laptop",
-    "book":"book"
+    "book":"book",
+    "mobile":"mobile",
+    "mug":"mug"
 }
 
 total = 0
