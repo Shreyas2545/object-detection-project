@@ -6,7 +6,7 @@ import joblib
 # =========================
 # CLASS NAMES
 # =========================
-class_names = ["bird", "bottle", "car", "cat", "dog", "human", "shoe", "watch"]
+class_names = ["bird", "bottle", "car", "cat", "dog", "human", "shoe", "watch","laptop","book"]
 # =========================
 # LOAD FEATURES
 # =========================
