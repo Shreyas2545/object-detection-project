@@ -6,7 +6,7 @@ import joblib
 # =========================
 # CLASS NAMES
 # =========================
-class_names = ["bird", "bottle", "car", "cat", "dog", "human", "shoe", "watch","laptop","book","mobile","mug"]
+class_names = ["bird", "book", "bottle", "car", "cat", "dog", "human", "laptop", "mobile", "mug", "shoe", "watch"]
 # =========================
 # LOAD FEATURES
 # =========================
@@ -81,7 +81,7 @@ def run_decision_tree_and_get_accuracy():
     # =========================
     y_pred = dt.predict(X_test)
 
-    p3rint("📊 Classification Report:")
+    print("📊 Classification Report:")
     print(classification_report(y_test, y_pred, target_names=class_names))
 
     print("🧩 Confusion Matrix:")

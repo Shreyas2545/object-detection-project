@@ -65,22 +65,6 @@ mobilenet_acc = test_model(mobilenet_model, os.path.join(checkpoints_dir, "mobil
 # =====================================================
 print("\n================ YOLO MODEL ================\n")
 
-# 🔑 CRITICAL: YOLO → Dataset folder mapping
-YOLO_TO_DATASET = {
-    "bird": "birds",
-    "car": "cars",
-    "cat": "cats",
-    "dog": "dogs",
-    "watch": "watches",
-    "human": "human",
-    "bottle": "bottle",
-    "shoe": "shoe",
-    "laptop":"laptop",
-    "book":"book",
-    "mobile":"mobile",
-    "mug":"mug"
-}
-
 total = 0
 correct = 0
 
@@ -97,8 +81,8 @@ for actual_class in class_names:
         if image is None:
             continue
 
-        pred_label, conf = predict_yolo_single(image)
-        mapped_pred = YOLO_TO_DATASET.get(pred_label, "unknown")
+        # pred_label is already mapped to your dataset names in yolo_model.py
+        mapped_pred, conf = predict_yolo_single(image)
 
         print(
             f"🖼️ Predicted: {mapped_pred} ({conf:.2f}%) | Actual: {actual_class}"

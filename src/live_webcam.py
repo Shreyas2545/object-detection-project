@@ -50,7 +50,7 @@ resnet_feature_extractor.to(device).eval()
 # =========================
 # CLASS NAMES
 # =========================
-class_names = ["bird", "bottle", "car", "cat", "dog", "human", "shoe", "watch","laptop","book","mobile","mug"]
+class_names = ["bird", "book", "bottle", "car", "cat", "dog", "human", "laptop", "mobile", "mug", "shoe", "watch"]
 # =========================
 # IMAGE TRANSFORM
 # =========================

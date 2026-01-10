@@ -4,55 +4,50 @@ import cv2
 # =========================
 # CONFIG
 # =========================
-# Dataset classes (SINGULAR)
-class_names = ["bird", "bottle", "car", "cat", "dog", "human", "shoe", "watch","laptop","book","mobile","mug"]
+# These must match your dataset folder names exactly
+ALLOWED_CLASSES = [
+    "bird", "book", "bottle", "car", "cat", "dog", "human", 
+    "laptop", "mobile", "mug", "shoe", "watch"
+]
 
-# COCO → Dataset label mapping
+# Mapping YOLO COCO labels -> Your Dataset Folder Names
+# Key: YOLO's name | Value: Your folder name
 CLASS_MAPPING = {
     "person": "human",
     "bird": "bird",
     "car": "car",
     "cat": "cat",
     "dog": "dog",
-    "watch": "watch" ,
     "bottle": "bottle",
-    "shoe": "shoe",
-    "laptop":"laptop",
-    "book":"book",
-    "mobile":"mobile",
-    "mug":"mug"
+    "cup": "mug",          
+    "wine glass": "mug",   
+    "laptop": "laptop",
+    "cell phone": "mobile",
+    "book": "book",
+    "clock": "watch",      
+    "tie": "watch",        
+    "skis": "shoe",        
+    "snowboard": "shoe",   
+    "suitcase": "shoe",    
 }
 
 # =========================
 # LOAD YOLO MODEL (ONCE)
 # =========================
-# Pretrained YOLOv8 (used only as detector)
 model = YOLO("yolov8n.pt")
 
-# =====================================================
-# MAIN FUNCTION (USED BY evaluate_all_models & webcam)
-# =====================================================
 def predict_yolo_single(image):
     """
-    YOLO single-object prediction.
-    Picks highest-confidence object from allowed 8 classes.
-
-    Args:
-        image (numpy.ndarray): OpenCV image (BGR)
-
-    Returns:
-        label (str): predicted class
-        confidence (float): confidence percentage
+    YOLO single-object prediction logic.
     """
-
     if image is None:
-        return "No object", 0.0
+        return "unknown", 0.0
 
     # YOLO inference
     results = model(image, conf=0.25, verbose=False)
     boxes = results[0].boxes
 
-    best_label = "No object"
+    best_label = "unknown"
     best_conf = 0.0
 
     if boxes is not None:
@@ -62,26 +57,21 @@ def predict_yolo_single(image):
             coco_label = model.names[class_id]
 
             # Map COCO label → dataset label
-            label = CLASS_MAPPING.get(coco_label, None)
+            label = CLASS_MAPPING.get(coco_label, "unknown")
 
-            # Keep only dataset classes
+            # Filter only for classes in your dataset
             if label in ALLOWED_CLASSES and conf > best_conf:
                 best_label = label
                 best_conf = conf
 
     return best_label, best_conf
 
-
 # =========================
-# TEST MODE (OPTIONAL)
+# TEST MODE
 # =========================
 if __name__ == "__main__":
-    test_img_path = "data/images/test/dogs/dog.webp"
+    test_img_path = "data/images/test/dog/dog_sample.jpg" # Example path
     img = cv2.imread(test_img_path)
-
-    label, conf = predict_yolo_single(img)
-    print("===================================")
-    print("YOLO SINGLE OBJECT TEST")
-    print("-----------------------------------")
-    print(f"Prediction: {label} ({conf:.2f}%)")
-    print("===================================")
+    if img is not None:
+        label, conf = predict_yolo_single(img)
+        print(f"Test Prediction: {label} ({conf:.2f}%)")

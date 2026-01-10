@@ -14,13 +14,17 @@ CLASS_MAPPING = {
     "car": "car",
     "cat": "cat",
     "dog": "dog",
-    "watch": "watch" ,
     "bottle": "bottle",
-    "shoe": "shoe",
-    "laptop":"laptop",
-    "book":"book",
-    "mobile":"mobile",
-    "mug":"mug"
+    "cup": "mug",          
+    "wine glass": "mug",   
+    "laptop": "laptop",
+    "cell phone": "mobile",
+    "book": "book",
+    "clock": "watch",      
+    "tie": "watch",        
+    "skis": "shoe",        
+    "snowboard": "shoe",   
+    "suitcase": "shoe",    
 }
 
 # =========================
