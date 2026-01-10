@@ -5,10 +5,7 @@ import cv2
 # CONFIG
 # =========================
 # These must match your dataset folder names exactly
-ALLOWED_CLASSES = [
-    "bird", "book", "bottle", "car", "cat", "dog", "human", 
-    "laptop", "mobile", "mug", "shoe", "watch"
-]
+ALLOWED_CLASSES = ["bird", "book", "bottle", "car", "cat", "dog", "human", "laptop", "mobile", "mug", "shoe", "watch"]
 
 # Mapping YOLO COCO labels -> Your Dataset Folder Names
 # Key: YOLO's name | Value: Your folder name
