@@ -25,7 +25,8 @@ except ImportError:
 app = Flask(__name__)
 CORS(app)
 
-CLASS_NAMES = ["bird", "book", "bottle", "car", "cat", "dog", "human", "laptop", "mobile", "mug", "shoe", "watch"]
+CLASS_NAMES = ["backpack", "bird", "book", "bottle", "car", "cat", "dog", "human",
+                "keyboard", "laptop", "mobile", "mouse", "mug", "plant", "shoe", "watch"]
 class CNNModel(nn.Module):
     def __init__(self):
         super().__init__()
