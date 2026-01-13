@@ -52,7 +52,7 @@ class CNNModel(nn.Module):
             nn.Linear(256 * 8 * 8, 256),
             nn.ReLU(),
             nn.Dropout(0.3),
-            nn.Linear(256, 12)
+            nn.Linear(256, 16)
         )
     def forward(self, x):
         return self.network(x)
@@ -65,12 +65,12 @@ if os.path.exists("checkpoints/cnn_model.pth"):
     cnn_model.load_state_dict(torch.load("checkpoints/cnn_model.pth", map_location=device))
 cnn_model.to(device).eval()
 
-resnet_model = get_resnet18_model(num_classes=12)
+resnet_model = get_resnet18_model(num_classes=16)
 if os.path.exists("checkpoints/resnet18_model.pth"):
     resnet_model.load_state_dict(torch.load("checkpoints/resnet18_model.pth", map_location=device))
 resnet_model.to(device).eval()
 
-mobilenet_model = get_mobilenet_model(num_classes=12)
+mobilenet_model = get_mobilenet_model(num_classes=16)
 if os.path.exists("checkpoints/mobilenet_model.pth"):
     mobilenet_model.load_state_dict(torch.load("checkpoints/mobilenet_model.pth", map_location=device))
 mobilenet_model.to(device).eval()

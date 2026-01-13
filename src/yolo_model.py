@@ -28,7 +28,7 @@ CLASS_MAPPING = {
     "backpack": "backpack",
     "keyboard": "keyboard",
     "mouse": "mouse",
-    "potted plant ": "potted_plant"
+    "potted plant ": "plant"
 }
 
 # =========================
