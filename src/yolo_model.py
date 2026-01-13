@@ -5,10 +5,9 @@ import cv2
 # CONFIG
 # =========================
 # These must match your dataset folder names exactly
-ALLOWED_CLASSES = ["bird", "book", "bottle", "car", "cat", "dog", "human", "laptop", "mobile", "mug", "shoe", "watch"]
-
-# Mapping YOLO COCO labels -> Your Dataset Folder Names
-# Key: YOLO's name | Value: Your folder name
+ALLOWED_CLASSES = [
+    "backpack","bird","book","bottle","car","cat","dog","human","keyboard","laptop","mobile","mouse","mug","plant","shoe","watch"
+]
 CLASS_MAPPING = {
     "person": "human",
     "bird": "bird",
@@ -25,7 +24,11 @@ CLASS_MAPPING = {
     "tie": "watch",        
     "skis": "shoe",        
     "snowboard": "shoe",   
-    "suitcase": "shoe",    
+    "suitcase": "shoe",  
+    "backpack": "backpack",
+    "keyboard": "keyboard",
+    "mouse": "mouse",
+    "potted plant ": "potted_plant"
 }
 
 # =========================

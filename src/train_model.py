@@ -84,16 +84,13 @@ def train_model(model, model_name, epochs=8,lr=0.001): # model + model name + ep
     torch.save(model.state_dict(), save_path)
     print(f"✅ {model_name} saved to {save_path}\n")
 
-# epoch and learning rate for good o/p for models 
-# ───────────────────────────────────────────────────────────────
-# ONLY CNN will be trained — other models are commented out
-# ───────────────────────────────────────────────────────────────
-train_model(CNNModel(num_classes=len(train_data.classes)), "CNN", epochs=8, lr=0.001)  # Increased to 8 epochs for better accuracy
 
-# train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18", epochs=2, lr=0.001 ) # for resnet18 model  ← commented out
+train_model(CNNModel(num_classes=len(train_data.classes)), "CNN", epochs=6, lr=0.001)  # Increased to 8 epochs for better accuracy
 
-# MobileNet is a lightweight pretrained CNN designed for speed and efficiency
-# train_model(get_mobilenet_model(num_classes=len(train_data.classes)),"MobileNet", epochs=3, lr=0.001)  ← commented out
+train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18", epochs=3, lr=0.001 ) # for resnet18 model  ← commented out
+
+
+train_model(get_mobilenet_model(num_classes=len(train_data.classes)),"MobileNet", epochs=3, lr=0.001)  
 
 # epoch = how many times the model sees all training images.
 # learning rate = how fast the model learns.
