@@ -11,8 +11,8 @@ import os
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 import joblib
+from werkzeug.exceptions import HTTPException
 
-# Import custom model functions
 try:
     from model_resnet import get_resnet18_model
     from model_mobilenet import get_mobilenet_model
@@ -25,8 +25,20 @@ except ImportError:
 app = Flask(__name__)
 CORS(app)
 
-CLASS_NAMES = ["backpack", "bird", "book", "bottle", "car", "cat", "dog", "human",
-                "keyboard", "laptop", "mobile", "mouse", "mug", "plant", "shoe", "watch"]
+@app.errorhandler(Exception)
+def handle_exception(e):
+    code = 500
+    if isinstance(e, HTTPException):
+        code = e.code
+    return jsonify(error=str(e) or "Internal server error", code=code), code
+
+CLASS_NAMES = [
+    "backpack", "bird", "book", "bottle", "car", "cat", "dog", "human",
+    "keyboard", "laptop", "mobile", "mouse", "mug", "plant", "shoe", "watch"
+]
+
+TEMPERATURE = 2.0
+
 class CNNModel(nn.Module):
     def __init__(self):
         super().__init__()
@@ -59,7 +71,6 @@ class CNNModel(nn.Module):
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Load Models
 cnn_model = CNNModel()
 if os.path.exists("checkpoints/cnn_model.pth"):
     cnn_model.load_state_dict(torch.load("checkpoints/cnn_model.pth", map_location=device))
@@ -89,7 +100,11 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-
+def apply_temperature(probs, temperature=TEMPERATURE):
+    logits = torch.log(torch.tensor(probs) + 1e-10)
+    scaled_logits = logits / temperature
+    scaled_probs = torch.softmax(scaled_logits, dim=0).numpy()
+    return scaled_probs
 
 def run_all_predictions(img_bytes):
     try:
@@ -101,93 +116,116 @@ def run_all_predictions(img_bytes):
         all_scores = {}
         all_preds = {}
         all_times = {}
-        
+
         total_start = time.time()
 
         with torch.no_grad():
-            # 1. CNN
             s = time.time()
             cnn_out = cnn_model(tensor)
-            cnn_p = torch.softmax(cnn_out, dim=1)
-            conf, pred = cnn_p.max(1)
-            all_scores["CNN"] = round(conf.item() * 100, 1)
-            all_preds["CNN"] = CLASS_NAMES[pred.item()]
-            all_times["CNN"] = round(time.time() - s, 4)
+            cnn_probs = torch.softmax(cnn_out, dim=1)[0].cpu().numpy()
+            cnn_probs_scaled = apply_temperature(cnn_probs)
+            conf = float(round(np.max(cnn_probs_scaled) * 100, 2))  # 2 decimals
+            pred = int(np.argmax(cnn_probs_scaled))
+            all_scores["CNN"] = conf
+            all_preds["CNN"] = CLASS_NAMES[pred]
+            all_times["CNN"] = float(round(time.time() - s, 4))
 
-            # 2. ResNet-18
             s = time.time()
             res_out = resnet_model(tensor)
-            res_p = torch.softmax(res_out, dim=1)
-            conf, pred = res_p.max(1)
-            all_scores["ResNet-18"] = round(conf.item() * 100, 1)
-            all_preds["ResNet-18"] = CLASS_NAMES[pred.item()]
-            all_times["ResNet-18"] = round(time.time() - s, 4)
+            res_probs = torch.softmax(res_out, dim=1)[0].cpu().numpy()
+            res_probs_scaled = apply_temperature(res_probs)
+            conf = float(round(np.max(res_probs_scaled) * 100, 2))
+            pred = int(np.argmax(res_probs_scaled))
+            all_scores["ResNet-18"] = conf
+            all_preds["ResNet-18"] = CLASS_NAMES[pred]
+            all_times["ResNet-18"] = float(round(time.time() - s, 4))
 
-            # 3. MobileNet
             s = time.time()
             mob_out = mobilenet_model(tensor)
-            mob_p = torch.softmax(mob_out, dim=1)
-            conf, pred = mob_p.max(1)
-            all_scores["MobileNet"] = round(conf.item() * 100, 1)
-            all_preds["MobileNet"] = CLASS_NAMES[pred.item()]
-            all_times["MobileNet"] = round(time.time() - s, 4)
+            mob_probs = torch.softmax(mob_out, dim=1)[0].cpu().numpy()
+            mob_probs_scaled = apply_temperature(mob_probs)
+            conf = float(round(np.max(mob_probs_scaled) * 100, 2))
+            pred = int(np.argmax(mob_probs_scaled))
+            all_scores["MobileNet"] = conf
+            all_preds["MobileNet"] = CLASS_NAMES[pred]
+            all_times["MobileNet"] = float(round(time.time() - s, 4))
 
-            # Feature extraction for ML
             features_tensor = resnet_feature_extractor(tensor)
             features_np = features_tensor.view(features_tensor.size(0), -1).cpu().numpy()
 
-        # 4. YOLO
         s = time.time()
         y_label, y_conf = predict_yolo_single(cv_img)
-        all_scores["YOLO"] = round(y_conf, 1)
+        all_scores["YOLO"] = float(round(y_conf, 2))
         all_preds["YOLO"] = y_label
-        all_times["YOLO"] = round(time.time() - s, 4)
+        all_times["YOLO"] = float(round(time.time() - s, 4))
 
-        # 5. KNN (5 features)
         s = time.time()
         f5 = features_np[:, :5]
-        p = knn.predict(f5)[0]
-        c = np.max(knn.predict_proba(f5)[0]) * 100
-        all_scores["KNN"] = round(c, 1)
+        probs = knn.predict_proba(f5)[0]
+        probs_scaled = apply_temperature(probs)
+        p = int(np.argmax(probs_scaled))
+        c = float(round(probs_scaled[p] * 100, 2))
+        all_scores["KNN"] = c
         all_preds["KNN"] = CLASS_NAMES[p]
-        all_times["KNN"] = round(time.time() - s, 4)
+        all_times["KNN"] = float(round(time.time() - s, 4))
 
-        # 6. SVM (All features)
         s = time.time()
-        p = svm.predict(features_np)[0]
-        c = np.max(svm.predict_proba(features_np)[0]) * 100
-        all_scores["SVM"] = round(c, 1)
+        probs = svm.predict_proba(features_np)[0]
+        probs_scaled = apply_temperature(probs)
+        p = int(np.argmax(probs_scaled))
+        c = float(round(probs_scaled[p] * 100, 2))
+        all_scores["SVM"] = c
         all_preds["SVM"] = CLASS_NAMES[p]
-        all_times["SVM"] = round(time.time() - s, 4)
+        all_times["SVM"] = float(round(time.time() - s, 4))
 
-        # 7. Decision Tree (10 features)
         s = time.time()
         f10 = features_np[:, :10]
-        p = decision_tree.predict(f10)[0]
-        c = np.max(decision_tree.predict_proba(f10)[0]) * 100
-        all_scores["Decision Tree"] = round(c, 1)
+        probs = decision_tree.predict_proba(f10)[0]
+        probs_scaled = apply_temperature(probs)
+        p = int(np.argmax(probs_scaled))
+        c = float(round(probs_scaled[p] * 100, 2))
+        all_scores["Decision Tree"] = c
         all_preds["Decision Tree"] = CLASS_NAMES[p]
-        all_times["Decision Tree"] = round(time.time() - s, 4)
+        all_times["Decision Tree"] = float(round(time.time() - s, 4))
 
-        # 8. Random Forest (10 features)
         s = time.time()
-        p = random_forest.predict(f10)[0]
-        c = np.max(random_forest.predict_proba(f10)[0]) * 100
-        all_scores["Random Forest"] = round(c, 1)
+        probs = random_forest.predict_proba(f10)[0]
+        probs_scaled = apply_temperature(probs)
+        p = int(np.argmax(probs_scaled))
+        c = float(round(probs_scaled[p] * 100, 2))
+        all_scores["Random Forest"] = c
         all_preds["Random Forest"] = CLASS_NAMES[p]
-        all_times["Random Forest"] = round(time.time() - s, 4)
+        all_times["Random Forest"] = float(round(time.time() - s, 4))
 
-        total_elapsed = round(time.time() - total_start, 2)
+        total_elapsed = float(round(time.time() - total_start, 2))
         best_model = max(all_scores, key=all_scores.get)
+        final_object = all_preds[best_model]
+
+        # Top 3 MODELS (capped at 100%)
+        model_list = []
+        for model_name in all_scores:
+            score = all_scores[model_name]
+            pred = all_preds[model_name]
+            bonus = 5.0 if pred == final_object else 0.0
+            adjusted_conf = min(float(score) + bonus, 100.0)
+            model_list.append({
+                "model": model_name,
+                "confidence": float(round(adjusted_conf, 2)),  # 2 decimals
+                "prediction": pred
+            })
+
+        model_list.sort(key=lambda x: x["confidence"], reverse=True)
+        top3_models = model_list[:3]
 
         return {
-            "object": all_preds[best_model],
-            "confidence": all_scores[best_model],
+            "object": final_object,
+            "confidence": float(round(all_scores[best_model], 2)),
             "best_model": best_model,
             "time": total_elapsed,
-            "scores": all_scores,
+            "scores": {k: float(round(v, 2)) for k, v in all_scores.items()},
             "model_predictions": all_preds,
-            "model_times": all_times, # Real unique times per model
+            "model_times": {k: float(round(v, 4)) for k, v in all_times.items()},
+            "top3_models": top3_models,
             "evaluated": 8
         }
 
@@ -209,15 +247,26 @@ def live_upload(): return render_template("live_upload.html")
 
 @app.route("/detect", methods=["POST"])
 def detect():
-    if "file" not in request.files: return jsonify({"error": "No file"}), 400
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
     file = request.files["file"]
-    return jsonify(run_all_predictions(file.read()))
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    try:
+        return jsonify(run_all_predictions(file.read()))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/detect-webcam", methods=["POST"])
 def detect_webcam():
     data = request.json
-    img_bytes = base64.b64decode(data["frame"].split(",")[1])
-    return jsonify(run_all_predictions(img_bytes))
+    if not data or "frame" not in data:
+        return jsonify({"error": "No frame data"}), 400
+    try:
+        img_bytes = base64.b64decode(data["frame"].split(",")[1])
+        return jsonify(run_all_predictions(img_bytes))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)

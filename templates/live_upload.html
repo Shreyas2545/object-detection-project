@@ -127,7 +127,8 @@
         <div class="lg:col-span-2 bg-white rounded-2xl shadow-md p-6">
           <h3 class="text-xl font-semibold mb-4 text-gray-900">Detected Object</h3>
           <img id="resultImage" class="rounded-xl w-full object-contain mb-4 shadow" style="max-height: 350px;" />
-          <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+
+          <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
             <div class="flex items-start gap-3">
               <svg class="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -141,6 +142,13 @@
               </div>
             </div>
           </div>
+
+          <!-- Top 3 Models by Confidence -->
+          <div class="mt-6">
+            <h4 class="font-semibold text-lg mb-3 text-gray-900">Top 3 Models by Confidence</h4>
+            <div id="top3ModelsList" class="space-y-3"></div>
+          </div>
+
           <div class="mt-6">
             <h4 class="font-semibold text-lg mb-3 text-gray-900">Classification Summary</h4>
             <p id="classificationSummary" class="text-gray-600 text-sm leading-relaxed">-</p>
@@ -250,6 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewMoreBtn = document.getElementById('viewMoreBtn');
   const moreDetails = document.getElementById('moreDetails');
   const modelDetailsList = document.getElementById('modelDetailsList');
+  const top3ModelsList = document.getElementById('top3ModelsList');
 
   backBtn.addEventListener('click', () => location.reload());
 
@@ -265,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const timer = setInterval(() => {
       current += increment;
       if ((diff > 0 && current >= targetValue) || (diff < 0 && current <= targetValue) || diff === 0) {
-        element.textContent = `${targetValue}%`;
+        element.textContent = `${Math.round(targetValue)}%`;
         clearInterval(timer);
       } else {
         element.textContent = `${Math.round(current)}%`;
@@ -379,37 +388,53 @@ document.addEventListener('DOMContentLoaded', () => {
     analysisTime.textContent = `${data.time}s`;
     bestModel.textContent = data.best_model;
 
-    // --- MAIN CONFIDENCE DISPLAY ---
     if (isLiveMode) {
-        detectedConfidence.textContent = `${data.confidence}%`;
+      detectedConfidence.textContent = `${data.confidence}%`;
     } else {
-        detectedConfidence.textContent = `0%`;
-        setTimeout(() => animateCounter(detectedConfidence, 0, data.confidence), 300);
+      detectedConfidence.textContent = `0%`;
+      setTimeout(() => animateCounter(detectedConfidence, 0, data.confidence), 300);
     }
 
-    // --- MODEL LIST DISPLAY ---
     modelScoreList.innerHTML = '';
     Object.entries(data.scores).forEach(([model, score]) => {
-        const div = document.createElement('div');
-        div.className = 'flex justify-between items-center p-4 rounded-lg bg-gray-50';
-        
-        if (isLiveMode) {
-            div.innerHTML = `
-                <span class="font-medium text-lg">${model}</span>
-                <span class="text-3xl font-bold text-gray-800">${score}%</span>
-            `;
-        } else {
-            div.innerHTML = `
-                <span class="font-medium text-lg">${model}</span>
-                <span class="text-3xl font-bold text-gray-800 odometer">0%</span>
-            `;
-            const odometer = div.querySelector('.odometer');
-            setTimeout(() => animateCounter(odometer, 0, score), 600);
-        }
-        modelScoreList.appendChild(div);
+      const div = document.createElement('div');
+      div.className = 'flex justify-between items-center p-4 rounded-lg bg-gray-50';
+      if (isLiveMode) {
+        div.innerHTML = `
+          <span class="font-medium text-lg">${model}</span>
+          <span class="text-3xl font-bold text-gray-800">${score}%</span>
+        `;
+      } else {
+        div.innerHTML = `
+          <span class="font-medium text-lg">${model}</span>
+          <span class="text-3xl font-bold text-gray-800 odometer">0%</span>
+        `;
+        const odometer = div.querySelector('.odometer');
+        setTimeout(() => animateCounter(odometer, 0, score), 600);
+      }
+      modelScoreList.appendChild(div);
     });
 
-    // --- TABLE UPDATE ---
+    // Top 3 Models by Confidence
+    const top3ModelsList = document.getElementById('top3ModelsList');
+    top3ModelsList.innerHTML = '';
+    if (data.top3_models && data.top3_models.length > 0) {
+      data.top3_models.forEach((item) => {
+        const div = document.createElement('div');
+        div.className = 'flex flex-col p-4 rounded-lg bg-gray-50 shadow-sm';
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-medium text-lg">${item.model}</span>
+            <span class="text-xl font-bold text-blue-600">${item.confidence.toFixed(2)}%</span>
+          </div>
+          <span class="text-sm text-gray-600 mt-1">Predicted: ${item.prediction}</span>
+        `;
+        top3ModelsList.appendChild(div);
+      });
+    } else {
+      top3ModelsList.innerHTML = '<p class="text-gray-500">No top models available</p>';
+    }
+
     modelDetailsList.innerHTML = '';
     Object.entries(data.scores).forEach(([model, score]) => {
       const pred = data.model_predictions[model] || data.object;
@@ -419,7 +444,6 @@ document.addEventListener('DOMContentLoaded', () => {
       modelDetailsList.appendChild(tr);
     });
 
-    // --- CHART UPDATE ---
     const labels = Object.keys(data.scores);
     const values = Object.values(data.scores);
     if (chartInstance) {
@@ -431,9 +455,20 @@ document.addEventListener('DOMContentLoaded', () => {
         type: 'bar',
         data: {
           labels,
-          datasets: [{ label: 'Confidence (%)', data: values, backgroundColor: 'rgba(59,130,246,0.7)', barThickness: 30, borderRadius: 8 }]
+          datasets: [{
+            label: 'Confidence (%)',
+            data: values,
+            backgroundColor: 'rgba(59,130,246,0.7)',
+            borderColor: 'rgba(59,130,246,1)',
+            borderWidth: 1,
+            borderRadius: 8
+          }]
         },
-        options: { animation: { duration: 1000 }, scales: { y: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } }
+        options: {
+          animation: { duration: 1000 },
+          scales: { y: { beginAtZero: true, max: 100 } },
+          plugins: { legend: { display: false } }
+        }
       });
     }
 
@@ -442,6 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     insightsList.innerHTML = `
       <li>✓ Best model: <strong>${data.best_model}</strong> (${data.confidence}% confidence)</li>
+      <li>✓ Top 3 models shown above</li>
       <li>✓ Processing time: <strong>${data.time}s</strong></li>
       <li>✓ All 8 models evaluated successfully</li>
     `;
@@ -450,9 +486,6 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('resultImage', imageSrc);
   }
 
-  // PDF Report Logic (Unchanged)
-  // --- PROFESSIONAL PDF REPORT LOGIC ---
-  // --- FULL PROFESSIONAL PDF REPORT LOGIC (PRESERVING ALL FEATURES) ---
   downloadReportBtn.addEventListener('click', async () => {
     const data = JSON.parse(localStorage.getItem('resultData'));
     const imageSrc = localStorage.getItem('resultImage');
@@ -461,8 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageWidth = pdf.internal.pageSize.getWidth();
     const timestamp = new Date().toLocaleString();
 
-    // --- PAGE 1: HEADER ---
-    pdf.setFillColor(59, 130, 246); // Professional Blue
+    pdf.setFillColor(59, 130, 246);
     pdf.rect(0, 0, pageWidth, 40, 'F');
     pdf.setTextColor(255, 255, 255);
     pdf.setFontSize(22);
@@ -473,7 +505,6 @@ document.addEventListener('DOMContentLoaded', () => {
     pdf.setFont("helvetica", "normal");
     pdf.text(`Generated on: ${timestamp}`, 105, 30, { align: 'center' });
 
-    // --- 1. SMART IMAGE SECTION (Prevents "Flexy" stretching) ---
     pdf.setTextColor(0, 0, 0);
     pdf.setFontSize(14);
     pdf.setFont("helvetica", "bold");
@@ -495,14 +526,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const xPos = (pageWidth - finalWidth) / 2;
     pdf.addImage(imageSrc, 'JPEG', xPos, 60, finalWidth, finalHeight);
 
-    // --- 2. DETAILED MODEL PERFORMANCE TABLE ---
-    // Start table dynamically below the image
     let startY = 60 + finalHeight + 20; 
     pdf.setFontSize(14);
     pdf.text('2. Detailed Model Performance', 15, startY);
     
     startY += 10;
-    // Table Headers
     pdf.setFillColor(240, 240, 240);
     pdf.rect(15, startY - 5, 180, 8, 'F');
     pdf.setFontSize(10);
@@ -511,7 +539,6 @@ document.addEventListener('DOMContentLoaded', () => {
     pdf.text('Confidence', 120, startY);
     pdf.text('Processing Time', 160, startY);
 
-    // Table Rows (All 8 Models) 
     pdf.setFont("helvetica", "normal");
     Object.entries(data.scores).forEach(([model, score], index) => {
         const rowY = startY + 10 + (index * 8);
@@ -527,7 +554,6 @@ document.addEventListener('DOMContentLoaded', () => {
     pdf.setFontSize(8);
     pdf.text('Page 1 of 2', 105, 285, { align: 'center' });
 
-    // --- PAGE 2: VISUALIZATION & CONCLUSION ---
     pdf.addPage();
     
     pdf.setFontSize(14);
@@ -541,16 +567,14 @@ document.addEventListener('DOMContentLoaded', () => {
     pdf.setFillColor(245, 247, 250);
     pdf.rect(15, 145, 180, 40, 'F');
     
-    // Conclusion Content [cite: 25, 26, 27, 28]
     const conclusion = [
         `Inference Conclusion:`,
-        `• Primary identification for analyzed media: "${data.object}"`,
+        `• Primary identification: "${data.object}"`,
         `• Peak model accuracy: ${data.confidence}% using ${data.best_model}`,
         `• Total multi-model classification time: ${data.time} seconds`
     ];
     pdf.text(conclusion, 20, 155);
 
-    // Footer [cite: 29]
     pdf.setDrawColor(59, 130, 246);
     pdf.setLineWidth(1);
     pdf.line(15, 270, 195, 270);
@@ -558,10 +582,9 @@ document.addEventListener('DOMContentLoaded', () => {
     pdf.text('Real-Time Object Classifier © 2026', 15, 278);
     pdf.text('Page 2 of 2', 105, 285, { align: 'center' });
 
-    // --- DIRECT FILENAME ---
-  pdf.save('Analysis_report.pdf');
+    pdf.save('Analysis_report.pdf');
   });
- 
+
   testAnotherBtn.addEventListener('click', () => location.reload());
 
   function hideInputScreen() {
@@ -572,8 +595,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function dataURLToFile(dataurl, filename) {
-    const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1], bstr = atob(arr[1]);
-    let n = bstr.length, u8arr = new Uint8Array(n);
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
     while (n--) u8arr[n] = bstr.charCodeAt(n);
     return new File([u8arr], filename, { type: mime });
   }
