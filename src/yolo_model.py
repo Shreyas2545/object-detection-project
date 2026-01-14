@@ -34,7 +34,7 @@ CLASS_MAPPING = {
 # =========================
 # LOAD YOLO MODEL (ONCE)
 # =========================
-model = YOLO("yolov8n.pt")
+model = YOLO("yolov8s.pt")
 
 def predict_yolo_single(image):
     """
