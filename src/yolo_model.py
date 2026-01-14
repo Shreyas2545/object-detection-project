@@ -65,13 +65,3 @@ def predict_yolo_single(image):
                 best_conf = conf
 
     return best_label, best_conf
-
-# =========================
-# TEST MODE
-# =========================
-if __name__ == "__main__":
-    test_img_path = "data/images/test/dog/dog_sample.jpg" # Example path
-    img = cv2.imread(test_img_path)
-    if img is not None:
-        label, conf = predict_yolo_single(img)
-        print(f"Test Prediction: {label} ({conf:.2f}%)")
