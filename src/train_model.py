@@ -85,10 +85,9 @@ def train_model(model, model_name, epochs=8,lr=0.001): # model + model name + ep
     print(f"✅ {model_name} saved to {save_path}\n")
 
 
-train_model(CNNModel(num_classes=len(train_data.classes)), "CNN", epochs=6, lr=0.001)  # Increased to 8 epochs for better accuracy
+train_model(CNNModel(num_classes=len(train_data.classes)), "CNN", epochs=6, lr=0.001)  
 
-train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18", epochs=3, lr=0.001 ) # for resnet18 model  ← commented out
-
+train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18", epochs=3, lr=0.001 ) 
 
 train_model(get_mobilenet_model(num_classes=len(train_data.classes)),"MobileNet", epochs=3, lr=0.001)  
 

@@ -70,8 +70,8 @@ def run_decision_tree_and_get_accuracy():
             correct += 1
 
         print(
-            f"🧮 Predicted: {class_names[pred]} ({conf:.2f}%) | "
-            f"Actual: {class_names[actual]}"
+            f"🧮 Predicted: {CLASS_NAMES[pred]} ({conf:.2f}%) | "
+            f"Actual: {CLASS_NAMES[actual]}"
         )
 
     accuracy = correct / total
@@ -83,7 +83,7 @@ def run_decision_tree_and_get_accuracy():
     y_pred = dt.predict(X_test)
 
     print("📊 Classification Report:")
-    print(classification_report(y_test, y_pred, target_names=class_names))
+    print(classification_report(y_test, y_pred, target_names=CLASS_NAMES))
 
     print("🧩 Confusion Matrix:")
     print(confusion_matrix(y_test, y_pred))
