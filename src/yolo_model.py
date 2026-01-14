@@ -44,7 +44,7 @@ def predict_yolo_single(image):
         return "unknown", 0.0
 
     # YOLO inference
-    results = model(image, conf=0.15, verbose=False)
+    results = model(image, conf=0.15, iou=0.45, max_det=10, verbose=False)
     boxes = results[0].boxes
 
     best_label = "unknown"
