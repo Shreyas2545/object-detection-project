@@ -3,9 +3,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report, confusion_matrix
 import joblib
 
-# =========================
-# CLASS NAMES (SAME AS DL)
-# =========================
+
 CLASS_NAMES = ["backpack", "bird", "book", "bottle", "car", "cat", "dog", "human", "keyboard",
                 "laptop", "mobile", "mouse", "mug", "plant", "shoe", "watch"]
 # =========================
@@ -20,10 +18,7 @@ print("✅ Loaded feature data")
 print("Original Training shape:", X_train.shape)
 print("Original Testing shape :", X_test.shape)
 
-# =========================
-# 🔻 REDUCE FEATURE DIMENSION
-# (To avoid overfitting & get realistic accuracy)
-# =========================
+
 X_train = X_train[:, :5]
 X_test  = X_test[:, :5]
  # 🔻 Add noise to test features
