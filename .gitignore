@@ -20,3 +20,19 @@ __pycache__/
 
 # Virtual env
 venv/
+
+
+# Ignore datasets
+data/
+datasets/
+images/
+*.jpg
+*.png
+
+# Ignore training artifacts
+*.pt
+*.ckpt
+
+# Python cache
+__pycache__/
+*.pyc
