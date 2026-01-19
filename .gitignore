@@ -1,0 +1,22 @@
+# Models
+*.pt
+*.h5
+*.onnx
+
+# Datasets
+data/
+dataset/
+datasets/
+
+# Videos & images
+*.mp4
+*.avi
+*.mov
+
+# Cache
+__pycache__/
+.cache/
+.env
+
+# Virtual env
+venv/
