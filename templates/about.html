@@ -3,306 +3,231 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>About | ObjectVision</title>
+  <title>About | Objectify Intelligence</title>
 
-  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    body { background: #ffffff; }
-    .info-card {
-      background: #f7f9fc;
-      transition: 0.2s;
+    body { 
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #ffffff;
     }
-    .info-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 12px rgba(0,0,0,0.06);
+    .mesh-gradient {
+        background-color: #ffffff;
+        background-image: 
+            radial-gradient(at 0% 0%, hsla(210,100%,93%,1) 0, transparent 50%), 
+            radial-gradient(at 100% 100%, hsla(210,100%,95%,1) 0, transparent 50%);
+    }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glass-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(59, 130, 246, 0.2);
     }
     .model-line {
-      border-left: 4px solid #2563eb;
-      padding-left: 1rem;
-      margin-left: 0.5rem;
+        border-left: 4px solid #3b82f6;
+        padding-left: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    .model-line:hover {
+        border-left-width: 8px;
+        background: rgba(59, 130, 246, 0.03);
+    }
+    .tech-card {
+        background: white;
+        border: 1px solid #f1f5f9;
+        transition: all 0.3s ease;
+    }
+    .tech-card:hover {
+        border-color: #3b82f6;
+        transform: scale(1.05);
     }
   </style>
 </head>
 
-<body class="text-gray-800 flex flex-col min-h-screen">
-<!-- 🌐 NAVBAR -->
-<header class="bg-gray-100/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
-  <nav class="max-w-6xl mx-auto flex justify-between items-center px-6 py-3">
+<body class="text-slate-800 flex flex-col min-h-screen mesh-gradient">
 
-    <!-- Logo -->
-    <div class="flex items-center space-x-2 text-2xl font-bold">
-      <span class="text-blue-600">🧠</span>
-      <span>Real-Time Object Classifier</span>
+<header class="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-slate-100">
+  <nav class="max-w-7xl mx-auto flex justify-between items-center px-8 py-4">
+    <div class="flex items-center space-x-3 text-2xl font-extrabold tracking-tight">
+      <div class="bg-blue-600 p-2 rounded-xl shadow-lg">
+        <svg width="24" height="24" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/>
+        </svg>
+      </div>
+      <span class="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">Objectify</span>
     </div>
-
-    <!-- Navigation Links -->
-    <ul class="flex space-x-14 text-lg items-center">
-
-      <!-- Home -->
-      <li>
-        <a href="/" class="flex items-center space-x-2 hover:text-blue-600 transition">
-          <svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1h-6v-6H10v6H4a1 1 0 0 1-1-1V9.5z"/>
-          </svg>
-          <span>Home</span>
-        </a>
-      </li>
-
-      <!-- About -->
-      <li>
-        <a href="/about" class="flex items-center space-x-2 hover:text-blue-600 transition">
-          <svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="16" x2="12" y2="12"/>
-            <circle cx="12" cy="8" r="1"/>
-          </svg>
-          <span>About</span>
-        </a>
-      </li>
-
-      <li>
-        <a href="/live-upload" class="flex items-center space-x-2 hover:text-blue-600 transition">
-          <svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <path d="M12 4l6 6h-3v8H9v-8H6l6-6z"/>
-          </svg>
-          <span>Live Upload</span>
-        </a>
-      </li>
-
-      <!-- Help -->
-      <li>
-        <a href="/help" class="flex items-center space-x-2 hover:text-blue-600 transition">
-          <svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M12 17v-.5m0-4.5a2 2 0 1 0-2-2"/>
-          </svg>
-          <span>Help</span>
-        </a>
-      </li>
+    <ul class="hidden md:flex space-x-10 text-[15px] font-semibold text-slate-600">
+      <li><a href="/" class="hover:text-blue-600 transition">Home</a></li>
+      <li><a href="/about" class="text-blue-600">About</a></li>
+      <li><a href="/live-upload" class="hover:text-blue-600 transition">Live Upload</a></li>
+      <li><a href="/help" class="hover:text-blue-600 transition">Help</a></li>
     </ul>
+    <a href="mailto:shreyashadawale25@gmail.com" class="hidden md:block bg-slate-900 text-white text-xs font-bold px-6 py-2.5 rounded-full hover:bg-slate-800 transition">
+      Contact Us
+    </a>
   </nav>
 </header>
 
+<main class="flex-grow max-w-7xl mx-auto px-8 py-16">
 
-
-  <!-- 📘 Main Content -->
-  <main class="flex-grow">
-
-    <!-- HEADER -->
-    <section class="text-center mt-16 mb-10 px-4">
-      <h1 class="text-4xl font-bold text-gray-900">
-        About <span class="text-blue-500">The Project</span>
+    <section class="text-center mb-16">
+      <h1 class="text-5xl font-extrabold text-slate-900 mb-6">
+        About <span class="text-blue-600">The Project</span>
       </h1>
-      <p class="text-lg text-gray-600 mt-3">
-        AI-powered object detection with multiple neural network models
-      </p>
-      <p class="text-lg text-gray-600 mt-4 max-w-4xl mx-auto">
-        A comprehensive academic study comparing the efficacy of modern deep learning architectures 
-        with traditional machine learning algorithms in object detection and classification tasks.
-      </p>
+     
     </section>
 
-    <!-- 🟦 3 Info Cards -->
-    <section class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 px-6 mb-20">
-      <div class="info-card shadow rounded-xl p-6">
-        <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
-          <span class="text-blue-600 text-xl">🎯</span>
-        </div>
-        <h3 class="font-semibold text-xl mb-2">Research Objective</h3>
-        <p class="text-gray-600">
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
+      <div class="glass-card p-8 rounded-3xl">
+        <div class="w-12 h-12 rounded-2xl bg-blue-600/10 flex items-center justify-center mb-6 text-2xl">🎯</div>
+        <h3 class="font-bold text-xl mb-3">Research Objective</h3>
+        <p class="text-slate-500 leading-relaxed text-sm">
           Conduct a comprehensive comparative analysis of ML & DL models for object detection, evaluating their performance across multiple metrics.
         </p>
       </div>
 
-      <div class="info-card shadow rounded-xl p-6">
-        <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
-          <span class="text-blue-600 text-xl">📊</span>
-        </div>
-        <h3 class="font-semibold text-xl mb-2">Performance Evaluation</h3>
-        <p class="text-gray-600">
-          Assess accuracy, precision, recall, and computational efficiency of YOLO, CNN, ResNet-18, MobileNet, KNN, SVM, Decision Tree & Random Forest.
+      <div class="glass-card p-8 rounded-3xl">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-600/10 flex items-center justify-center mb-6 text-2xl">📊</div>
+        <h3 class="font-bold text-xl mb-3">Performance Evaluation</h3>
+        <p class="text-slate-500 leading-relaxed text-sm">
+          Assess accuracy, precision, and computational efficiency of YOLO, CNN, ResNet-18, MobileNet, KNN, SVM, and Ensemble methods.
         </p>
       </div>
 
-      <div class="info-card shadow rounded-xl p-6">
-        <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
-          <span class="text-blue-600 text-xl">🧠</span>
-        </div>
-        <h3 class="font-semibold text-xl mb-2">Methodology</h3>
-        <p class="text-gray-600">
-          Utilize standardized datasets and testing environments to ensure fair comparison between ML and DL approaches.
+      <div class="glass-card p-8 rounded-3xl">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-600/10 flex items-center justify-center mb-6 text-2xl">🧠</div>
+        <h3 class="font-bold text-xl mb-3">Methodology</h3>
+        <p class="text-slate-500 leading-relaxed text-sm">
+          Utilize standardized datasets and high-performance testing environments to ensure fair comparison between statistical and neural approaches.
         </p>
       </div>
     </section>
 
-    <!-- 🟩 Deep Learning Models – Wrapped in card -->
-    <section class="max-w-6xl mx-auto px-6 mb-16">
-      <div class="bg-white shadow-lg rounded-2xl p-10 border border-gray-200">
-        <h2 class="text-3xl font-semibold text-gray-900 mb-10">Deep Learning Models</h2>
-
-        <div class="space-y-10">
+    <section class="mb-16">
+      <div class="glass-card rounded-3xl p-10 border border-slate-100">
+        <h2 class="text-3xl font-extrabold text-slate-900 mb-10 flex items-center">
+            <span class="w-8 h-8 bg-blue-600 rounded-lg mr-4"></span>
+            Deep Learning Models
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div class="model-line">
-            <h3 class="font-semibold text-xl text-gray-900">YOLO (You Only Look Once)</h3>
-            <p class="text-gray-600">
-              A state-of-the-art, real-time Object detection system that frames object detection as a regression problem,
-              achieving remarkable speed and accuracy by processing images in a single neural network pass.
+            <h3 class="font-bold text-xl text-slate-900 mb-2">YOLO (You Only Look Once)</h3>
+            <p class="text-slate-500 text-sm leading-relaxed">
+              A state-of-the-art, real-time object detection system that frames detection as a regression problem, achieving remarkable speed in a single pass.
             </p>
           </div>
-
           <div class="model-line">
-            <h3 class="font-semibold text-xl text-gray-900">CNN (Convolutional Neural Network)</h3>
-            <p class="text-gray-600">
-              A deep learning architecture designed for processing grid-like topology data such as images,
-              using convolutional layers to automatically extract hierarchical feature representations.
+            <h3 class="font-bold text-xl text-slate-900 mb-2">CNN (Convolutional Neural Network)</h3>
+            <p class="text-slate-500 text-sm leading-relaxed">
+              Custom-built 4-block architecture designed for hierarchical feature extraction from grid-like image data topology.
             </p>
           </div>
-
           <div class="model-line">
-            <h3 class="font-semibold text-xl text-gray-900">ResNet-18</h3>
-            <p class="text-gray-600">
-              An 18-layer residual neural network using skip connections to enable training of deep networks,
-              avoiding vanishing gradients and achieving superior accuracy.
+            <h3 class="font-bold text-xl text-slate-900 mb-2">ResNet-18</h3>
+            <p class="text-slate-500 text-sm leading-relaxed">
+              Residual Neural Network architecture utilizing skip connections to solve vanishing gradients in deep training cycles.
             </p>
           </div>
-
           <div class="model-line">
-            <h3 class="font-semibold text-xl text-gray-900">MobileNet</h3>
-            <p class="text-gray-600">
-              A lightweight deep neural network architecture optimized for embedded systems and mobile devices,
-              designed using depthwise separable convolutions for reduced computation cost.
+            <h3 class="font-bold text-xl text-slate-900 mb-2">MobileNet</h3>
+            <p class="text-slate-500 text-sm leading-relaxed">
+              Lightweight architecture optimized for mobile and embedded vision using depthwise separable convolutions.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 🟧 Machine Learning Models – Wrapped in card -->
-    <section class="max-w-6xl mx-auto px-6 mb-20">
-      <div class="bg-white shadow-lg rounded-2xl p-10 border border-gray-200">
-        <h2 class="text-3xl font-semibold text-gray-900 mb-10">Machine Learning Models</h2>
-
-        <div class="space-y-10">
+    <section class="mb-24">
+      <div class="glass-card rounded-3xl p-10 border border-slate-100">
+        <h2 class="text-3xl font-extrabold text-slate-900 mb-10 flex items-center">
+            <span class="w-8 h-8 bg-emerald-600 rounded-lg mr-4"></span>
+            Machine Learning Models
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div class="model-line">
-            <h3 class="font-semibold text-xl text-gray-900">KNN (K-Nearest Neighbors)</h3>
-            <p class="text-gray-600">
-              A non-parametric, instance-based learning algorithm that classifies objects based on the majority class
-              among their k nearest neighbors in feature space.
+            <h3 class="font-bold text-xl text-slate-900 mb-2">KNN (K-Nearest Neighbors)</h3>
+            <p class="text-slate-500 text-sm leading-relaxed">
+              Instance-based learning algorithm that classifies objects based on the proximity in feature space.
             </p>
           </div>
-
           <div class="model-line">
-            <h3 class="font-semibold text-xl text-gray-900">SVM (Support Vector Machine)</h3>
-            <p class="text-gray-600">
-              A supervised learning algorithm that finds the optimal hyperplane in high-dimensional space
-              to maximize separation between classes, effective for linear & non-linear classification.
+            <h3 class="font-bold text-xl text-slate-900 mb-2">SVM (Support Vector Machine)</h3>
+            <p class="text-slate-500 text-sm leading-relaxed">
+              High-dimensional hyperplane optimization used for robust class separation and linear/non-linear classification.
             </p>
           </div>
-
           <div class="model-line">
-            <h3 class="font-semibold text-xl text-gray-900">Decision Tree</h3>
-            <p class="text-gray-600">
-              A tree-structured model predicting outcomes using hierarchical splitting of features,
-              enabling interpretable rule-based classification.
+            <h3 class="font-bold text-xl text-slate-900 mb-2">Decision Tree</h3>
+            <p class="text-slate-500 text-sm leading-relaxed">
+              Tree-structured model utilizing hierarchical entropy reduction for interpretable rule-based detection.
             </p>
           </div>
-
           <div class="model-line">
-            <h3 class="font-semibold text-xl text-gray-900">Random Forest</h3>
-            <p class="text-gray-600">
-              An ensemble learning approach that constructs multiple decision trees and outputs aggregated predictions,
-              improving accuracy and reducing overfitting.
+            <h3 class="font-bold text-xl text-slate-900 mb-2">Random Forest</h3>
+            <p class="text-slate-500 text-sm leading-relaxed">
+              Ensemble approach constructing multiple decision trees to reduce overfitting and improve collective accuracy.
             </p>
           </div>
         </div>
       </div>
     </section>
-  </main>
 
-  <!-- 🛠 Technologies -->
-  <section class="mt-20 px-6">
-  <h2 class="text-3xl font-semibold text-gray-900 text-center mb-12">
-    Built With Modern Technologies
-  </h2>
+   <section class="mt-24 px-6 py-24 bg-white rounded-[3.5rem] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
+      <div class="max-w-4xl mx-auto text-center mb-20">
+        <div class="inline-block px-4 py-1.5 mb-5 text-[10px] font-bold tracking-[0.2em] text-blue-600 uppercase bg-blue-50 rounded-full">Technical Stack</div>
+        <h2 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6">Built With Modern Technologies</h2>
+        <p class="text-slate-500 font-medium text-lg">Powering high-precision object detection through a robust stack of industry-standard tools.</p>
+      </div>
 
-  <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
 
-    <!-- Backend -->
-    <div class="bg-white shadow-md rounded-xl p-6 text-center">
-      <div class="text-4xl mb-2">🔥</div>
-      <h3 class="font-semibold text-lg mb-1">Flask</h3>
-      <p class="text-gray-500 text-sm">Backend REST server powering detection routes</p>
+        <div class="tech-card bg-slate-50/50 border border-slate-100 p-8 rounded-[2rem]">
+          <div class="text-4xl mb-6">🔥</div>
+          <h3 class="font-bold text-xl text-slate-900 mb-2">Flask</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Backend REST server powering detection routes</p>
+        </div>
+
+        <div class="tech-card bg-slate-50/50 border border-slate-100 p-8 rounded-[2rem]">
+          <div class="text-4xl mb-6">🧠</div>
+          <h3 class="font-bold text-xl text-slate-900 mb-2">PyTorch</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Trains CNN / ResNet / YOLO models</p>
+        </div>
+
+        <div class="tech-card bg-slate-50/50 border border-slate-100 p-8 rounded-[2rem]">
+          <div class="text-4xl mb-6">📷</div>
+          <h3 class="font-bold text-xl text-slate-900 mb-2">OpenCV</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Frame capture & image preprocessing</p>
+        </div>
+
+        <div class="tech-card bg-slate-50/50 border border-slate-100 p-8 rounded-[2rem]">
+          <div class="text-4xl mb-6">🔢</div>
+          <h3 class="font-bold text-xl text-slate-900 mb-2">NumPy</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Matrix operations & dataset vectorization</p>
+        </div>
+      </div>
+    </section>
+
+</main>
+
+<footer class="bg-white border-t border-slate-100 py-12">
+  <div class="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center text-slate-400 text-sm font-medium">
+    <div class="flex items-center space-x-2 text-slate-900 mb-4 md:mb-0">
+      <span class="text-blue-600 text-xl font-black">🧠</span>
+      <span class="font-bold tracking-tight text-lg">Objectify</span>
     </div>
-
-    <!-- Deep Learning Framework -->
-    <div class="bg-white shadow-md rounded-xl p-6 text-center">
-      <div class="text-4xl mb-2">🧠</div>
-      <h3 class="font-semibold text-lg mb-1">PyTorch</h3>
-      <p class="text-gray-500 text-sm">Trains CNN / ResNet / YOLO models</p>
-    </div>
-
-    <!-- Computer Vision Library -->
-    <div class="bg-white shadow-md rounded-xl p-6 text-center">
-      <div class="text-4xl mb-2">📷</div>
-      <h3 class="font-semibold text-lg mb-1">OpenCV</h3>
-      <p class="text-gray-500 text-sm">Frame capture & image preprocessing</p>
-    </div>
-
-    <!-- Numerical Engine -->
-    <div class="bg-white shadow-md rounded-xl p-6 text-center">
-      <div class="text-4xl mb-2">🔢</div>
-      <h3 class="font-semibold text-lg mb-1">NumPy</h3>
-      <p class="text-gray-500 text-sm">Matrix operations & dataset vectorization</p>
-    </div>
-
-    <!-- Model Optimization -->
-    <div class="bg-white shadow-md rounded-xl p-6 text-center">
-      <div class="text-4xl mb-2">⚙️</div>
-      <h3 class="font-semibold text-lg mb-1">Adam Optimizer</h3>
-      <p class="text-gray-500 text-sm">Model weight optimization during training</p>
-    </div>
-
-    <!-- IDE -->
-    <div class="bg-white shadow-md rounded-xl p-6 text-center">
-      <div class="text-4xl mb-2">🛠</div>
-      <h3 class="font-semibold text-lg mb-1">VS Code</h3>
-      <p class="text-gray-500 text-sm">Main environment for development</p>
-    </div>
-
-    <!-- Version Control -->
-    <div class="bg-white shadow-md rounded-xl p-6 text-center">
-      <div class="text-4xl mb-2">🧩</div>
-      <h3 class="font-semibold text-lg mb-1">Git & GitHub</h3>
-      <p class="text-gray-500 text-sm">Code management & collaboration</p>
-    </div>
-
-    <!-- Programming Language -->
-    <div class="bg-white shadow-md rounded-xl p-6 text-center">
-      <div class="text-4xl mb-2">💡</div>
-      <h3 class="font-semibold text-lg mb-1">Python</h3>
-      <p class="text-gray-500 text-sm">Core language used across ML & backend</p>
-    </div>
-
+    <span>© 2026 Objectify Intelligence. Academic Research Project.</span>
   </div>
-</section>
-
-
-  <!-- ✉️ Contact -->
-  <section class="mt-16 mb-20 text-center px-4">
-    <p class="text-lg text-gray-700 mb-8">Interested in collaboration or have questions?</p>
-    <a href="mailto:shreyashadawale25@gmail.com"
-       class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg">
-       Get in Touch
-    </a>
-  </section>
-
-  <!-- ⚙️ Footer -->
-  <footer class="bg-white shadow-inner mt-auto py-4">
-    <div class="max-w-6xl mx-auto text-center text-sm text-gray-500">
-      © 2025 Real-Time Object Classifier | 
-    </div>
-  </footer>
+</footer>
 
 </body>
 </html>
