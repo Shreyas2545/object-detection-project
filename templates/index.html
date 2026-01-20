@@ -19,16 +19,18 @@
             radial-gradient(at 0% 0%, hsla(210,100%,93%,1) 0, transparent 50%), 
             radial-gradient(at 100% 100%, hsla(210,100%,95%,1) 0, transparent 50%);
     }
+    /* Updated Visible Glass Cards */
     .glass-card {
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.85); /* Increased opacity */
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(226, 232, 240, 1); /* Visible slate-200 border */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); /* Subtle fixed shadow */
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .glass-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
-        border: 1px solid rgba(59, 130, 246, 0.2);
+        transform: translateY(-6px);
+        box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.1), 0 10px 10px -5px rgba(59, 130, 246, 0.04);
+        border: 1px solid rgba(59, 130, 246, 0.4); /* Blue highlight on hover */
     }
     .btn-primary {
         background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -38,122 +40,79 @@
         box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
         transform: translateY(-1px);
     }
-    .nav-link {
-        position: relative;
-    }
-    .nav-link::after {
-        content: '';
-        position: absolute;
-        width: 0;
-        height: 2px;
-        bottom: -4px;
-        left: 0;
-        background-color: #3b82f6;
-        transition: width 0.3s ease;
-    }
-    .nav-link:hover::after {
-        width: 100%;
-    }
-    .badge-dl { @apply bg-blue-50 text-blue-600; }
-    .badge-ml { @apply bg-emerald-50 text-emerald-600; }
   </style>
 </head>
 
 <body class="text-slate-900 flex flex-col min-h-screen mesh-gradient">
 
-<header class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100/60">
+<header class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
   <nav class="max-w-6xl mx-auto flex justify-between items-center px-12 py-6">
-    
     <div class="flex items-center space-x-4 group cursor-pointer">
       <div class="bg-blue-600 p-3 rounded-[1.2rem] shadow-xl shadow-blue-100 group-hover:scale-105 transition-all duration-300">
         <svg width="24" height="24" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/>
         </svg>
       </div>
-      <span class="text-2xl font-[800] tracking-tight text-slate-900">
-        Objectify
-      </span>
+      <span class="text-2xl font-[800] tracking-tight text-slate-900">Objectify</span>
     </div>
 
     <ul class="flex items-center space-x-14">
-      <li>
-        <a href="/" class="text-[17px] font-bold text-blue-600 relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-full after:h-[3px] after:bg-blue-600 after:rounded-full">Home</a>
-      </li>
-      <li>
-        <a href="/about" class="text-[17px] font-bold text-slate-500 hover:text-slate-900 transition-colors duration-300">About</a>
-      </li>
-      <li>
-        <a href="/live-upload" class="text-[17px] font-bold text-slate-500 hover:text-slate-900 transition-colors duration-300">Live Upload</a>
-      </li>
-      <li>
-        <a href="/help" class="text-[17px] font-bold text-slate-500 hover:text-slate-900 transition-colors duration-300">Help</a>
-      </li>
+      <li><a href="/" class="text-[17px] font-bold text-blue-600 relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-full after:h-[3px] after:bg-blue-600 after:rounded-full">Home</a></li>
+      <li><a href="/about" class="text-[17px] font-bold text-slate-500 hover:text-slate-900 transition-colors duration-300">About</a></li>
+      <li><a href="/live-upload" class="text-[17px] font-bold text-slate-500 hover:text-slate-900 transition-colors duration-300">Live Upload</a></li>
+      <li><a href="/help" class="text-[17px] font-bold text-slate-500 hover:text-slate-900 transition-colors duration-300">Help</a></li>
     </ul>
-
   </nav>
 </header>
 
 <main class="flex-grow max-w-7xl mx-auto px-8 py-20 flex flex-col items-center">
-  
-  <div class="inline-flex items-center space-x-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full text-xs font-bold mb-8 border border-blue-100 uppercase tracking-widest">
-    <span class="relative flex h-2 w-2">
-      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-      <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
-    </span>
-    <span>Powered by 8 Advanced Intelligence Models</span>
-  </div>
-
   <h1 class="text-5xl md:text-7xl font-extrabold text-center leading-[1.1] tracking-tight mb-8">
     Object Detection <br/> 
     <span class="text-blue-600">Simplified & Precise</span>
   </h1>
 
-  <p class="max-w-2xl text-lg text-slate-500 text-center mb-12 leading-relaxed">
-    Experience real-time and image-based object detection powered by a comprehensive suite of advanced Machine Learning & Deep Learning architectures.
-  </p>
-  
-  <div class="flex flex-col sm:flex-row gap-4 mb-24">
+  <div class="flex flex-col sm:flex-row gap-4 mb-24 mt-8">
     <a href="/live-upload" class="btn-primary text-white font-bold px-10 py-4 rounded-2xl flex items-center justify-center gap-3">
       🎥 Start Live Detection
     </a>
-    <a href="/live-upload" class="bg-white border border-slate-200 hover:border-blue-400 text-slate-700 font-bold px-10 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300">
+    <a href="/live-upload" class="bg-white border border-slate-200 hover:border-blue-400 text-slate-700 font-bold px-10 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 shadow-sm">
       📸 Upload Detection
     </a>
   </div>
 
   <section class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full mb-32">
     <div class="glass-card p-8 rounded-3xl">
-      <div class="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center mb-6">
+      <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 border border-blue-100">
         <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-width="2" d="M9 3v2m6-2v2m5 5h-2m2 6h-2M5 10H3m2 6H3m4-8h10v8H7v-8z"/></svg>
       </div>
-      <h3 class="text-xl font-bold mb-3">Multi-Model Analysis</h3>
+      <h3 class="text-xl font-bold mb-3 text-slate-800">Multi-Model Analysis</h3>
       <p class="text-slate-500 leading-relaxed">Compare YOLO, CNN, ResNet-18, MobileNet, SVM, KNN & more in a single unified interface.</p>
     </div>
 
     <div class="glass-card p-8 rounded-3xl">
-      <div class="w-14 h-14 bg-indigo-600/10 rounded-2xl flex items-center justify-center mb-6">
+      <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 border border-indigo-100">
         <svg class="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-width="2" stroke-linecap="round" d="M5 12h2M5 8h4m-4 8h6m4-4h6m-6-4h4m-4 8h2"/></svg>
       </div>
-      <h3 class="text-xl font-bold mb-3">Performance Metrics</h3>
+      <h3 class="text-xl font-bold mb-3 text-slate-800">Performance Metrics</h3>
       <p class="text-slate-500 leading-relaxed">Get detailed visual comparisons and real-time graphs demonstrating accuracy and speed for every detection.</p>
     </div>
 
     <div class="glass-card p-8 rounded-3xl">
-      <div class="w-14 h-14 bg-emerald-600/10 rounded-2xl flex items-center justify-center mb-6">
+      <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6 border border-emerald-100">
         <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-width="2" stroke-linecap="round" d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
       </div>
-      <h3 class="text-xl font-bold mb-3">Instant Detection</h3>
+      <h3 class="text-xl font-bold mb-3 text-slate-800">Instant Detection</h3>
       <p class="text-slate-500 leading-relaxed">Whether uploading a file or using your webcam, receive instant predictions across all supported architectures.</p>
     </div>
   </section>
 
   <div class="w-full text-center mb-16">
     <h2 class="text-3xl font-extrabold mb-4">Supported Architectures</h2>
-    <div class="h-1.5 w-20 bg-blue-600 mx-auto rounded-full mb-12"></div>
+    <div class="h-1.5 w-40 bg-blue-600 mx-auto rounded-full mb-12"></div>
     
     <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
       
-      <div class="bg-white border border-slate-100 p-6 rounded-2xl flex flex-col items-center glass-card">
+      <div class="glass-card p-6 rounded-2xl flex flex-col items-center">
         <div class="flex justify-between w-full items-center mb-2">
             <span class="font-bold text-slate-800">YOLOv8</span>
             <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
@@ -161,7 +120,7 @@
         <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md mt-1 uppercase tracking-wider">Deep Learning</span>
       </div>
 
-      <div class="bg-white border border-slate-100 p-6 rounded-2xl flex flex-col items-center glass-card">
+      <div class="glass-card p-6 rounded-2xl flex flex-col items-center">
         <div class="flex justify-between w-full items-center mb-2">
             <span class="font-bold text-slate-800">CNN</span>
             <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
@@ -169,7 +128,7 @@
         <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md mt-1 uppercase tracking-wider">Deep Learning</span>
       </div>
 
-      <div class="bg-white border border-slate-100 p-6 rounded-2xl flex flex-col items-center glass-card">
+      <div class="glass-card p-6 rounded-2xl flex flex-col items-center">
         <div class="flex justify-between w-full items-center mb-2">
             <span class="font-bold text-slate-800">ResNet-18</span>
             <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
@@ -177,7 +136,7 @@
         <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md mt-1 uppercase tracking-wider">Deep Learning</span>
       </div>
 
-      <div class="bg-white border border-slate-100 p-6 rounded-2xl flex flex-col items-center glass-card">
+      <div class="glass-card p-6 rounded-2xl flex flex-col items-center">
         <div class="flex justify-between w-full items-center mb-2">
             <span class="font-bold text-slate-800">MobileNet</span>
             <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
@@ -185,7 +144,7 @@
         <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md mt-1 uppercase tracking-wider">Deep Learning</span>
       </div>
 
-      <div class="bg-white border border-slate-100 p-6 rounded-2xl flex flex-col items-center glass-card">
+      <div class="glass-card p-6 rounded-2xl flex flex-col items-center">
         <div class="flex justify-between w-full items-center mb-2">
             <span class="font-bold text-slate-800">KNN</span>
             <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
@@ -193,7 +152,7 @@
         <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-md mt-1 uppercase tracking-wider">Machine Learning</span>
       </div>
 
-      <div class="bg-white border border-slate-100 p-6 rounded-2xl flex flex-col items-center glass-card">
+      <div class="glass-card p-6 rounded-2xl flex flex-col items-center">
         <div class="flex justify-between w-full items-center mb-2">
             <span class="font-bold text-slate-800">SVM</span>
             <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
@@ -201,7 +160,7 @@
         <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-md mt-1 uppercase tracking-wider">Machine Learning</span>
       </div>
 
-      <div class="bg-white border border-slate-100 p-6 rounded-2xl flex flex-col items-center glass-card">
+      <div class="glass-card p-6 rounded-2xl flex flex-col items-center">
         <div class="flex justify-between w-full items-center mb-2">
             <span class="font-bold text-slate-800">Decision Tree</span>
             <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
@@ -209,7 +168,7 @@
         <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-md mt-1 uppercase tracking-wider">Machine Learning</span>
       </div>
 
-      <div class="bg-white border border-slate-100 p-6 rounded-2xl flex flex-col items-center glass-card">
+      <div class="glass-card p-6 rounded-2xl flex flex-col items-center">
         <div class="flex justify-between w-full items-center mb-2">
             <span class="font-bold text-slate-800">Random Forest</span>
             <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
@@ -218,11 +177,8 @@
       </div>
 
     </div>
-  </div>
+  </section>
 
-  <p class="text-slate-400 text-sm mb-10 font-medium italic">
-    All 8 models are pre-configured, trained, and ready for comparative live analysis.
-  </p>
 </main>
 
 <footer class="bg-slate-50 border-t border-slate-200 py-12">
