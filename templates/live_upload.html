@@ -57,9 +57,11 @@
     
     <div class="flex items-center space-x-4 group cursor-pointer">
       <div class="bg-blue-600 p-3 rounded-[1.2rem] shadow-xl shadow-blue-100 group-hover:scale-105 transition-all duration-300">
-        <svg width="24" height="24" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/>
-        </svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  <circle cx="12" cy="11" r="3"/>
+  <path d="M12 8v0m0 6v0m3-3v0m-6 0v0"/>
+</svg>
       </div>
       <span class="text-2xl font-[800] tracking-tight text-slate-900">
         Objectify
@@ -100,7 +102,7 @@
 
   <div id="uploadSection" class="space-y-8">
     <button id="backBtn" class="hidden px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-full font-bold hover:bg-slate-50 transition flex items-center gap-2">
-      ← Reset Selection
+      ←    Reset Selection
     </button>
 
     <div id="uploadContainer" class="upload-zone glass-card rounded-[2.5rem] p-16 flex flex-col justify-center items-center cursor-pointer"
@@ -221,7 +223,7 @@
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <button id="viewMoreBtn" class="px-8 py-3 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition">View Detailed Logs</button>
             <button id="downloadReportBtn" class="px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition flex items-center justify-center gap-2">
-                📄 Export Official Report
+                📄 Export Report
             </button>
         </div>
 
@@ -489,20 +491,105 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('resultData', JSON.stringify(data));
     localStorage.setItem('resultImage', imageSrc);
   }
-
-  elements.downloadReportBtn.addEventListener('click', async () => {
+ downloadReportBtn.addEventListener('click', async () => {
     const data = JSON.parse(localStorage.getItem('resultData'));
     const imageSrc = localStorage.getItem('resultImage');
     const chartImg = document.getElementById('chart').toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const timestamp = new Date().toLocaleString();
+
     pdf.setFillColor(59, 130, 246);
-    pdf.rect(0, 0, 210, 40, 'F');
+    pdf.rect(0, 0, pageWidth, 40, 'F');
     pdf.setTextColor(255, 255, 255);
     pdf.setFontSize(22);
-    pdf.text('Neural Analysis Report', 105, 25, { align: 'center' });
-    pdf.addImage(imageSrc, 'JPEG', 15, 50, 180, 100);
-    pdf.save('Neural_Report.pdf');
+    pdf.setFont("helvetica", "bold");
+    pdf.text('Object Detection Analysis Report', 105, 20, { align: 'center' });
+    
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(`Generated on: ${timestamp}`, 105, 30, { align: 'center' });
+
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(14);
+    pdf.setFont("helvetica", "bold");
+    pdf.text('1. Analyzed Image Source', 15, 55);
+
+    const imgProps = pdf.getImageProperties(imageSrc);
+    const maxWidth = 180;
+    const maxHeight = 100;
+    const ratio = imgProps.width / imgProps.height;
+    
+    let finalWidth = maxWidth;
+    let finalHeight = maxWidth / ratio;
+
+    if (finalHeight > maxHeight) {
+        finalHeight = maxHeight;
+        finalWidth = maxHeight * ratio;
+    }
+
+    const xPos = (pageWidth - finalWidth) / 2;
+    pdf.addImage(imageSrc, 'JPEG', xPos, 60, finalWidth, finalHeight);
+
+    let startY = 60 + finalHeight + 20; 
+    pdf.setFontSize(14);
+    pdf.text('2. Detailed Model Performance', 15, startY);
+    
+    startY += 10;
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(15, startY - 5, 180, 8, 'F');
+    pdf.setFontSize(10);
+    pdf.text('Model', 20, startY);
+    pdf.text('Prediction', 70, startY);
+    pdf.text('Confidence', 120, startY);
+    pdf.text('Processing Time', 160, startY);
+
+    pdf.setFont("helvetica", "normal");
+    Object.entries(data.scores).forEach(([model, score], index) => {
+        const rowY = startY + 10 + (index * 8);
+        const pred = data.model_predictions[model] || data.object;
+        pdf.text(model, 20, rowY);
+        pdf.text(pred, 70, rowY);
+        pdf.text(`${score}%`, 120, rowY);
+        pdf.text(`${data.time}s`, 160, rowY);
+        pdf.setDrawColor(220, 220, 220);
+        pdf.line(15, rowY + 2, 195, rowY + 2);
+    });
+
+    pdf.setFontSize(8);
+    pdf.text('Page 1 of 2', 105, 285, { align: 'center' });
+
+    pdf.addPage();
+    
+    pdf.setFontSize(14);
+    pdf.setFont("helvetica", "bold");
+    pdf.text('3. Performance Visualization', 15, 20);
+    pdf.addImage(chartImg, 'PNG', 15, 30, 180, 90);
+
+    pdf.text('4. Detection Summary Note', 15, 140);
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFillColor(245, 247, 250);
+    pdf.rect(15, 145, 180, 40, 'F');
+    
+    const conclusion = [
+        `Inference Conclusion:`,
+        `• Primary identification: "${data.object}"`,
+        `• Peak model accuracy: ${data.confidence}% using ${data.best_model}`,
+        `• Total multi-model classification time: ${data.time} seconds`
+    ];
+    pdf.text(conclusion, 20, 155);
+
+    pdf.setDrawColor(59, 130, 246);
+    pdf.setLineWidth(1);
+    pdf.line(15, 270, 195, 270);
+    pdf.setFontSize(10);
+    pdf.text('Real-Time Object Classifier © 2026', 15, 278);
+    pdf.text('Page 2 of 2', 105, 285, { align: 'center' });
+
+    pdf.save('Analysis_report.pdf');
   });
+
 
   function hideInputScreen() {
     elements.backBtn.classList.remove('hidden');
