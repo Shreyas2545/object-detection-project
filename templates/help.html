@@ -63,6 +63,12 @@
       <li>
         <a href="/help" class="text-[17px] font-bold text-blue-600 relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-full after:h-[3px] after:bg-blue-600 after:rounded-full">Help</a>
       </li>
+      <li>
+        <a href="/signup" id="getStartedBtn" class="text-[17px] font-bold text-white bg-blue-600 hover:bg-blue-700 px-6 py-2.5 rounded-xl transition-all duration-300">Get Started</a>
+      </li>
+      <li id="logoutBtn" style="display:none;">
+        <a href="#" class="text-[17px] font-bold text-white bg-red-600 hover:bg-red-700 px-6 py-2.5 rounded-xl transition-all duration-300">Logout</a>
+      </li>
     </ul>
 
   </nav>
@@ -250,6 +256,40 @@
     © 2026 Objectify Intelligence Dashboard | Academic Research Project
   </div>
 </footer>
+
+<script>
+  // Check authentication and update UI
+  function checkAuthAndUpdateUI() {
+    const token = localStorage.getItem('authToken');
+    const getStartedBtn = document.getElementById('getStartedBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    if (token) {
+      // User is logged in
+      if (getStartedBtn) {
+        getStartedBtn.href = '/live-upload';
+        getStartedBtn.textContent = '🎯 Start Detection';
+        getStartedBtn.parentElement.style.display = 'none';
+      }
+      if (logoutBtn) {
+        logoutBtn.style.display = 'list-item';
+        logoutBtn.querySelector('a').addEventListener('click', (e) => {
+          e.preventDefault();
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+          location.reload();
+        });
+      }
+    }
+  }
+
+  // Run on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkAuthAndUpdateUI);
+  } else {
+    checkAuthAndUpdateUI();
+  }
+</script>
 
 </body>
 </html>
