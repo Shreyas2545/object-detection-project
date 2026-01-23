@@ -557,15 +557,22 @@ def save_test_result(current_user):
         # Get or create test_results collection
         test_results_collection = db['test_results']
         
+        # Extract primary object and confidence from the detection results
+        results = data.get('results', {})
+        primary_object = results.get('Final Prediction') or results.get('object') or 'Unknown'
+        confidence = results.get('Confidence (%)') or results.get('confidence') or 0
+        
         test_result = {
             'user_id': current_user,
             'image_data': data.get('image_data'),  # Base64 encoded image
-            'detection_results': data.get('results'),  # Detection results from all models
+            'detection_results': results,  # Detection results from all models
             'detection_method': data.get('method', 'upload'),  # 'upload' or 'webcam'
             'timestamp': datetime.datetime.utcnow(),
-            'primary_object': data.get('results', {}).get('object', 'Unknown') if data.get('results') else 'Unknown',
-            'confidence': data.get('results', {}).get('confidence', 0) if data.get('results') else 0
+            'primary_object': primary_object,
+            'confidence': confidence
         }
+        
+        print(f"[SAVE] User: {current_user}, Object: {primary_object}, Confidence: {confidence}")
         
         result = test_results_collection.insert_one(test_result)
         
