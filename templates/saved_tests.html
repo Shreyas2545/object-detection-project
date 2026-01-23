@@ -70,6 +70,58 @@
         animation: spin 1s linear infinite;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    /* Toast Notification Styles */
+    .toast {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        padding: 1rem 1.5rem;
+        border-radius: 0.75rem;
+        background-color: white;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        z-index: 1000;
+        animation: slideInUp 0.3s ease-out;
+    }
+    .toast.success {
+        color: #166534;
+        background-color: #dcfce7;
+        border-left: 4px solid #22c55e;
+    }
+    .toast.error {
+        color: #991b1b;
+        background-color: #fee2e2;
+        border-left: 4px solid #ef4444;
+    }
+    .toast.info {
+        color: #1e40af;
+        background-color: #dbeafe;
+        border-left: 4px solid #3b82f6;
+    }
+    @keyframes slideInUp {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    @keyframes slideOutDown {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+    }
   </style>
 </head>
 
@@ -218,6 +270,25 @@
     }
   }
 
+  // Toast Notification Function
+  function showToast(message, type = 'success', duration = 2000) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let icon = '';
+    if (type === 'success') icon = '✓';
+    else if (type === 'error') icon = '✕';
+    else if (type === 'info') icon = 'ℹ';
+    
+    toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.animation = 'slideOutDown 0.3s ease-out forwards';
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  }
+
   // Setup profile dropdown
   function setupProfileDropdown() {
     const profileBtn = document.getElementById('profileBtn');
@@ -234,13 +305,11 @@
       profileBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         dropdownMenu.classList.toggle('hidden');
-        dropdownArrow.style.transform = dropdownMenu.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
       });
       
       document.addEventListener('click', (e) => {
         if (!profileBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
           dropdownMenu.classList.add('hidden');
-          dropdownArrow.style.transform = 'rotate(0deg)';
         }
       });
     }
@@ -314,8 +383,14 @@
       '<span class="badge badge-upload">📤 Upload</span>';
 
     const detectionResults = test.detection_results || {};
-    const confidence = Math.round(detectionResults.confidence || 0);
-    const object = test.primary_object || detectionResults.object || 'Unknown';
+    // Get confidence from multiple possible locations
+    const confidence = Math.round(
+      detectionResults['Confidence (%)'] || 
+      detectionResults.confidence || 
+      test.confidence || 
+      0
+    );
+    const object = test.primary_object || detectionResults['Final Prediction'] || detectionResults.object || 'Unknown';
 
     card.innerHTML = `
       <div class="relative overflow-hidden bg-slate-100 h-40">
@@ -457,7 +532,7 @@
         renderTests();
       }
 
-      alert('Test deleted successfully');
+      showToast('Test deleted successfully', 'success', 2000);
     } catch (error) {
       console.error('Error deleting test:', error);
       alert('Failed to delete test: ' + error.message);
