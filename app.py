@@ -562,6 +562,23 @@ def save_test_result(current_user):
         primary_object = results.get('Final Prediction') or results.get('object') or 'Unknown'
         confidence = results.get('Confidence (%)') or results.get('confidence') or 0
         
+        # Ensure confidence is a number
+        try:
+            confidence = float(confidence) if confidence else 0
+        except (ValueError, TypeError):
+            confidence = 0
+        
+        # Ensure primary_object is a string
+        try:
+            primary_object = str(primary_object).strip() if primary_object else 'Unknown'
+        except:
+            primary_object = 'Unknown'
+        
+        # Log debug info
+        print(f"[SAVE] Debug - results keys: {list(results.keys())}")
+        print(f"[SAVE] Debug - primary_object extracted: {primary_object}")
+        print(f"[SAVE] Debug - confidence extracted: {confidence}")
+        
         test_result = {
             'user_id': current_user,
             'image_data': data.get('image_data'),  # Base64 encoded image

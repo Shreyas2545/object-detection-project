@@ -477,7 +477,7 @@
           <p class="text-sm font-semibold text-slate-700 mb-2">Test Information</p>
           <div class="bg-slate-50 p-4 rounded-lg space-y-2">
             <p><span class="font-semibold text-slate-900">Primary Object:</span> ${test.primary_object || 'Unknown'}</p>
-            <p><span class="font-semibold text-slate-900">Overall Confidence:</span> ${Math.round((test.confidence || 0) * 100)}%</p>
+            <p><span class="font-semibold text-slate-900">Overall Confidence:</span> ${typeof test.confidence === 'number' ? test.confidence.toFixed(2) : test.confidence}%</p>
             <p><span class="font-semibold text-slate-900">Method:</span> ${test.detection_method === 'webcam' ? '📷 Webcam Capture' : '📤 Image Upload'}</p>
             <p><span class="font-semibold text-slate-900">Date:</span> ${formattedDate}</p>
           </div>
