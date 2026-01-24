@@ -691,6 +691,32 @@ def delete_test_result(current_user, test_id):
         traceback.print_exc()
         return jsonify({'message': f'Server error: {str(e)}'}), 500
 
+@app.route('/api/clear-all-tests', methods=['DELETE'])
+@token_required
+def clear_all_tests(current_user):
+    """Clear all test results for current user (requires authentication)"""
+    try:
+        if db is None:
+            return jsonify({'message': 'Database not connected'}), 500
+        
+        test_results_collection = db['test_results']
+        
+        # Delete all test results for the user
+        result = test_results_collection.delete_many({'user_id': current_user})
+        
+        print(f"[DELETE] User: {current_user} - Deleted {result.deleted_count} tests")
+        
+        return jsonify({
+            'message': f'All tests cleared successfully. Deleted {result.deleted_count} tests.',
+            'deleted_count': result.deleted_count
+        }), 200
+    
+    except Exception as e:
+        print(f"Clear All Tests Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'message': f'Server error: {str(e)}'}), 500
+
 # ==================== ERROR HANDLERS ====================
 
 @app.errorhandler(404)
