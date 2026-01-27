@@ -259,7 +259,7 @@
     const password = document.querySelector('input[name="password"]').value;
     
     if (!email || !password) {
-      alert('Please fill in all fields');
+      showToast('Please fill in all fields', 'error', 2000);
       return;
     }
     
@@ -286,9 +286,7 @@
         data = await response.json();
       } else {
         // Response is not JSON (likely HTML error page)
-        const html = await response.text();
-        console.error('Server returned HTML instead of JSON:', html);
-        alert('Server error: Invalid response. Check console for details.');
+        showToast('Server error: Invalid response', 'error', 2000);
         loginBtn.disabled = false;
         loginBtn.textContent = 'Sign In';
         return;
@@ -300,22 +298,57 @@
         localStorage.setItem('user', JSON.stringify(data.user));
         
         // Show success message
-        alert('Login successful!');
+        showToast('Login successful!', 'success', 2000);
         
-        // Redirect to home page
-        window.location.href = '/';
+        // Redirect to home page after a short delay
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 500);
       } else {
         const errorMsg = data.message || 'An error occurred. Please try again.';
-        alert(errorMsg);
-        console.error('Login error:', data);
+        showToast(errorMsg, 'error', 2000);
         loginBtn.disabled = false;
         loginBtn.textContent = 'Sign In';
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert('Error: ' + error.message);
+      showToast('Error: ' + error.message, 'error', 2000);
       loginBtn.disabled = false;
       loginBtn.textContent = 'Sign In';
     }
   });
+  
+  // Toast Notification Function
+  function showToast(message, type = 'success', duration = 2000) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let icon = '';
+    if (type === 'success') icon = '✓';
+    else if (type === 'error') icon = '✕';
+    
+    toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.animation = 'slideOutDown 0.3s ease-out forwards';
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  }
+  
+  // Password visibility toggle
+  function togglePasswordVisibility() {
+    const input = document.getElementById('passwordInput');
+    const icon = document.getElementById('eyeIcon');
+    
+    if (input.type === 'password') {
+      input.type = 'text';
+      // Change to eye-off icon
+      icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-4.753 4.753m4.753-4.753L9.172 9.172m5.656 5.656l-5.656-5.656"/>';
+    } else {
+      input.type = 'password';
+      // Change back to eye icon
+      icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+    }
+  }
 </script>
