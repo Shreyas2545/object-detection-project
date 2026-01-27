@@ -399,7 +399,7 @@
     const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
     const badge = test.detection_method === 'webcam' ? 
       '<span class="badge badge-webcam">📷 Webcam</span>' : 
-      '<span class="badge badge-upload">📤 Upload</span>';
+      '';
 
     const detectionResults = test.detection_results || {};
     // Get confidence from multiple possible locations
