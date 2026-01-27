@@ -206,7 +206,7 @@
     </div>
 
     <button id="useWebcamBtn" class="w-full glass-card hover:bg-white rounded-[2rem] py-10 flex flex-col items-center gap-4 group transition-all">
-      <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+      <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
           <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
         </svg>
@@ -463,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   elements.liveToggleBtn.addEventListener('click', () => {
     if (liveInterval) {
-      clearInterval(liveInterval);
+      cancelAnimationFrame(liveInterval);
       liveInterval = null;
       elements.liveToggleBtn.textContent = 'Start Live Stream';
       elements.liveToggleBtn.classList.replace('bg-rose-500', 'bg-emerald-500');
@@ -471,42 +471,65 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       elements.results.classList.remove('hidden');
       isLiveMode = true;
-      liveInterval = setInterval(sendLiveFrame, 1000);
+      lastFrameTime = 0;
+      frameSendInterval = 1000;  // Send detection every 1000ms
+      sendLiveFrameOptimized();  // Start the loop
       elements.liveToggleBtn.textContent = 'Terminate Stream';
       elements.liveToggleBtn.classList.replace('bg-emerald-500', 'bg-rose-500');
     }
   });
 
-  async function sendLiveFrame() {
-    const canvas = document.createElement('canvas');
-    canvas.width = elements.webcam.videoWidth;
-    canvas.height = elements.webcam.videoHeight;
-    canvas.getContext('2d').drawImage(elements.webcam, 0, 0);
-    const frameData = canvas.toDataURL('image/jpeg');
+  let lastFrameTime = 0;
+  let frameSendInterval = 1000;  // Send detection every 1000ms for performance
+
+  async function sendLiveFrameOptimized() {
+    if (!isLiveMode) return;
     
-    try {
-      // Convert data URL to blob
-      const blob = await (await fetch(frameData)).blob();
-      const formData = new FormData();
-      formData.append('file', blob, 'frame.jpg');
+    const now = Date.now();
+    
+    // Only send frame for detection analysis every frameSendInterval ms
+    if (now - lastFrameTime >= frameSendInterval) {
+      lastFrameTime = now;
       
-      // Add JWT token
-      const token = localStorage.getItem('authToken');
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const canvas = document.createElement('canvas');
+      canvas.width = elements.webcam.videoWidth;
+      canvas.height = elements.webcam.videoHeight;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(elements.webcam, 0, 0);
       
-      const res = await fetch('/api/detect', {
-        method: 'POST',
-        body: formData,
-        headers: headers
-      });
-      
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      updateResults(data, frameData);
-    } catch (err) { 
-      console.error('Live Detection Error:', err);
+      // Use higher JPEG quality but canvas.toBlob is faster than toDataURL
+      canvas.toBlob(async (blob) => {
+        if (!blob || !isLiveMode) return;
+        
+        const formData = new FormData();
+        formData.append('file', blob, 'frame.jpg');
+        
+        // Add JWT token
+        const token = localStorage.getItem('authToken');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        
+        try {
+          const res = await fetch('/api/detect', {
+            method: 'POST',
+            body: formData,
+            headers: headers
+          });
+          
+          if (!res.ok) throw new Error(`Server error: ${res.status}`);
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+          
+          // Convert blob to data URL for display
+          const frameData = URL.createObjectURL(blob);
+          updateResults(data, frameData);
+        } catch (err) { 
+          console.error('Live Detection Error:', err);
+        }
+      }, 'image/jpeg', 0.85);  // 85% quality for faster processing
     }
+    
+    // Continue animation loop for smooth webcam display
+    liveInterval = requestAnimationFrame(sendLiveFrameOptimized);
   }
 
   elements.analyzeBtn.addEventListener('click', () => {

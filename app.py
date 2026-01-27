@@ -206,10 +206,18 @@ def run_all_predictions_from_image(image: np.ndarray):
 
             # Extract features for traditional ML models
             try:
-                features = resnet_feature_extractor(tensor).view(1, -1).cpu().numpy()
+                full_features = resnet_feature_extractor(tensor).view(1, -1).cpu().numpy()
+                # KNN and Random Forest were trained on reduced features
+                features_knn = full_features[:, :5]  # KNN uses first 5 features
+                features_rf = full_features[:, :10]  # Random Forest uses first 10 features
+                features_dt = full_features  # Decision Tree uses full features
+                features_svm = full_features  # SVM uses full features
             except Exception as e:
                 print(f"[ERROR] Feature extraction failed: {str(e)}")
-                features = np.zeros((1, 2048))
+                features_knn = np.zeros((1, 5))
+                features_rf = np.zeros((1, 10))
+                features_dt = np.zeros((1, 2048))
+                features_svm = np.zeros((1, 2048))
 
         # YOLO
         try:
@@ -224,8 +232,8 @@ def run_all_predictions_from_image(image: np.ndarray):
 
         # Traditional ML Models - KNN
         try:
-            knn_pred = knn.predict(features.reshape(1, -1))[0]
-            knn_probs = knn.predict_proba(features.reshape(1, -1))[0]
+            knn_pred = knn.predict(features_knn.reshape(1, -1))[0]
+            knn_probs = knn.predict_proba(features_knn.reshape(1, -1))[0]
             knn_conf = float(np.max(knn_probs) * 100)
             all_scores["KNN"] = knn_conf
             all_preds["KNN"] = CLASS_NAMES[int(knn_pred)]
@@ -237,9 +245,9 @@ def run_all_predictions_from_image(image: np.ndarray):
 
         # SVM
         try:
-            svm_pred = svm.predict(features.reshape(1, -1))[0]
+            svm_pred = svm.predict(features_svm.reshape(1, -1))[0]
             try:
-                svm_decision = svm.decision_function(features.reshape(1, -1))[0]
+                svm_decision = svm.decision_function(features_svm.reshape(1, -1))[0]
                 svm_conf = float((np.mean(svm_decision) + 1) * 50)  # Normalize to 0-100
                 svm_conf = min(100.0, max(0.0, svm_conf))
             except:
@@ -254,8 +262,8 @@ def run_all_predictions_from_image(image: np.ndarray):
 
         # Decision Tree
         try:
-            dt_pred = decision_tree.predict(features.reshape(1, -1))[0]
-            dt_probs = decision_tree.predict_proba(features.reshape(1, -1))[0]
+            dt_pred = decision_tree.predict(features_dt.reshape(1, -1))[0]
+            dt_probs = decision_tree.predict_proba(features_dt.reshape(1, -1))[0]
             dt_conf = float(np.max(dt_probs) * 100)
             all_scores["Decision Tree"] = dt_conf
             all_preds["Decision Tree"] = CLASS_NAMES[int(dt_pred)]
@@ -267,8 +275,8 @@ def run_all_predictions_from_image(image: np.ndarray):
 
         # Random Forest
         try:
-            rf_pred = random_forest.predict(features.reshape(1, -1))[0]
-            rf_probs = random_forest.predict_proba(features.reshape(1, -1))[0]
+            rf_pred = random_forest.predict(features_rf.reshape(1, -1))[0]
+            rf_probs = random_forest.predict_proba(features_rf.reshape(1, -1))[0]
             rf_conf = float(np.max(rf_probs) * 100)
             all_scores["Random Forest"] = rf_conf
             all_preds["Random Forest"] = CLASS_NAMES[int(rf_pred)]
