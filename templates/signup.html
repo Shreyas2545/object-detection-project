@@ -58,6 +58,59 @@
         width: 0%;
         transition: all 0.3s ease;
     }
+    
+    /* Toast Notification Styles */
+    .toast {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        padding: 1rem 1.5rem;
+        border-radius: 0.75rem;
+        background-color: white;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        z-index: 1000;
+        animation: slideInUp 0.3s ease-out;
+    }
+    .toast.success {
+        color: #166534;
+        background-color: #dcfce7;
+        border-left: 4px solid #22c55e;
+    }
+    .toast.error {
+        color: #991b1b;
+        background-color: #fee2e2;
+        border-left: 4px solid #ef4444;
+    }
+    @keyframes slideInUp {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    @keyframes slideOutDown {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+    }
+    
+    /* Password visibility toggle */
+    .password-toggle {
+        cursor: pointer;
+        user-select: none;
+    }
   </style>
 </head>
 
@@ -132,14 +185,26 @@
         <!-- Password Input -->
         <div>
           <label class="block text-sm font-bold text-slate-700 mb-2.5">Password</label>
-          <input 
-            type="password" 
-            name="password"
-            placeholder="••••••••"
-            id="passwordInput"
-            class="input-field w-full px-5 py-3.5 rounded-[1.2rem] text-slate-900 placeholder-slate-400 font-medium"
-            required
-          />
+          <div class="relative">
+            <input 
+              type="password" 
+              name="password"
+              placeholder="••••••••"
+              id="passwordInput"
+              class="input-field w-full px-5 py-3.5 pr-12 rounded-[1.2rem] text-slate-900 placeholder-slate-400 font-medium"
+              required
+            />
+            <button 
+              type="button" 
+              onclick="togglePasswordVisibility('passwordInput', 'eyeIcon1')"
+              class="password-toggle absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-blue-600 transition-colors"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="eyeIcon1">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </button>
+          </div>
           <div class="password-strength mt-2">
             <div class="strength-bar bg-red-500" id="strengthBar"></div>
           </div>
@@ -149,13 +214,26 @@
         <!-- Confirm Password Input -->
         <div>
           <label class="block text-sm font-bold text-slate-700 mb-2.5">Confirm Password</label>
-          <input 
-            type="password" 
-            name="confirmPassword"
-            placeholder="••••••••"
-            class="input-field w-full px-5 py-3.5 rounded-[1.2rem] text-slate-900 placeholder-slate-400 font-medium"
-            required
-          />
+          <div class="relative">
+            <input 
+              type="password" 
+              name="confirmPassword"
+              placeholder="••••••••"
+              id="confirmPasswordInput"
+              class="input-field w-full px-5 py-3.5 pr-12 rounded-[1.2rem] text-slate-900 placeholder-slate-400 font-medium"
+              required
+            />
+            <button 
+              type="button" 
+              onclick="togglePasswordVisibility('confirmPasswordInput', 'eyeIcon2')"
+              class="password-toggle absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-blue-600 transition-colors"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="eyeIcon2">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Terms Checkbox -->
@@ -248,22 +326,22 @@
     
     // Validation
     if (!fullName || !email || !password || !confirmPassword) {
-      alert('Please fill in all fields');
+      showToast('Please fill in all fields', 'error', 2000);
       return;
     }
     
     if (password.length < 8) {
-      alert('Password must be at least 8 characters');
+      showToast('Password must be at least 8 characters', 'error', 2000);
       return;
     }
     
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      showToast('Passwords do not match', 'error', 2000);
       return;
     }
     
     if (!termsChecked) {
-      alert('Please agree to the Terms of Service and Privacy Policy');
+      showToast('Please agree to the Terms of Service and Privacy Policy', 'error', 2000);
       return;
     }
     
@@ -294,7 +372,7 @@
         // Response is not JSON (likely HTML error page)
         const html = await response.text();
         console.error('Server returned HTML instead of JSON:', html);
-        alert('Server error: Invalid response. Check console for details.');
+        showToast('Server error: Invalid response', 'error', 2000);
         signupBtn.disabled = false;
         signupBtn.textContent = 'Create Account';
         return;
@@ -306,24 +384,23 @@
         localStorage.setItem('user', JSON.stringify(data.user));
         
         // Show success message
-        alert('Account created successfully!');
+        showToast('Account created successfully!', 'success', 2000);
         
         // Redirect to home page
         window.location.href = '/';
       } else {
         const errorMsg = data.message || 'An error occurred. Please try again.';
-        alert(errorMsg);
+        showToast(errorMsg, 'error', 2000);
         console.error('Signup error:', data);
         signupBtn.disabled = false;
         signupBtn.textContent = 'Create Account';
       }
     } catch (error) {
       console.error('Signup error:', error);
-      alert('Error: ' + error.message);
+      showToast('Error: ' + error.message, 'error', 2000);
       signupBtn.disabled = false;
       signupBtn.textContent = 'Create Account';
     }
-  });
 </script>
 
 <footer class="bg-white border-t border-slate-100 py-8 mt-12">
