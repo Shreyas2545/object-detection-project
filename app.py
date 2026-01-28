@@ -76,10 +76,12 @@ try:
     from model_resnet import get_resnet18_model
     from model_mobilenet import get_mobilenet_model
     from yolo_model import predict_yolo_single
+    from ai_image_detector import AIImageDetector
 except ImportError:
     from src.model_resnet import get_resnet18_model
     from src.model_mobilenet import get_mobilenet_model
     from src.yolo_model import predict_yolo_single
+    from src.ai_image_detector import AIImageDetector
 
 CLASS_NAMES = [
     "backpack", "bird", "book", "bottle", "car", "cat", "dog", "human",
@@ -141,6 +143,16 @@ decision_tree = joblib.load("checkpoints/decision_tree_model.pkl")
 knn = joblib.load("checkpoints/knn_model.pkl")
 random_forest = joblib.load("checkpoints/random_forest_model.pkl")
 svm = joblib.load("checkpoints/svm_model.pkl")
+
+# ==================== LOAD AI IMAGE DETECTOR ====================
+try:
+    print("Loading AI Image Detector...")
+    ai_detector = AIImageDetector(method='artifact')  # Use artifact analysis (faster, no downloads)
+    print("✓ AI Image Detector loaded successfully")
+except Exception as e:
+    print(f"⚠️ AI Image Detector failed to load: {e}")
+    print("Will continue without AI detection")
+    ai_detector = None
 
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
@@ -303,13 +315,54 @@ def run_all_predictions_from_image(image: np.ndarray):
         print(f"[FINAL] Top 3 Models: {[(m['model'], m['confidence']) for m in top3_models]}")
         print(f"[FINAL] All Scores: {all_scores}\n")
 
+        # ==================== AI IMAGE DETECTION ====================
+        ai_detection_result = None
+        if ai_detector is not None:
+            try:
+                print("[AI DETECTOR] Running AI image detection...")
+                # Save image temporarily for AI detector
+                import tempfile
+                with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp:
+                    tmp_path = tmp.name
+                    image_pil.save(tmp_path)
+                
+                # Run AI detection
+                ai_result = ai_detector.predict(tmp_path)
+                
+                # Clean up temp file
+                try:
+                    os.remove(tmp_path)
+                except:
+                    pass
+                
+                ai_detection_result = {
+                    "is_ai_generated": ai_result.get('is_ai_generated', False),
+                    "confidence": float(ai_result.get('confidence', 0)),
+                    "label": ai_result.get('label', 'Unknown'),
+                    "verdict": ai_result.get('verdict', ''),
+                    "method": ai_result.get('method', 'unknown'),
+                    "metrics": ai_result.get('metrics', {}),
+                    "explanation": ai_result.get('explanation', '')
+                }
+                print(f"[AI DETECTOR] Result: {ai_detection_result['label']} ({ai_detection_result['confidence']:.2f}%)")
+            except Exception as e:
+                print(f"[ERROR] AI detection failed: {str(e)}")
+                ai_detection_result = {
+                    "is_ai_generated": False,
+                    "confidence": 0,
+                    "label": "Error",
+                    "verdict": f"Detection failed: {str(e)}",
+                    "method": "error"
+                }
+
         return {
             "Final Prediction": all_preds[best_model],
             "Best Model": best_model,
             "Confidence (%)": round(all_scores[best_model], 2),
             "All Predictions": all_preds,
             "All Scores": all_scores,
-            "Top 3 Models": top3_models
+            "Top 3 Models": top3_models,
+            "AI Detection": ai_detection_result
         }
     except Exception as e:
         print(f"[CRITICAL ERROR] run_all_predictions_from_image failed: {str(e)}")
