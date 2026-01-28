@@ -208,6 +208,81 @@ document.addEventListener('DOMContentLoaded', () => {
         li.textContent = insight;
         insightsList.appendChild(li);
       });
+
+      // ==================== AI DETECTION DISPLAY ====================
+      if (data.ai_detection) {
+        const aiCard = document.getElementById('aiDetectionCard');
+        const aiImageType = document.getElementById('aiImageType');
+        const aiConfidence = document.getElementById('aiConfidence');
+        const aiMethod = document.getElementById('aiMethod');
+        const aiVerdict = document.getElementById('aiVerdict');
+        const aiTechnicalDetails = document.getElementById('aiTechnicalDetails');
+        
+        // Show AI detection card
+        if (aiCard) {
+          aiCard.style.display = 'block';
+        }
+        
+        // Set image type label with color coding
+        if (aiImageType) {
+          aiImageType.textContent = data.ai_detection.label;
+          if (data.ai_detection.is_ai) {
+            aiImageType.className = 'font-bold text-lg px-6 py-2 rounded-xl shadow-sm bg-orange-100 text-orange-700 border border-orange-300';
+          } else {
+            aiImageType.className = 'font-bold text-lg px-6 py-2 rounded-xl shadow-sm bg-green-100 text-green-700 border border-green-300';
+          }
+        }
+        
+        // Set confidence with color based on value
+        if (aiConfidence) {
+          aiConfidence.textContent = data.ai_detection.confidence + '%';
+          if (data.ai_detection.confidence > 80) {
+            aiConfidence.className = 'font-bold text-2xl text-green-600';
+          } else if (data.ai_detection.confidence > 60) {
+            aiConfidence.className = 'font-bold text-2xl text-yellow-600';
+          } else {
+            aiConfidence.className = 'font-bold text-2xl text-orange-600';
+          }
+        }
+        
+        // Set detection method
+        if (aiMethod) {
+          aiMethod.textContent = data.ai_detection.method.toUpperCase();
+        }
+        
+        // Set verdict with appropriate styling
+        if (aiVerdict) {
+          aiVerdict.textContent = data.ai_detection.verdict;
+          if (data.ai_detection.is_ai) {
+            aiVerdict.className = 'p-6 rounded-2xl text-base font-semibold leading-relaxed shadow-lg border-2 bg-orange-50 text-orange-800 border-orange-200';
+          } else {
+            aiVerdict.className = 'p-6 rounded-2xl text-base font-semibold leading-relaxed shadow-lg border-2 bg-green-50 text-green-800 border-green-200';
+          }
+        }
+        
+        // Display technical metrics if available
+        if (aiTechnicalDetails && data.ai_detection.metrics) {
+          let html = '<div class="space-y-1">';
+          for (const [key, value] of Object.entries(data.ai_detection.metrics)) {
+            const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            html += `
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-600">${displayKey}:</span>
+                <span class="font-semibold">${typeof value === 'number' ? value.toFixed(4) : value}</span>
+              </div>
+            `;
+          }
+          html += '</div>';
+          aiTechnicalDetails.innerHTML = html;
+        }
+        
+        console.log('[AI Detection]', data.ai_detection);
+      }
+      // ==================== END AI DETECTION DISPLAY ====================
+
+      // Store scores for PDF
+      localStorage.setItem('scores', JSON.stringify(data.scores));
+
     } catch (err) {
       alert('Error during analysis: ' + err.message);
     }
@@ -300,11 +375,4 @@ document.addEventListener('DOMContentLoaded', () => {
     while (n--) u8arr[n] = bstr.charCodeAt(n);
     return new File([u8arr], filename, { type: mime });
   }
-
-  // Store scores for PDF (temp)
-  // In analyze, after data: localStorage.setItem('scores', JSON.stringify(data.scores));
-  // Add this line in analyze success: localStorage.setItem('scores', JSON.stringify(data.scores));
 });
-
-// Add to analyze success block:
-localStorage.setItem('scores', JSON.stringify(data.scores));
