@@ -257,13 +257,10 @@
         </div>
 
         <!-- AI Detection Result -->
-        <div id="aiDetectionMinimal" class="mt-6 p-5 rounded-2xl flex items-center justify-between border-2 hidden" style="display: none;">
-          <div class="flex items-center gap-3">
-            <span id="aiImageLabel" class="text-lg font-bold"></span>
-          </div>
-          <div class="text-right">
-            <span id="aiScoreMinimal" class="text-2xl font-black"></span>
-          </div>
+        <div id="aiDetectionMinimal" class="mt-6 rounded-2xl border-2 hidden px-5 py-3 flex items-center gap-3" style="display: none;">
+          <span id="aiImageLabel" class="text-lg font-bold flex-1"></span>
+          <div id="aiProgressBox" class="h-5 w-5 rounded transition-all duration-500 flex-shrink-0"></div>
+          <span id="aiScoreMinimal" class="text-lg font-black"></span>
         </div>
 
         <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -792,6 +789,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const aiDetectionMinimal = document.getElementById('aiDetectionMinimal');
     const aiImageLabel = document.getElementById('aiImageLabel');
     const aiScoreMinimal = document.getElementById('aiScoreMinimal');
+    const aiProgressBox = document.getElementById('aiProgressBox');
     
     if (data["AI Detection"] && data["AI Detection"] !== null) {
       const aiData = data["AI Detection"];
@@ -800,22 +798,41 @@ document.addEventListener('DOMContentLoaded', () => {
       // Show the minimal display
       aiDetectionMinimal.style.display = 'flex';
       
-      // Set label and styling
+      // Set label
       if (aiData.is_ai_generated) {
-        aiImageLabel.textContent = '🤖 AI-Generated';
-        aiDetectionMinimal.className = 'mt-6 p-5 rounded-2xl flex items-center justify-between border-2 border-red-300 bg-red-50';
+        aiImageLabel.textContent = 'Likely to be AI-generated';
       } else {
-        aiImageLabel.textContent = '📸 Real Photo';
-        aiDetectionMinimal.className = 'mt-6 p-5 rounded-2xl flex items-center justify-between border-2 border-green-300 bg-green-50';
+        aiImageLabel.textContent = 'Not likely to be AI-generated';
       }
       
       // Set score
+      const aiConfidence = aiData.confidence;
       if (isLiveMode) {
-        aiScoreMinimal.textContent = `${aiData.confidence.toFixed(1)}%`;
+        aiScoreMinimal.textContent = `${aiConfidence.toFixed(1)}%`;
       } else {
         aiScoreMinimal.textContent = '0%';
-        setTimeout(() => animateCounter(aiScoreMinimal, 0, aiData.confidence), 800);
+        setTimeout(() => animateCounter(aiScoreMinimal, 0, aiConfidence), 800);
       }
+      
+      // Simple color logic based on AI or Real
+      let boxColor;
+      
+      if (aiData.is_ai_generated) {
+        // Red for AI - shade based on confidence (0-100%)
+        // Use power function to make color change more visible
+        const opacity = Math.pow(aiConfidence / 100, 0.6);  // More dramatic color change
+        boxColor = `rgba(239, 68, 68, ${opacity})`;  // Red with opacity
+        aiDetectionMinimal.className = 'mt-6 rounded-2xl border-2 border-slate-200 flex items-center gap-3 px-5 py-3';
+      } else {
+        // Green for Real Photo - shade based on confidence directly
+        const opacity = Math.pow(aiConfidence / 100, 0.6);  // More dramatic color change
+        boxColor = `rgba(34, 197, 94, ${opacity})`;  // Green with opacity
+        aiDetectionMinimal.className = 'mt-6 rounded-2xl border-2 border-slate-200 flex items-center gap-3 px-5 py-3';
+      }
+      
+      // Apply color only to the small box
+      aiProgressBox.style.backgroundColor = boxColor;
+      aiProgressBox.style.border = 'none';
     } else {
       aiDetectionMinimal.style.display = 'none';
     }

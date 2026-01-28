@@ -147,8 +147,14 @@ svm = joblib.load("checkpoints/svm_model.pkl")
 # ==================== LOAD AI IMAGE DETECTOR ====================
 try:
     print("Loading AI Image Detector...")
-    ai_detector = AIImageDetector(method='artifact')  # Use artifact analysis (faster, no downloads)
-    print("✓ AI Image Detector loaded successfully")
+    # Try HuggingFace model first (most accurate), fall back to hybrid if not available
+    try:
+        ai_detector = AIImageDetector(method='huggingface')  # Use HuggingFace pre-trained model
+        print("✓ AI Image Detector (HuggingFace) loaded successfully")
+    except:
+        print("⚠️ HuggingFace model not available, trying hybrid approach...")
+        ai_detector = AIImageDetector(method='hybrid')  # Try artifact analysis + HuggingFace fallback
+        print("✓ AI Image Detector (Hybrid) loaded successfully")
 except Exception as e:
     print(f"⚠️ AI Image Detector failed to load: {e}")
     print("Will continue without AI detection")
@@ -222,13 +228,13 @@ def run_all_predictions_from_image(image: np.ndarray):
                 # KNN and Random Forest were trained on reduced features
                 features_knn = full_features[:, :5]  # KNN uses first 5 features
                 features_rf = full_features[:, :10]  # Random Forest uses first 10 features
-                features_dt = full_features  # Decision Tree uses full features
+                features_dt = full_features[:, :10]  # Decision Tree uses first 10 features
                 features_svm = full_features  # SVM uses full features
             except Exception as e:
                 print(f"[ERROR] Feature extraction failed: {str(e)}")
                 features_knn = np.zeros((1, 5))
                 features_rf = np.zeros((1, 10))
-                features_dt = np.zeros((1, 2048))
+                features_dt = np.zeros((1, 10))
                 features_svm = np.zeros((1, 2048))
 
         # YOLO
