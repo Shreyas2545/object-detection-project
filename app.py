@@ -260,18 +260,34 @@ def run_all_predictions_from_image(image: np.ndarray):
                     local_scores["CNN"] = 0.0
                     local_preds["CNN"] = "Unknown"
 
-                # ResNet-18
+                # ResNet-18 (Optimized: Shared Backbone)
                 try:
-                    res_output = resnet_model(tensor)
+                    # Run backbone once
+                    raw_features = resnet_feature_extractor(tensor)
+                    full_features = raw_features.view(tensor.size(0), -1)
+                    
+                    # 1. Classification
+                    res_output = resnet_model.fc(full_features)
                     res_probs = torch.softmax(res_output, dim=1)[0].cpu().numpy()
                     res_probs = apply_temperature(res_probs)
                     local_scores["ResNet-18"] = float(np.max(res_probs) * 100)
                     local_preds["ResNet-18"] = CLASS_NAMES[int(np.argmax(res_probs))]
                     print(f"[ResNet-18] Prediction: {local_preds['ResNet-18']}, Confidence: {local_scores['ResNet-18']:.2f}%")
+                    
+                    # 2. Prepare for ML models
+                    full_features_np = full_features.cpu().numpy()
+                    features_knn = full_features_np[:, :5]
+                    features_rf = full_features_np[:, :10]
+                    features_dt = full_features_np[:, :10]
+                    features_svm = full_features_np
                 except Exception as e:
-                    print(f"[ERROR] ResNet-18 failed: {str(e)}")
+                    print(f"[ERROR] ResNet/Features failed: {str(e)}")
                     local_scores["ResNet-18"] = 0.0
                     local_preds["ResNet-18"] = "Unknown"
+                    features_knn = np.zeros((1, 5))
+                    features_rf = np.zeros((1, 10))
+                    features_dt = np.zeros((1, 10))
+                    features_svm = np.zeros((1, 2048))
 
                 # MobileNet
                 try:
@@ -285,20 +301,6 @@ def run_all_predictions_from_image(image: np.ndarray):
                     print(f"[ERROR] MobileNet failed: {str(e)}")
                     local_scores["MobileNet"] = 0.0
                     local_preds["MobileNet"] = "Unknown"
-
-                # Feature Extraction
-                try:
-                    full_features = resnet_feature_extractor(tensor).view(1, -1).cpu().numpy()
-                    features_knn = full_features[:, :5]
-                    features_rf = full_features[:, :10]
-                    features_dt = full_features[:, :10]
-                    features_svm = full_features
-                except Exception as e:
-                    print(f"[ERROR] Feature extraction failed: {str(e)}")
-                    features_knn = np.zeros((1, 5))
-                    features_rf = np.zeros((1, 10))
-                    features_dt = np.zeros((1, 10))
-                    features_svm = np.zeros((1, 2048))
 
             # 2. ML Models (Depend on DL features)
             # KNN
