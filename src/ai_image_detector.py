@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 from PIL import Image
@@ -13,19 +14,26 @@ class AIImageDetector:
     """
     Universal AI Image Detector
     Detects AI-generated vs Real images for ANY object type
+
+    Improvements added:
+    - Sensitivity option ('low','medium','high') to control artifact thresholds
+    - Auto-load local trained model at 'checkpoints/ai_detector.pth' when available
+    - Training script available at 'src/train_ai_detector.py' to fine-tune a ResNet18 binary classifier
     """
     
-    def __init__(self, model_path=None, method='hybrid'):
+    def __init__(self, model_path=None, method='hybrid', sensitivity='medium'):
         """
         Initialize AI Image Detector
         
         Args:
             model_path: Path to custom trained model (optional)
             method: 'huggingface', 'custom', 'artifact', or 'hybrid'
+            sensitivity: 'low'|'medium'|'high' - higher sensitivity favors AI detection (may increase false positives)
         """
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.method = method
         self.model = None
+        self.sensitivity = sensitivity  # new
         
         # Image preprocessing
         self.transform = transforms.Compose([
@@ -37,6 +45,18 @@ class AIImageDetector:
             )
         ])
         
+        # If a local custom checkpoint exists, prefer custom model for better precision
+        local_ckpt = os.path.join('checkpoints', 'ai_detector.pth')
+        if os.path.exists(local_ckpt) and (method in ['custom','hybrid']):
+            try:
+                print(f"🔄 Found local AI detector checkpoint at {local_ckpt}, loading custom model...")
+                self._load_custom_model(local_ckpt)
+                self.method = 'custom'
+                return
+            except Exception as e:
+                print(f"⚠️ Failed to load local checkpoint: {e}")
+                # fallback to requested method
+
         # Load model based on method
         if method == 'huggingface':
             self._load_huggingface_model()
@@ -69,17 +89,30 @@ class AIImageDetector:
             raise
     
     def _load_custom_model(self, model_path):
-        """Load your custom trained AI detection model"""
+        """Load your custom trained AI detection model directly using torchvision ResNet-18
+        This avoids requiring an external `model_resnet` module and makes checkpoint loading robust.
+        """
         try:
-            # Import your ResNet model
-            import sys
-            sys.path.append('.')
-            from model_resnet import get_resnet18_model
-            
             print(f"🔄 Loading custom AI detector from {model_path}...")
-            self.model = get_resnet18_model(num_classes=2)  # Binary: Real vs AI
-            self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-            self.model.to(self.device)
+            # Build a ResNet-18 and adapt final layer for binary classification
+            from torchvision import models
+            model = models.resnet18(weights=None)
+            num_ftrs = model.fc.in_features
+            model.fc = nn.Linear(num_ftrs, 2)
+
+            # Load state dict (handle either state_dict or full model saved)
+            state = torch.load(model_path, map_location=self.device)
+            if isinstance(state, dict) and all(k.startswith('fc') or k.startswith('layer') or k.startswith('conv') or k.startswith('bn') for k in state.keys()):
+                model.load_state_dict(state)
+            else:
+                # If it's a full model object or different format, try loading into state_dict
+                try:
+                    model.load_state_dict(state)
+                except Exception:
+                    # Last resort: if the saved object is actually a model, assign directly
+                    model = state
+
+            self.model = model.to(self.device)
             self.model.eval()
             print("✅ Custom model loaded successfully!")
         except Exception as e:
@@ -174,35 +207,69 @@ class AIImageDetector:
             ai_score = 0
             explanations = []
             
+            # Adjust thresholds by sensitivity to increase detection precision when requested
+            sensitivity_map = {
+                'low': 0.8,
+                'medium': 1.0,
+                'high': 1.3
+            }
+            s_factor = sensitivity_map.get(self.sensitivity, 1.0)
+
             # Rule 1: Very low noise is suspicious
-            if noise_level < 2.5:
-                ai_score += 35
+            # Higher sensitivity -> treat higher noise levels as suspicious
+            noise_thresh_1 = 2.5 * s_factor
+            noise_thresh_2 = 4.0 * s_factor
+            if noise_level < noise_thresh_1:
+                ai_score += 40 * s_factor
                 explanations.append(f"Very low sensor noise ({noise_level:.2f}) - typical of AI generation")
-            elif noise_level < 4.0:
-                ai_score += 20
+            elif noise_level < noise_thresh_2:
+                ai_score += 25 * s_factor
                 explanations.append(f"Low sensor noise ({noise_level:.2f}) - slightly suspicious")
             else:
                 explanations.append(f"Normal sensor noise ({noise_level:.2f}) - natural camera behavior")
-            
+
             # Rule 2: Unusual frequency patterns
-            if fft_ratio < 0.03 or fft_ratio > 0.6:
-                ai_score += 25
+            fft_low = 0.03 / s_factor
+            fft_high = 0.6 * s_factor
+            if fft_ratio < fft_low or fft_ratio > fft_high:
+                ai_score += 25 * s_factor
                 explanations.append(f"Unusual frequency patterns ({fft_ratio:.3f}) - may be AI-generated")
-            
+
             # Rule 3: Edge consistency
-            if edge_density > 0.15:
-                ai_score += 15
+            # Lower threshold under high sensitivity
+            edge_thresh = 0.15 / s_factor
+            if edge_density > edge_thresh:
+                ai_score += 15 * s_factor
                 explanations.append(f"High edge density ({edge_density:.3f}) - too many perfect edges")
-            
+
             # Rule 4: Color distribution
-            if color_variance < 400:
-                ai_score += 15
+            color_thresh = 400 / s_factor
+            if color_variance < color_thresh:
+                ai_score += 15 * s_factor
                 explanations.append(f"Low color variance ({color_variance:.1f}) - unnaturally uniform")
-            
+
             # Rule 5: Texture uniformity
-            if texture_std < 25:
-                ai_score += 10
+            texture_thresh = 25 * s_factor
+            if texture_std < texture_thresh:
+                ai_score += 10 * s_factor
                 explanations.append(f"Very smooth texture ({texture_std:.1f}) - possibly AI smoothing")
+
+            # Additional check: JPEG quantization table heuristic (if JPEG)
+            try:
+                quant = self._get_jpeg_qtable(image_path)
+                if quant is not None:
+                    quant_score = 0
+                    # Highly uniform quantization suggests synthetic editing / large-scale recompression
+                    q_std = np.std(quant)
+                    if q_std < 1.0:
+                        quant_score += 10 * s_factor
+                        explanations.append(f"Very uniform JPEG quantization (std={q_std:.2f}) - suspicious")
+                    elif q_std < 3.0:
+                        quant_score += 5 * s_factor
+                        explanations.append(f"Low JPEG quantization variance (std={q_std:.2f}) - possibly suspicious")
+                    ai_score += quant_score
+            except Exception:
+                pass
             
             # Final verdict
             is_ai = ai_score >= 50
@@ -221,7 +288,11 @@ class AIImageDetector:
                     'ai_score': float(ai_score)
                 },
                 'explanations': explanations
-            }
+            }    
+
+        except Exception as e:
+            print(f"❌ Error in artifact analysis: {e}")
+            return None
         
         except Exception as e:
             print(f"❌ Error in artifact analysis: {e}")
@@ -237,9 +308,16 @@ class AIImageDetector:
             label = result[0]['label'].lower()
             confidence = result[0]['score'] * 100
             
-            # Check if it's AI/Artificial/Fake/Generated
-            is_ai = any(word in label for word in ['artificial', 'fake', 'ai', 'generated', 'synthetic'])
+            # Map label strings more robustly and mark cases that are ambiguous
+            ai_keywords = ['artificial', 'fake', 'ai', 'generated', 'synthetic', 'computer-generated']
+            is_ai = any(word in label for word in ai_keywords)
             
+            # If confidence is low but label includes e.g. 'cartoon' or 'painting', treat as suspicious
+            if not is_ai and any(k in label for k in ['painting','render','cartoon','illustration']):
+                # Increase suspicion for non-photoreal labels
+                confidence = max(confidence, 65.0)
+                is_ai = True if confidence > 70 else is_ai
+
             return {
                 'is_ai': is_ai,
                 'confidence': float(confidence),
@@ -273,7 +351,32 @@ class AIImageDetector:
         except Exception as e:
             print(f"❌ Error in custom prediction: {e}")
             return None
-    
+
+    def _get_jpeg_qtable(self, image_path):
+        """Return flattened JPEG quantization table values as numpy array if JPEG, else None"""
+        try:
+            from PIL import Image
+            im = Image.open(image_path)
+            if im.format != 'JPEG':
+                return None
+            qtables = im.quantization
+            vals = []
+            if isinstance(qtables, dict):
+                for k, v in qtables.items():
+                    if isinstance(v, (list, tuple)):
+                        vals.extend(v)
+                    else:
+                        vals.append(v)
+            elif isinstance(qtables, (list, tuple)):
+                for v in qtables:
+                    if isinstance(v, (list, tuple)):
+                        vals.extend(v)
+                    else:
+                        vals.append(v)
+            return np.array(vals, dtype=float) if vals else None
+        except Exception:
+            return None
+
     def predict(self, image_path):
         """
         Main prediction method - Works on ANY image type
@@ -309,6 +412,23 @@ class AIImageDetector:
                     results['is_ai_generated'] = custom_result['is_ai']
                     results['confidence'] = custom_result['confidence']
                     results['label'] = 'AI Generated' if custom_result['is_ai'] else 'Real Photo'
+
+                    # When user requested high sensitivity, do an additional artifact analysis
+                    # and override to AI if artifact score is strongly suspicious
+                    if self.sensitivity == 'high':
+                        try:
+                            artifact_result = self.analyze_artifacts(image_path)
+                            if artifact_result and artifact_result.get('metrics', {}).get('ai_score', 0) >= 55:
+                                # Under high sensitivity, give priority to artifact score and be decisive
+                                art_score = artifact_result['metrics']['ai_score']
+                                results['is_ai_generated'] = True
+                                # Use artifact ai_score directly as confidence (more decisive)
+                                results['confidence'] = float(min(100, art_score))
+                                results['label'] = 'AI Generated'
+                                results['metrics'] = artifact_result.get('metrics', {})
+                                results['explanation'] = f"Artifact override: {art_score:.1f}% ai_score"
+                        except Exception:
+                            pass
             
             elif self.method == 'artifact':
                 artifact_result = self.analyze_artifacts(image_path)
@@ -324,13 +444,23 @@ class AIImageDetector:
                 hf_result = self.predict_huggingface(image_path)
                 artifact_result = self.analyze_artifacts(image_path)
                 
+                # Tuneable weighting - favor artifacts more under high sensitivity or if local model missing
+                hf_weight = 0.7
+                artifact_weight = 0.3
+                decision_threshold = 50
+                if self.sensitivity == 'high':
+                    # increase artifacts' influence and lower decision threshold for high sensitivity
+                    artifact_weight = 0.7
+                    hf_weight = 0.3
+                    decision_threshold = 45
+
                 if hf_result and artifact_result:
-                    # Weighted average (70% HF, 30% artifacts)
+                    # Use weighted scoring and normalize
                     hf_score = hf_result['confidence'] if hf_result['is_ai'] else (100 - hf_result['confidence'])
                     artifact_score = artifact_result['confidence'] if artifact_result['is_ai'] else (100 - artifact_result['confidence'])
                     
-                    combined_score = (0.7 * hf_score + 0.3 * artifact_score)
-                    is_ai = combined_score >= 50
+                    combined_score = (hf_weight * hf_score + artifact_weight * artifact_score)
+                    is_ai = combined_score >= decision_threshold
                     
                     results['is_ai_generated'] = is_ai
                     results['confidence'] = combined_score if is_ai else (100 - combined_score)
@@ -350,6 +480,7 @@ class AIImageDetector:
                     results['metrics'] = artifact_result.get('metrics', {})
             
             # Generate verdict message
+            # Make verdict messages more decisive under high sensitivity for AI detection
             if results['is_ai_generated']:
                 if results['confidence'] > 80:
                     results['verdict'] = f"⚠️ This image is LIKELY AI-GENERATED with {results['confidence']:.1f}% confidence"
@@ -358,7 +489,10 @@ class AIImageDetector:
                 else:
                     results['verdict'] = f"❓ Uncertain, but leans towards AI-generated ({results['confidence']:.1f}% confidence)"
             else:
-                if results['confidence'] > 80:
+                # If the user requested high sensitivity and the detector is 'custom' or 'hybrid', be slightly stricter when labeling as real
+                if self.sensitivity == 'high' and results['confidence'] < 85 and self.method in ['custom','hybrid']:
+                    results['verdict'] = f"❓ Low confidence real photo ({results['confidence']:.1f}%) — consider retraining with more AI samples"
+                elif results['confidence'] > 80:
                     results['verdict'] = f"✅ This image is LIKELY A REAL PHOTO with {results['confidence']:.1f}% confidence"
                 elif results['confidence'] > 60:
                     results['verdict'] = f"✅ This image APPEARS to be a real photo ({results['confidence']:.1f}% confidence)"

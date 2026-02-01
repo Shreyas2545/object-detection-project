@@ -436,6 +436,19 @@
       signupBtn.textContent = 'Create Account';
     }
   });
+
+  // Hide Get Started button when already on the Signup page
+  (function() {
+    try {
+      if (window && window.location && (window.location.pathname === '/signup' || window.location.pathname.endsWith('/signup'))) {
+        const gs = document.getElementById('getStartedBtn');
+        if (gs) gs.remove();
+      }
+    } catch (e) {
+      // non-fatal, ignore
+      console.warn('Could not hide getStartedBtn:', e);
+    }
+  })();
 </script>
 
 <footer class="bg-white border-t border-slate-100 py-8 mt-12">

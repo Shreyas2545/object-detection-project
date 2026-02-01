@@ -9,7 +9,13 @@ import cv2
 import os
 import joblib
 from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
+try:
+    from flask_cors import CORS
+except ImportError:
+    print("✗ Required package 'flask-cors' not found. Run: python -m pip install -r requirements.txt")
+    print("✗ Or install just it: python -m pip install flask-cors")
+    import sys
+    sys.exit(1)
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
@@ -144,21 +150,75 @@ knn = joblib.load("checkpoints/knn_model.pkl")
 random_forest = joblib.load("checkpoints/random_forest_model.pkl")
 svm = joblib.load("checkpoints/svm_model.pkl")
 
+ai_detector = None
 # ==================== LOAD AI IMAGE DETECTOR ====================
 try:
     print("Loading AI Image Detector...")
-    # Try HuggingFace model first (most accurate), fall back to hybrid if not available
+    # Sensitivity can be controlled by environment variable AI_DETECT_SENSITIVITY (low/medium/high)
+    import os
+    sensitivity = os.getenv('AI_DETECT_SENSITIVITY', 'high')
+
+    # Try HuggingFace model first (most accurate), fall back to hybrid or artifact if not available
     try:
-        ai_detector = AIImageDetector(method='huggingface')  # Use HuggingFace pre-trained model
+        ai_detector = AIImageDetector(method='huggingface', sensitivity=sensitivity)
         print("✓ AI Image Detector (HuggingFace) loaded successfully")
-    except:
+    except Exception:
         print("⚠️ HuggingFace model not available, trying hybrid approach...")
-        ai_detector = AIImageDetector(method='hybrid')  # Try artifact analysis + HuggingFace fallback
-        print("✓ AI Image Detector (Hybrid) loaded successfully")
+        try:
+            ai_detector = AIImageDetector(method='hybrid', sensitivity=sensitivity)
+            print("✓ AI Image Detector (Hybrid) loaded successfully")
+        except Exception:
+            print("⚠️ Hybrid detector failed, trying artifact-only approach...")
+            try:
+                ai_detector = AIImageDetector(method='artifact', sensitivity=sensitivity)
+                print("✓ AI Image Detector (Artifact) loaded successfully")
+            except Exception as e:
+                print(f"⚠️ AI Image Detector failed to load: {e}")
+                ai_detector = None
 except Exception as e:
-    print(f"⚠️ AI Image Detector failed to load: {e}")
-    print("Will continue without AI detection")
+    print(f"⚠️ Error during AI detector initialization: {e}")
     ai_detector = None
+
+# Report whether detector is available (do NOT overwrite a successfully loaded detector)
+if ai_detector is None:
+    print("Will continue without AI detection")
+else:
+    print("AI detection initialized and ready")
+
+# ----------------- Checkpoint watcher: reload detector after retraining completes -----------------
+import threading, time
+
+_ai_detector_mtime = None
+
+def _watch_checkpoints(interval=30):
+    global ai_detector, _ai_detector_mtime
+    ckpt = 'checkpoints/ai_detector.pth'
+    while True:
+        try:
+            if os.path.exists(ckpt):
+                m = os.path.getmtime(ckpt)
+                if _ai_detector_mtime is None:
+                    _ai_detector_mtime = m
+                elif m > _ai_detector_mtime:
+                    print('Detected updated ai detector checkpoint, reloading detector...')
+                    try:
+                        sensitivity = os.getenv('AI_DETECT_SENSITIVITY', 'high')
+                        new_detector = AIImageDetector(method='hybrid', sensitivity=sensitivity)
+                        ai_detector = new_detector
+                        _ai_detector_mtime = m
+                        print('AI detector reloaded from checkpoint.')
+                    except Exception as e:
+                        print('Error reloading detector:', e)
+        except Exception as e:
+            print('Checkpoint watcher error:', e)
+        time.sleep(interval)
+
+# Start watcher in background daemon thread
+try:
+    t = threading.Thread(target=_watch_checkpoints, args=(30,), daemon=True)
+    t.start()
+except Exception:
+    pass
 
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
@@ -780,6 +840,192 @@ def clear_all_tests(current_user):
     
     except Exception as e:
         print(f"Clear All Tests Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'message': f'Server error: {str(e)}'}), 500
+
+
+@app.route('/api/rerun-ai-detection/<test_id>', methods=['POST'])
+@token_required
+def rerun_ai_detection(current_user, test_id):
+    """Re-run AI detection for a saved test and update record (requires auth)
+    Optional query/body param: sensitivity (low|medium|high)
+    """
+    try:
+        if db is None:
+            return jsonify({'message': 'Database not connected'}), 500
+        test_results_collection = db['test_results']
+        test_result = test_results_collection.find_one({'_id': ObjectId(test_id), 'user_id': current_user})
+        if not test_result:
+            return jsonify({'message': 'Test result not found or unauthorized'}), 404
+
+        # sensitivity param
+        sensitivity = request.args.get('sensitivity') or (request.json.get('sensitivity') if request.json else None)
+        sensitivity = sensitivity or os.getenv('AI_DETECT_SENSITIVITY', 'high')
+
+        # Get image data (prefer stored file path or base64 image_data)
+        image_data = test_result.get('image_path') or test_result.get('image_data')
+        if not image_data:
+            return jsonify({'message': 'No image available to re-run detection'}), 400
+
+        # If image_data is base64 data URL, save to temp file
+        import tempfile, base64, re
+        tmp_file = None
+        if isinstance(image_data, str) and image_data.startswith('data:'):
+            header, encoded = image_data.split(',', 1)
+            ext = 'jpg' if 'jpeg' in header or 'jpg' in header else 'png'
+            decoded = base64.b64decode(encoded)
+            tmp = tempfile.NamedTemporaryFile(suffix=f'.{ext}', delete=False)
+            tmp.write(decoded)
+            tmp.flush()
+            tmp.close()
+            tmp_file = tmp.name
+        elif isinstance(image_data, str) and os.path.exists(image_data):
+            tmp_file = image_data
+        else:
+            # unsupported image storage
+            return jsonify({'message': 'Unsupported image storage format'}), 400
+
+        # Instantiate a detector with requested sensitivity; prefer local custom model if available
+        from src.ai_image_detector import AIImageDetector
+        detector = AIImageDetector(method='hybrid', sensitivity=sensitivity)
+        new_result = detector.predict(tmp_file)
+
+        # Map to DB shape
+        ai_detection = {
+            'is_ai_generated': new_result.get('is_ai_generated', new_result.get('is_ai', False)),
+            'confidence': float(new_result.get('confidence', 0)),
+            'label': new_result.get('label', 'Unknown') if new_result.get('label') else ('AI Generated' if new_result.get('is_ai') else 'Real Photo'),
+            'method': new_result.get('method'),
+            'verdict': new_result.get('verdict'),
+            'explanation': new_result.get('explanation') or (' | '.join(new_result.get('explanations', [])) if new_result.get('explanations') else ''),
+            'metrics': new_result.get('metrics', {})
+        }
+
+        # Update DB document
+        test_results_collection.update_one({'_id': ObjectId(test_id)}, {'$set': {'detection_results.AI Detection': ai_detection}})
+
+        # Clean up temp
+        try:
+            if tmp_file and tmp_file != image_data:
+                os.remove(tmp_file)
+        except:
+            pass
+
+        return jsonify({'message': 'AI detection re-run successfully', 'ai_detection': ai_detection}), 200
+    except Exception as e:
+        print(f"Re-run AI detection error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'message': f'Server error: {str(e)}'}), 500
+
+
+# -------------------- Misclassification reporting & retraining --------------------
+@app.route('/api/report-misclassification/<test_id>', methods=['POST'])
+@token_required
+def report_misclassification(current_user, test_id):
+    """Report a misclassified saved test to add to retraining queue"""
+    try:
+        if db is None:
+            return jsonify({'message': 'Database not connected'}), 500
+
+        data = request.json or {}
+        correct_label = data.get('correct_label')
+        if correct_label not in ['ai', 'real']:
+            return jsonify({'message': 'Invalid correct_label'}), 400
+
+        test_results_collection = db['test_results']
+        retrain_collection = db['retrain_queue']
+
+        test_result = test_results_collection.find_one({'_id': ObjectId(test_id), 'user_id': current_user})
+        if not test_result:
+            return jsonify({'message': 'Test result not found or unauthorized'}), 404
+
+        # Prepare directories
+        import pathlib, shutil, tempfile, base64
+        dest_dir = pathlib.Path('data/ai_detector/train') / ('ai' if correct_label == 'ai' else 'real')
+        dest_dir.mkdir(parents=True, exist_ok=True)
+
+        image_data = test_result.get('image_path') or test_result.get('image_data')
+        if not image_data:
+            return jsonify({'message': 'No image available to save'}), 400
+
+        # Save file
+        if isinstance(image_data, str) and image_data.startswith('data:'):
+            header, encoded = image_data.split(',', 1)
+            ext = 'jpg' if 'jpeg' in header or 'jpg' in header else 'png'
+            filename = f"reported_{test_id}_{int(datetime.datetime.utcnow().timestamp())}.{ext}"
+            save_path = dest_dir / filename
+            with open(save_path, 'wb') as f:
+                f.write(base64.b64decode(encoded))
+        elif isinstance(image_data, str) and os.path.exists(image_data):
+            ext = pathlib.Path(image_data).suffix or '.jpg'
+            filename = f"reported_{test_id}_{int(datetime.datetime.utcnow().timestamp())}{ext}"
+            save_path = dest_dir / filename
+            shutil.copy(image_data, save_path)
+        else:
+            return jsonify({'message': 'Unsupported image storage format'}), 400
+
+        # Insert retrain queue document
+        retrain_doc = {
+            'test_id': test_id,
+            'user_id': current_user,
+            'label': correct_label,
+            'saved_path': str(save_path),
+            'timestamp': datetime.datetime.utcnow()
+        }
+        retrain_collection.insert_one(retrain_doc)
+
+        # Mark test as reported
+        test_results_collection.update_one({'_id': ObjectId(test_id)}, {'$set': {'reported': True, 'reported_label': correct_label}})
+
+        # Trigger retraining if enough reports collected
+        RETRAIN_TRIGGER = int(os.getenv('RETRAIN_TRIGGER', 20))
+        queue_count = retrain_collection.count_documents({})
+        if queue_count >= RETRAIN_TRIGGER:
+            # start background training process
+            import subprocess
+            training_log = 'checkpoints/ai_retrain.log'
+            os.makedirs('checkpoints', exist_ok=True)
+            cmd = [sys.executable, 'src/train_ai_detector.py', '--data_dir', 'data/ai_detector', '--epochs', '15', '--batch_size', '32', '--save_path', 'checkpoints/ai_detector.pth']
+            with open(training_log, 'ab') as out:
+                subprocess.Popen(cmd, stdout=out, stderr=out)
+            # clear retrain queue after scheduling
+            retrain_collection.delete_many({})
+
+        return jsonify({'message': 'Reported for retraining', 'saved_path': str(save_path)}), 200
+    except Exception as e:
+        print(f"Report error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'message': f'Server error: {str(e)}'}), 500
+
+
+@app.route('/api/run-retrain', methods=['POST'])
+@token_required
+def run_retrain(current_user):
+    """Manually trigger a retraining job. Optional JSON body: {epochs:int, batch_size:int}
+    Requires sending {"confirm": true} in body to avoid accidental runs.
+    """
+    try:
+        data = request.json or {}
+        if not data.get('confirm'):
+            return jsonify({'message': 'Please confirm retrain by sending {"confirm": true} in the request body'}), 400
+
+        epochs = int(data.get('epochs', 15))
+        batch_size = int(data.get('batch_size', 32))
+
+        # Start background training process
+        import subprocess
+        training_log = 'checkpoints/ai_retrain_manual.log'
+        os.makedirs('checkpoints', exist_ok=True)
+        cmd = [sys.executable, 'src/train_ai_detector.py', '--data_dir', 'data/ai_detector', '--epochs', str(epochs), '--batch_size', str(batch_size), '--save_path', 'checkpoints/ai_detector.pth']
+        with open(training_log, 'ab') as out:
+            subprocess.Popen(cmd, stdout=out, stderr=out)
+
+        return jsonify({'message': 'Retraining started', 'log_file': training_log}), 200
+    except Exception as e:
+        print(f"Run retrain error: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'message': f'Server error: {str(e)}'}), 500

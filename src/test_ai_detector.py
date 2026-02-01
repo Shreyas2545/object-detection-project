@@ -82,7 +82,7 @@ def test_folder(detector, folder_path, expected_type):
     return correct, total
 
 
-def run_full_test():
+def run_full_test(sensitivity='medium'):
     """Run complete test suite"""
     print("\n" + "="*70)
     print("🧪 AI IMAGE DETECTOR - FULL TEST SUITE")
@@ -90,8 +90,9 @@ def run_full_test():
     
     # Initialize detector
     print("\n🔄 Initializing detector...")
-    detector = AIImageDetector(method='artifact')  # Change to 'huggingface' or 'hybrid' if available
-    print("✅ Detector initialized")
+    detector = AIImageDetector(method='artifact', sensitivity=sensitivity)  # Change to 'huggingface' or 'hybrid' if available
+    print(f"✅ Detector initialized (sensitivity={sensitivity})")
+
     
     # Test folders
     test_cases = [
@@ -176,14 +177,15 @@ if __name__ == "__main__":
     parser.add_argument('--mode', choices=['quick', 'full'], default='quick',
                        help='Test mode: quick (single image) or full (all test folders)')
     parser.add_argument('--image', type=str, help='Path to specific image to test')
+    parser.add_argument('--sensitivity', choices=['low','medium','high'], default='medium', help='Sensitivity level for artifact detector')
     
     args = parser.parse_args()
     
     if args.image:
         # Test specific image
-        detector = AIImageDetector(method='artifact')
+        detector = AIImageDetector(method='artifact', sensitivity=args.sensitivity)
         test_single_image(detector, args.image)
     elif args.mode == 'full':
-        run_full_test()
+        run_full_test(sensitivity=args.sensitivity)
     else:
         quick_test()

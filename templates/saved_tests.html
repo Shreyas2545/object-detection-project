@@ -454,6 +454,9 @@
     const date = new Date(test.timestamp);
     const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
 
+    // AI detection payload (if available)
+    const aiDetection = results['AI Detection'] || null;
+
     let resultsHTML = '<div class="space-y-3">';
     
     // Get top 3 models from backend response
@@ -500,6 +503,33 @@
             <p><span class="font-semibold text-slate-900">Primary Object:</span> ${test.primary_object || 'Unknown'}</p>
             <p><span class="font-semibold text-slate-900">Overall Confidence:</span> ${typeof test.confidence === 'number' ? test.confidence.toFixed(2) : test.confidence}%</p>
             <p><span class="font-semibold text-slate-900">Method:</span> ${test.detection_method === 'webcam' ? '📷 Webcam Capture' : '📤 Image Upload'}</p>
+            ${aiDetection ? `
+              <div class="flex items-center gap-3">
+                <div>
+                  <p><span class="font-semibold text-slate-900">AI Verdict:</span> ${aiDetection.is_ai_generated ? '<span class="font-semibold text-red-600">Likely AI-generated</span>' : '<span class="font-semibold text-emerald-600">Not likely AI-generated</span>'}</p>
+                  <p><span class="font-semibold text-slate-900">AI Confidence:</span> ${typeof aiDetection.confidence === 'number' ? aiDetection.confidence.toFixed(2) + '%' : aiDetection.confidence || 'N/A'}</p>
+                  <p><span class="font-semibold text-slate-900">AI Label:</span> ${aiDetection.label || 'N/A'}</p>
+                </div>
+                <div class="ml-auto flex items-center gap-2">
+                  <button id="rerunAiBtn" onclick="rerunAi('${test._id}', 'high')" class="px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-semibold hover:bg-blue-700 transition">Re-run AI Check (High)</button>
+                  <button onclick="showReportForm('${test._id}')" class="px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-sm font-semibold hover:bg-slate-50 transition">Report incorrect</button>
+                </div>
+              </div>
+
+              <!-- Report Form (hidden until toggled) -->
+              <div id="reportForm-${test._id}" class="hidden mt-3 bg-white border border-slate-100 rounded p-3 text-sm">
+                <p class="mb-2 font-semibold">Correct label:</p>
+                <div class="flex items-center gap-4 mb-3">
+                  <label class="flex items-center gap-2"><input type="radio" name="report-${test._id}" value="ai"> <span>AI Generated</span></label>
+                  <label class="flex items-center gap-2"><input type="radio" name="report-${test._id}" value="real"> <span>Real Photo</span></label>
+                </div>
+                <div class="flex gap-2">
+                  <button onclick="submitReport('${test._id}')" class="px-3 py-2 bg-red-600 text-white rounded-md text-sm font-semibold hover:bg-red-700 transition">Submit Report</button>
+                  <button onclick="hideReportForm('${test._id}')" class="px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-sm font-semibold hover:bg-slate-50 transition">Cancel</button>
+                </div>
+                <p class="text-xs mt-2 text-slate-400">Reports are added to the retraining queue. When enough reports are collected we will automatically retrain the AI detector.</p>
+              </div>
+            ` : ''}
             <p><span class="font-semibold text-slate-900">Date:</span> ${formattedDate}</p>
           </div>
         </div>
@@ -508,6 +538,8 @@
           <p class="text-sm font-semibold text-slate-700 mb-2">🏆 Top 3 Models</p>
           ${resultsHTML}
         </div>
+
+
       </div>
     `;
 
@@ -692,6 +724,20 @@
         });
       }
 
+      // Add concise AI Detection info to Test Information in PDF (if available)
+      const aiInfo = currentTest.detection_results && currentTest.detection_results['AI Detection'];
+      if (aiInfo) {
+        doc.setFontSize(11);
+        doc.setTextColor(51, 65, 85);
+        if (yPosition > pageHeight - 40) { doc.addPage(); yPosition = margin; }
+        doc.text(`AI Verdict: ${aiInfo.is_ai_generated ? 'Likely AI-generated' : 'Not likely AI-generated'}`, margin + 5, yPosition);
+        yPosition += 7;
+        doc.text(`AI Confidence: ${typeof aiInfo.confidence === 'number' ? aiInfo.confidence.toFixed(2) + '%' : aiInfo.confidence || 'N/A'}`, margin + 5, yPosition);
+        yPosition += 7;
+        doc.text(`AI Label: ${aiInfo.label || 'N/A'}`, margin + 5, yPosition);
+        yPosition += 8;
+      }
+
       // Image section (if available)
       if (currentTest.image_data) {
         if (yPosition > pageHeight - 80) {
@@ -734,6 +780,87 @@
       closeModal();
     }
   });
+
+  // Re-run AI detection for a single test with optional sensitivity
+  async function rerunAi(testId, sensitivity='high') {
+    const btn = document.getElementById('rerunAiBtn');
+    const originalText = btn ? btn.textContent : null;
+    try {
+      if (btn) { btn.disabled = true; btn.textContent = 'Running...'; }
+      const response = await fetch(`/api/rerun-ai-detection/${testId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ sensitivity })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to re-run AI detection');
+
+      // Update the savedTests array and modal content
+      const ai = data.ai_detection;
+      const tIndex = savedTests.findIndex(t => t._id === testId);
+      if (tIndex !== -1) {
+        if (!savedTests[tIndex].detection_results) savedTests[tIndex].detection_results = {};
+        savedTests[tIndex].detection_results['AI Detection'] = ai;
+      }
+
+      showToast('AI detection re-run successfully', 'success', 2000);
+      // Re-open modal to refresh content
+      showModal(testId);
+
+    } catch (error) {
+      console.error('Error re-running AI detection:', error);
+      showToast('Failed to re-run AI detection: ' + error.message, 'error', 3000);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = originalText; }
+    }
+  }
+
+  // Show/hide report form
+  function showReportForm(testId) {
+    const el = document.getElementById(`reportForm-${testId}`);
+    if (el) el.classList.remove('hidden');
+  }
+
+  function hideReportForm(testId) {
+    const el = document.getElementById(`reportForm-${testId}`);
+    if (el) el.classList.add('hidden');
+  }
+
+  // Submit a report for misclassification
+  async function submitReport(testId) {
+    const radios = document.getElementsByName(`report-${testId}`);
+    let selected = null;
+    for (const r of radios) {
+      if (r.checked) { selected = r.value; break; }
+    }
+
+    if (!selected) { showToast('Please select the correct label', 'error', 2000); return; }
+
+    try {
+      const response = await fetch(`/api/report-misclassification/${testId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ correct_label: selected })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to submit report');
+
+      showToast('Thank you — reported for retraining', 'success', 3000);
+      hideReportForm(testId);
+
+    } catch (error) {
+      console.error('Report error:', error);
+      showToast('Failed to submit report: ' + error.message, 'error', 3000);
+    }
+  }
 </script>
 
 </body>
