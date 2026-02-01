@@ -238,135 +238,193 @@ def run_all_predictions_from_image(image: np.ndarray):
         tensor = transform(image_pil).unsqueeze(0).to(device)
         cv_img = image[:, :, ::-1]
 
-        all_scores = {}
-        all_preds = {}
+        import concurrent.futures
 
-        # Deep Learning Models
-        with torch.no_grad():
-            # CNN
+        # Define tasks
+        def task_dl_ml():
+            local_scores = {}
+            local_preds = {}
+            
+            # 1. Deep Learning Models
+            with torch.no_grad():
+                # CNN
+                try:
+                    cnn_output = cnn_model(tensor)
+                    cnn_probs = torch.softmax(cnn_output, dim=1)[0].cpu().numpy()
+                    cnn_probs = apply_temperature(cnn_probs)
+                    local_scores["CNN"] = float(np.max(cnn_probs) * 100)
+                    local_preds["CNN"] = CLASS_NAMES[int(np.argmax(cnn_probs))]
+                    print(f"[CNN] Prediction: {local_preds['CNN']}, Confidence: {local_scores['CNN']:.2f}%")
+                except Exception as e:
+                    print(f"[ERROR] CNN failed: {str(e)}")
+                    local_scores["CNN"] = 0.0
+                    local_preds["CNN"] = "Unknown"
+
+                # ResNet-18
+                try:
+                    res_output = resnet_model(tensor)
+                    res_probs = torch.softmax(res_output, dim=1)[0].cpu().numpy()
+                    res_probs = apply_temperature(res_probs)
+                    local_scores["ResNet-18"] = float(np.max(res_probs) * 100)
+                    local_preds["ResNet-18"] = CLASS_NAMES[int(np.argmax(res_probs))]
+                    print(f"[ResNet-18] Prediction: {local_preds['ResNet-18']}, Confidence: {local_scores['ResNet-18']:.2f}%")
+                except Exception as e:
+                    print(f"[ERROR] ResNet-18 failed: {str(e)}")
+                    local_scores["ResNet-18"] = 0.0
+                    local_preds["ResNet-18"] = "Unknown"
+
+                # MobileNet
+                try:
+                    mob_output = mobilenet_model(tensor)
+                    mob_probs = torch.softmax(mob_output, dim=1)[0].cpu().numpy()
+                    mob_probs = apply_temperature(mob_probs)
+                    local_scores["MobileNet"] = float(np.max(mob_probs) * 100)
+                    local_preds["MobileNet"] = CLASS_NAMES[int(np.argmax(mob_probs))]
+                    print(f"[MobileNet] Prediction: {local_preds['MobileNet']}, Confidence: {local_scores['MobileNet']:.2f}%")
+                except Exception as e:
+                    print(f"[ERROR] MobileNet failed: {str(e)}")
+                    local_scores["MobileNet"] = 0.0
+                    local_preds["MobileNet"] = "Unknown"
+
+                # Feature Extraction
+                try:
+                    full_features = resnet_feature_extractor(tensor).view(1, -1).cpu().numpy()
+                    features_knn = full_features[:, :5]
+                    features_rf = full_features[:, :10]
+                    features_dt = full_features[:, :10]
+                    features_svm = full_features
+                except Exception as e:
+                    print(f"[ERROR] Feature extraction failed: {str(e)}")
+                    features_knn = np.zeros((1, 5))
+                    features_rf = np.zeros((1, 10))
+                    features_dt = np.zeros((1, 10))
+                    features_svm = np.zeros((1, 2048))
+
+            # 2. ML Models (Depend on DL features)
+            # KNN
             try:
-                cnn_output = cnn_model(tensor)
-                cnn_probs = torch.softmax(cnn_output, dim=1)[0].cpu().numpy()
-                cnn_probs = apply_temperature(cnn_probs)
-                all_scores["CNN"] = float(np.max(cnn_probs) * 100)
-                all_preds["CNN"] = CLASS_NAMES[int(np.argmax(cnn_probs))]
-                print(f"[CNN] Prediction: {all_preds['CNN']}, Confidence: {all_scores['CNN']:.2f}%")
+                knn_pred = knn.predict(features_knn.reshape(1, -1))[0]
+                knn_probs = knn.predict_proba(features_knn.reshape(1, -1))[0]
+                knn_conf = float(np.max(knn_probs) * 100)
+                local_scores["KNN"] = knn_conf
+                local_preds["KNN"] = CLASS_NAMES[int(knn_pred)]
+                print(f"[KNN] Prediction: {CLASS_NAMES[int(knn_pred)]}, Confidence: {knn_conf:.2f}%")
             except Exception as e:
-                print(f"[ERROR] CNN failed: {str(e)}")
-                all_scores["CNN"] = 0.0
-                all_preds["CNN"] = "Unknown"
+                print(f"[ERROR] KNN failed: {str(e)}")
+                local_scores["KNN"] = 0.0
+                local_preds["KNN"] = "Unknown"
 
-            # ResNet-18
+            # SVM
             try:
-                res_output = resnet_model(tensor)
-                res_probs = torch.softmax(res_output, dim=1)[0].cpu().numpy()
-                res_probs = apply_temperature(res_probs)
-                all_scores["ResNet-18"] = float(np.max(res_probs) * 100)
-                all_preds["ResNet-18"] = CLASS_NAMES[int(np.argmax(res_probs))]
-                print(f"[ResNet-18] Prediction: {all_preds['ResNet-18']}, Confidence: {all_scores['ResNet-18']:.2f}%")
+                svm_pred = svm.predict(features_svm.reshape(1, -1))[0]
+                try:
+                    svm_decision = svm.decision_function(features_svm.reshape(1, -1))[0]
+                    svm_conf = float((np.mean(svm_decision) + 1) * 50)
+                    svm_conf = min(100.0, max(0.0, svm_conf))
+                except:
+                    svm_conf = 50.0
+                local_scores["SVM"] = svm_conf
+                local_preds["SVM"] = CLASS_NAMES[int(svm_pred)]
+                print(f"[SVM] Prediction: {CLASS_NAMES[int(svm_pred)]}, Confidence: {svm_conf:.2f}%")
             except Exception as e:
-                print(f"[ERROR] ResNet-18 failed: {str(e)}")
-                all_scores["ResNet-18"] = 0.0
-                all_preds["ResNet-18"] = "Unknown"
+                print(f"[ERROR] SVM failed: {str(e)}")
+                local_scores["SVM"] = 0.0
+                local_preds["SVM"] = "Unknown"
 
-            # MobileNet
+            # Decision Tree
             try:
-                mob_output = mobilenet_model(tensor)
-                mob_probs = torch.softmax(mob_output, dim=1)[0].cpu().numpy()
-                mob_probs = apply_temperature(mob_probs)
-                all_scores["MobileNet"] = float(np.max(mob_probs) * 100)
-                all_preds["MobileNet"] = CLASS_NAMES[int(np.argmax(mob_probs))]
-                print(f"[MobileNet] Prediction: {all_preds['MobileNet']}, Confidence: {all_scores['MobileNet']:.2f}%")
+                dt_pred = decision_tree.predict(features_dt.reshape(1, -1))[0]
+                dt_probs = decision_tree.predict_proba(features_dt.reshape(1, -1))[0]
+                dt_conf = float(np.max(dt_probs) * 100)
+                local_scores["Decision Tree"] = dt_conf
+                local_preds["Decision Tree"] = CLASS_NAMES[int(dt_pred)]
+                print(f"[Decision Tree] Prediction: {CLASS_NAMES[int(dt_pred)]}, Confidence: {dt_conf:.2f}%")
             except Exception as e:
-                print(f"[ERROR] MobileNet failed: {str(e)}")
-                all_scores["MobileNet"] = 0.0
-                all_preds["MobileNet"] = "Unknown"
+                print(f"[ERROR] Decision Tree failed: {str(e)}")
+                local_scores["Decision Tree"] = 0.0
+                local_preds["Decision Tree"] = "Unknown"
 
-            # Extract features for traditional ML models
+            # Random Forest
             try:
-                full_features = resnet_feature_extractor(tensor).view(1, -1).cpu().numpy()
-                # KNN and Random Forest were trained on reduced features
-                features_knn = full_features[:, :5]  # KNN uses first 5 features
-                features_rf = full_features[:, :10]  # Random Forest uses first 10 features
-                features_dt = full_features[:, :10]  # Decision Tree uses first 10 features
-                features_svm = full_features  # SVM uses full features
+                rf_pred = random_forest.predict(features_rf.reshape(1, -1))[0]
+                rf_probs = random_forest.predict_proba(features_rf.reshape(1, -1))[0]
+                rf_conf = float(np.max(rf_probs) * 100)
+                local_scores["Random Forest"] = rf_conf
+                local_preds["Random Forest"] = CLASS_NAMES[int(rf_pred)]
+                print(f"[Random Forest] Prediction: {CLASS_NAMES[int(rf_pred)]}, Confidence: {rf_conf:.2f}%")
             except Exception as e:
-                print(f"[ERROR] Feature extraction failed: {str(e)}")
-                features_knn = np.zeros((1, 5))
-                features_rf = np.zeros((1, 10))
-                features_dt = np.zeros((1, 10))
-                features_svm = np.zeros((1, 2048))
+                print(f"[ERROR] Random Forest failed: {str(e)}")
+                local_scores["Random Forest"] = 0.0
+                local_preds["Random Forest"] = "Unknown"
+            
+            return local_scores, local_preds
 
-        # YOLO
-        try:
-            y_label, y_conf = predict_yolo_single(cv_img)
-            all_scores["YOLO"] = y_conf
-            all_preds["YOLO"] = y_label
-            print(f"[YOLO] Prediction: {y_label}, Confidence: {y_conf:.2f}%")
-        except Exception as e:
-            print(f"[ERROR] YOLO failed: {str(e)}")
-            all_scores["YOLO"] = 0.0
-            all_preds["YOLO"] = "Unknown"
-
-        # Traditional ML Models - KNN
-        try:
-            knn_pred = knn.predict(features_knn.reshape(1, -1))[0]
-            knn_probs = knn.predict_proba(features_knn.reshape(1, -1))[0]
-            knn_conf = float(np.max(knn_probs) * 100)
-            all_scores["KNN"] = knn_conf
-            all_preds["KNN"] = CLASS_NAMES[int(knn_pred)]
-            print(f"[KNN] Prediction: {CLASS_NAMES[int(knn_pred)]}, Confidence: {knn_conf:.2f}%")
-        except Exception as e:
-            print(f"[ERROR] KNN failed: {str(e)}")
-            all_scores["KNN"] = 0.0
-            all_preds["KNN"] = "Unknown"
-
-        # SVM
-        try:
-            svm_pred = svm.predict(features_svm.reshape(1, -1))[0]
+        def task_yolo():
             try:
-                svm_decision = svm.decision_function(features_svm.reshape(1, -1))[0]
-                svm_conf = float((np.mean(svm_decision) + 1) * 50)  # Normalize to 0-100
-                svm_conf = min(100.0, max(0.0, svm_conf))
-            except:
-                svm_conf = 50.0  # Default if decision_function fails
-            all_scores["SVM"] = svm_conf
-            all_preds["SVM"] = CLASS_NAMES[int(svm_pred)]
-            print(f"[SVM] Prediction: {CLASS_NAMES[int(svm_pred)]}, Confidence: {svm_conf:.2f}%")
-        except Exception as e:
-            print(f"[ERROR] SVM failed: {str(e)}")
-            all_scores["SVM"] = 0.0
-            all_preds["SVM"] = "Unknown"
+                y_label, y_conf = predict_yolo_single(cv_img)
+                print(f"[YOLO] Prediction: {y_label}, Confidence: {y_conf:.2f}%")
+                return {"YOLO": y_conf}, {"YOLO": y_label}
+            except Exception as e:
+                print(f"[ERROR] YOLO failed: {str(e)}")
+                return {"YOLO": 0.0}, {"YOLO": "Unknown"}
 
-        # Decision Tree
-        try:
-            dt_pred = decision_tree.predict(features_dt.reshape(1, -1))[0]
-            dt_probs = decision_tree.predict_proba(features_dt.reshape(1, -1))[0]
-            dt_conf = float(np.max(dt_probs) * 100)
-            all_scores["Decision Tree"] = dt_conf
-            all_preds["Decision Tree"] = CLASS_NAMES[int(dt_pred)]
-            print(f"[Decision Tree] Prediction: {CLASS_NAMES[int(dt_pred)]}, Confidence: {dt_conf:.2f}%")
-        except Exception as e:
-            print(f"[ERROR] Decision Tree failed: {str(e)}")
-            all_scores["Decision Tree"] = 0.0
-            all_preds["Decision Tree"] = "Unknown"
+        def task_ai():
+            if ai_detector is None:
+                return None
+            try:
+                print("[AI DETECTOR] Running AI image detection...")
+                import tempfile
+                # Use a unique temp file
+                with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp:
+                    tmp_path = tmp.name
+                    image_pil.save(tmp_path)
+                
+                ai_result = ai_detector.predict(tmp_path)
+                
+                try:
+                    os.remove(tmp_path)
+                except:
+                    pass
+                
+                res = {
+                    "is_ai_generated": ai_result.get('is_ai_generated', False),
+                    "confidence": float(ai_result.get('confidence', 0)),
+                    "label": ai_result.get('label', 'Unknown'),
+                    "verdict": ai_result.get('verdict', ''),
+                    "method": ai_result.get('method', 'unknown'),
+                    "metrics": ai_result.get('metrics', {}),
+                    "explanation": ai_result.get('explanation', '')
+                }
+                print(f"[AI DETECTOR] Result: {res['label']} ({res['confidence']:.2f}%)")
+                return res
+            except Exception as e:
+                print(f"[ERROR] AI detection failed: {str(e)}")
+                return {
+                    "is_ai_generated": False,
+                    "confidence": 0,
+                    "label": "Error",
+                    "verdict": f"Detection failed: {str(e)}",
+                    "method": "error"
+                }
 
-        # Random Forest
-        try:
-            rf_pred = random_forest.predict(features_rf.reshape(1, -1))[0]
-            rf_probs = random_forest.predict_proba(features_rf.reshape(1, -1))[0]
-            rf_conf = float(np.max(rf_probs) * 100)
-            all_scores["Random Forest"] = rf_conf
-            all_preds["Random Forest"] = CLASS_NAMES[int(rf_pred)]
-            print(f"[Random Forest] Prediction: {CLASS_NAMES[int(rf_pred)]}, Confidence: {rf_conf:.2f}%")
-        except Exception as e:
-            print(f"[ERROR] Random Forest failed: {str(e)}")
-            all_scores["Random Forest"] = 0.0
-            all_preds["Random Forest"] = "Unknown"
+        # Execute in parallel
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future_dl = executor.submit(task_dl_ml)
+            future_yolo = executor.submit(task_yolo)
+            future_ai = executor.submit(task_ai)
+
+            # Gather results
+            dl_scores, dl_preds = future_dl.result()
+            yolo_scores, yolo_preds = future_yolo.result()
+            ai_detection_result = future_ai.result()
+
+        # Merge
+        all_scores = {**dl_scores, **yolo_scores}
+        all_preds = {**dl_preds, **yolo_preds}
 
         best_model = max(all_scores, key=all_scores.get)
         
-        # Get top 3 models sorted by confidence
+        # Get top 3 models
         top3 = sorted(all_scores.items(), key=lambda x: x[1], reverse=True)[:3]
         top3_models = [
             {
@@ -380,46 +438,6 @@ def run_all_predictions_from_image(image: np.ndarray):
         print(f"\n[FINAL] Best Model: {best_model}, Confidence: {all_scores[best_model]:.2f}%")
         print(f"[FINAL] Top 3 Models: {[(m['model'], m['confidence']) for m in top3_models]}")
         print(f"[FINAL] All Scores: {all_scores}\n")
-
-        # ==================== AI IMAGE DETECTION ====================
-        ai_detection_result = None
-        if ai_detector is not None:
-            try:
-                print("[AI DETECTOR] Running AI image detection...")
-                # Save image temporarily for AI detector
-                import tempfile
-                with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp:
-                    tmp_path = tmp.name
-                    image_pil.save(tmp_path)
-                
-                # Run AI detection
-                ai_result = ai_detector.predict(tmp_path)
-                
-                # Clean up temp file
-                try:
-                    os.remove(tmp_path)
-                except:
-                    pass
-                
-                ai_detection_result = {
-                    "is_ai_generated": ai_result.get('is_ai_generated', False),
-                    "confidence": float(ai_result.get('confidence', 0)),
-                    "label": ai_result.get('label', 'Unknown'),
-                    "verdict": ai_result.get('verdict', ''),
-                    "method": ai_result.get('method', 'unknown'),
-                    "metrics": ai_result.get('metrics', {}),
-                    "explanation": ai_result.get('explanation', '')
-                }
-                print(f"[AI DETECTOR] Result: {ai_detection_result['label']} ({ai_detection_result['confidence']:.2f}%)")
-            except Exception as e:
-                print(f"[ERROR] AI detection failed: {str(e)}")
-                ai_detection_result = {
-                    "is_ai_generated": False,
-                    "confidence": 0,
-                    "label": "Error",
-                    "verdict": f"Detection failed: {str(e)}",
-                    "method": "error"
-                }
 
         return {
             "Final Prediction": all_preds[best_model],
