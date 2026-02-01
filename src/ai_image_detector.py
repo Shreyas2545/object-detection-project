@@ -35,9 +35,9 @@ class AIImageDetector:
         self.model = None
         self.sensitivity = sensitivity  # new
         
-        # Override sensitivity to 'high' for improved detection if not specified
-        if self.sensitivity == 'medium':
-            self.sensitivity = 'high'
+        # Default sensitivity is respected
+        # if self.sensitivity == 'medium':
+        #     self.sensitivity = 'high'
         
         # Image preprocessing
         self.transform = transforms.Compose([
@@ -462,9 +462,9 @@ class AIImageDetector:
                 artifact_weight = 0.3
                 decision_threshold = 50
                 if self.sensitivity == 'high':
-                    # increase artifacts' influence and lower decision threshold for high sensitivity
-                    artifact_weight = 0.7
-                    hf_weight = 0.3
+                    # Balanced weighting for high sensitivity - don't over-rely on artifacts
+                    artifact_weight = 0.4
+                    hf_weight = 0.6
                     decision_threshold = 45
 
                 elif hf_result and artifact_result:

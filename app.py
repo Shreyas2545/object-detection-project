@@ -156,7 +156,7 @@ try:
     print("Loading AI Image Detector...")
     # Sensitivity can be controlled by environment variable AI_DETECT_SENSITIVITY (low/medium/high)
     import os
-    sensitivity = os.getenv('AI_DETECT_SENSITIVITY', 'high')
+    sensitivity = os.getenv('AI_DETECT_SENSITIVITY', 'medium')
 
     # Try HuggingFace model first (most accurate), fall back to hybrid or artifact if not available
     try:
