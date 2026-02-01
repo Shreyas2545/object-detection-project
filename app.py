@@ -160,8 +160,8 @@ try:
 
     # Try HuggingFace model first (most accurate), fall back to hybrid or artifact if not available
     try:
-        ai_detector = AIImageDetector(method='huggingface', sensitivity=sensitivity)
-        print("✓ AI Image Detector (HuggingFace) loaded successfully")
+        ai_detector = AIImageDetector(method='hybrid', sensitivity=sensitivity)
+        print("✓ AI Image Detector (Hybrid) loaded successfully")
     except Exception:
         print("⚠️ HuggingFace model not available, trying hybrid approach...")
         try:

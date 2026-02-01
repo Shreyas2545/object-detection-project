@@ -510,24 +510,6 @@
                   <p><span class="font-semibold text-slate-900">AI Confidence:</span> ${typeof aiDetection.confidence === 'number' ? aiDetection.confidence.toFixed(2) + '%' : aiDetection.confidence || 'N/A'}</p>
                   <p><span class="font-semibold text-slate-900">AI Label:</span> ${aiDetection.label || 'N/A'}</p>
                 </div>
-                <div class="ml-auto flex items-center gap-2">
-                  <button id="rerunAiBtn" onclick="rerunAi('${test._id}', 'high')" class="px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-semibold hover:bg-blue-700 transition">Re-run AI Check (High)</button>
-                  <button onclick="showReportForm('${test._id}')" class="px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-sm font-semibold hover:bg-slate-50 transition">Report incorrect</button>
-                </div>
-              </div>
-
-              <!-- Report Form (hidden until toggled) -->
-              <div id="reportForm-${test._id}" class="hidden mt-3 bg-white border border-slate-100 rounded p-3 text-sm">
-                <p class="mb-2 font-semibold">Correct label:</p>
-                <div class="flex items-center gap-4 mb-3">
-                  <label class="flex items-center gap-2"><input type="radio" name="report-${test._id}" value="ai"> <span>AI Generated</span></label>
-                  <label class="flex items-center gap-2"><input type="radio" name="report-${test._id}" value="real"> <span>Real Photo</span></label>
-                </div>
-                <div class="flex gap-2">
-                  <button onclick="submitReport('${test._id}')" class="px-3 py-2 bg-red-600 text-white rounded-md text-sm font-semibold hover:bg-red-700 transition">Submit Report</button>
-                  <button onclick="hideReportForm('${test._id}')" class="px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-sm font-semibold hover:bg-slate-50 transition">Cancel</button>
-                </div>
-                <p class="text-xs mt-2 text-slate-400">Reports are added to the retraining queue. When enough reports are collected we will automatically retrain the AI detector.</p>
               </div>
             ` : ''}
             <p><span class="font-semibold text-slate-900">Date:</span> ${formattedDate}</p>

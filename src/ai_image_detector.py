@@ -35,6 +35,10 @@ class AIImageDetector:
         self.model = None
         self.sensitivity = sensitivity  # new
         
+        # Override sensitivity to 'high' for improved detection if not specified
+        if self.sensitivity == 'medium':
+            self.sensitivity = 'high'
+        
         # Image preprocessing
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
@@ -213,45 +217,54 @@ class AIImageDetector:
                 'medium': 1.0,
                 'high': 1.3
             }
-            s_factor = sensitivity_map.get(self.sensitivity, 1.0)
+            s_thresh = sensitivity_map.get(self.sensitivity, 1.0)
+            
+            # Don't inflate scores as aggressively as thresholds
+            # This prevents false positives on real high-res images (plants, nature)
+            # Use 1.0 for medium/low, and only slight boost (1.1) for high
+            s_score_mult = 1.0
+            if self.sensitivity == 'high':
+                s_score_mult = 1.1
+            elif self.sensitivity == 'low':
+                s_score_mult = 0.9
 
             # Rule 1: Very low noise is suspicious
             # Higher sensitivity -> treat higher noise levels as suspicious
-            noise_thresh_1 = 2.5 * s_factor
-            noise_thresh_2 = 4.0 * s_factor
+            noise_thresh_1 = 2.5 * s_thresh
+            noise_thresh_2 = 4.0 * s_thresh
             if noise_level < noise_thresh_1:
-                ai_score += 40 * s_factor
+                ai_score += 40 * s_score_mult
                 explanations.append(f"Very low sensor noise ({noise_level:.2f}) - typical of AI generation")
             elif noise_level < noise_thresh_2:
-                ai_score += 25 * s_factor
+                ai_score += 25 * s_score_mult
                 explanations.append(f"Low sensor noise ({noise_level:.2f}) - slightly suspicious")
             else:
                 explanations.append(f"Normal sensor noise ({noise_level:.2f}) - natural camera behavior")
 
             # Rule 2: Unusual frequency patterns
-            fft_low = 0.03 / s_factor
-            fft_high = 0.6 * s_factor
+            fft_low = 0.03 / s_thresh
+            fft_high = 0.6 * s_thresh
             if fft_ratio < fft_low or fft_ratio > fft_high:
-                ai_score += 25 * s_factor
+                ai_score += 25 * s_score_mult
                 explanations.append(f"Unusual frequency patterns ({fft_ratio:.3f}) - may be AI-generated")
 
             # Rule 3: Edge consistency
             # Lower threshold under high sensitivity
-            edge_thresh = 0.15 / s_factor
+            edge_thresh = 0.15 / s_thresh
             if edge_density > edge_thresh:
-                ai_score += 15 * s_factor
+                ai_score += 15 * s_score_mult
                 explanations.append(f"High edge density ({edge_density:.3f}) - too many perfect edges")
 
             # Rule 4: Color distribution
-            color_thresh = 400 / s_factor
+            color_thresh = 400 / s_thresh
             if color_variance < color_thresh:
-                ai_score += 15 * s_factor
+                ai_score += 15 * s_score_mult
                 explanations.append(f"Low color variance ({color_variance:.1f}) - unnaturally uniform")
 
             # Rule 5: Texture uniformity
-            texture_thresh = 25 * s_factor
+            texture_thresh = 25 * s_thresh
             if texture_std < texture_thresh:
-                ai_score += 10 * s_factor
+                ai_score += 10 * s_score_mult
                 explanations.append(f"Very smooth texture ({texture_std:.1f}) - possibly AI smoothing")
 
             # Additional check: JPEG quantization table heuristic (if JPEG)
@@ -262,10 +275,10 @@ class AIImageDetector:
                     # Highly uniform quantization suggests synthetic editing / large-scale recompression
                     q_std = np.std(quant)
                     if q_std < 1.0:
-                        quant_score += 10 * s_factor
+                        quant_score += 10 * s_score_mult
                         explanations.append(f"Very uniform JPEG quantization (std={q_std:.2f}) - suspicious")
                     elif q_std < 3.0:
-                        quant_score += 5 * s_factor
+                        quant_score += 5 * s_score_mult
                         explanations.append(f"Low JPEG quantization variance (std={q_std:.2f}) - possibly suspicious")
                     ai_score += quant_score
             except Exception:
@@ -454,11 +467,27 @@ class AIImageDetector:
                     hf_weight = 0.3
                     decision_threshold = 45
 
-                if hf_result and artifact_result:
+                elif hf_result and artifact_result:
                     # Use weighted scoring and normalize
                     hf_score = hf_result['confidence'] if hf_result['is_ai'] else (100 - hf_result['confidence'])
                     artifact_score = artifact_result['confidence'] if artifact_result['is_ai'] else (100 - artifact_result['confidence'])
                     
+                    # ARTIFACT OVERRIDE DISABLED
+                    # The override was causing false positives on high-quality real images (cars, keyboards).
+                    # We now rely primarily on the Deep Learning model.
+                    # artifact_ai_score = artifact_result.get('metrics', {}).get('ai_score', 0)
+                    # if artifact_ai_score > 75: ...
+
+                    # Tuneable weighting - Reduced artifact influence to avoid false positives
+                    hf_weight = 0.8
+                    artifact_weight = 0.2
+                    decision_threshold = 50
+                    if self.sensitivity == 'high':
+                        # Even in high sensitivity, keeps artifacts subordinate to the model
+                        artifact_weight = 0.3
+                        hf_weight = 0.7
+                        decision_threshold = 45
+
                     combined_score = (hf_weight * hf_score + artifact_weight * artifact_score)
                     is_ai = combined_score >= decision_threshold
                     
