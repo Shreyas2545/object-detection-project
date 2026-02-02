@@ -527,9 +527,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const data = await res.json();
           if (data.error) throw new Error(data.error);
           
-          // Convert blob to data URL for display
-          const frameData = URL.createObjectURL(blob);
-          updateResults(data, frameData);
+          // Convert blob to persistent base64 data URL for display (fixes broken saved webcam images)
+          const reader = new FileReader();
+          reader.onload = () => {
+            const frameData = reader.result;
+            updateResults(data, frameData);
+          };
+          reader.readAsDataURL(blob);
         } catch (err) { 
           console.error('Live Detection Error:', err);
         }
