@@ -767,51 +767,76 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function analyzeVideo() {
-    if (!selectedVideo) return;
+    if (!selectedVideo) {
+        showToast('Please select a video first', 'error', 2000);
+        return;
+    }
 
     const token = localStorage.getItem('authToken');
     if (!token) {
-      showToast('Please login to analyze videos', 'error', 3000);
-      window.location.href = '/login';
-      return;
+        showToast('Please login to analyze videos', 'error', 3000);
+        window.location.href = '/login';
+        return;
     }
 
+    console.log('=== VIDEO UPLOAD DEBUG ===');
+    console.log('Video file:', selectedVideo.name);
+    console.log('Video size:', (selectedVideo.size / 1024 / 1024).toFixed(2) + ' MB');
+    console.log('Video type:', selectedVideo.type);
+
     elements.videoPreviewContainer.classList.add('hidden');
-    elements.videoLoadingState.classList.remove('hidden');
+    elements.loadingOverlay.classList.remove('hidden');
+    elements.loadingText.textContent = 'Analyzing video frames... This may take a few moments.';
 
     const formData = new FormData();
     formData.append('file', selectedVideo);
 
     try {
-      const response = await fetch('/api/detect-video', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
+        const response = await fetch('/api/detect-video', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+                // Don't set Content-Type - browser will set it with boundary for FormData
+            },
+            body: formData
+        });
 
-      const data = await response.json();
+        console.log('Response status:', response.status);
 
-      if (response.ok) {
-        videoAnalysisResult = data;
-        displayVideoResults(data);
-        elements.uploadSection.classList.add('hidden');
-        elements.videoContainer.classList.add('hidden');
-        elements.videoLoadingState.classList.add('hidden');
-        elements.videoResults.classList.remove('hidden');
-      } else {
-        showToast(data.message || 'Error analyzing video', 'error', 3000);
-        elements.videoLoadingState.classList.add('hidden');
-        elements.videoPreviewContainer.classList.remove('hidden');
-      }
+        // CRITICAL FIX: Read as text first, then parse
+        const responseText = await response.text();
+        console.log('Raw response (first 500 chars):', responseText.substring(0, 500));
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+            console.log('Parsed JSON data:', data);
+        } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            console.error('Full response:', responseText);
+            throw new Error('Server returned invalid response. Check server logs.');
+        }
+
+        if (response.ok) {
+            console.log('✓ Video analysis complete');
+            videoAnalysisResult = data;
+            displayVideoResults(data);
+            elements.uploadSection.classList.add('hidden');
+            elements.videoContainer.classList.add('hidden');
+            elements.loadingOverlay.classList.add('hidden');
+            elements.videoResults.classList.remove('hidden');
+        } else {
+            console.error('Server error:', data);
+            throw new Error(data.message || data.error || 'Error analyzing video');
+        }
     } catch (error) {
-      console.error('Video analysis error:', error);
-      showToast('Error analyzing video', 'error', 3000);
-      elements.videoLoadingState.classList.add('hidden');
-      elements.videoPreviewContainer.classList.remove('hidden');
+        console.error('=== VIDEO ANALYSIS ERROR ===');
+        console.error('Error:', error.message);
+        showToast('Error: ' + error.message, 'error', 5000);
+        elements.loadingOverlay.classList.add('hidden');
+        elements.videoPreviewContainer.classList.remove('hidden');
     }
-  }
+}
 
   function displayVideoResults(data) {
     document.getElementById('videoLabel').textContent = data.label || 'Unknown';
