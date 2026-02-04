@@ -429,14 +429,29 @@ class AIVideoDetector:
                 model_result = self.predict_frames_with_model(frames)
                 t1 = time.perf_counter()
                 print(f"   Model inference: {(t1 - t0):.3f}s")
+
+            # === ANALYSIS 4: Temporal ML Model (if available) ===
+            temporal_ml_prob = None
+            try:
+                from temporal_model import TemporalModel
+                temporal_model_ckpt = os.path.join('checkpoints', 'temporal_model.joblib')
+                if os.path.exists(temporal_model_ckpt):
+                    t0 = time.perf_counter()
+                    tm = TemporalModel()
+                    tm.load(temporal_model_ckpt)
+                    temporal_ml_prob = tm.predict_proba(video_path)
+                    t1 = time.perf_counter()
+                    print(f"   Temporal ML inference: {(t1 - t0):.3f}s (AI_prob: {temporal_ml_prob:.3f})")
+            except Exception:
+                temporal_ml_prob = None
             
             # === COMBINE RESULTS ===
             final_score = 0
             explanations = []
             
-            # Temporal analysis weight: 35%
+            # Temporal analysis weight: 25%
             if temporal_result:
-                final_score += temporal_result['score'] * 0.35
+                final_score += temporal_result['score'] * 0.25
                 explanations.extend(temporal_result.get('explanations', []))
                 results['metrics'].update({
                     'temporal_score': temporal_result['score'],
@@ -444,6 +459,14 @@ class AIVideoDetector:
                     'color_shift_std': temporal_result['color_shift_std'],
                     'motion_inconsistency': temporal_result['motion_inconsistency']
                 })
+
+            # If we have a learned temporal ML model, use its probability (weighted) as additional evidence
+            if temporal_ml_prob is not None:
+                # weight configurable by future env var; default 30% of final scoring
+                temporal_weight = float(os.getenv('AI_VIDEO_TEMPORAL_WEIGHT', 0.30))
+                final_score += float(temporal_ml_prob * 100.0) * temporal_weight
+                explanations.append(f"Temporal-ML model AI probability: {temporal_ml_prob*100:.1f}%")
+                results['metrics']['temporal_ml_ai_prob'] = float(temporal_ml_prob)
             
             # Artifact analysis weight: 30%
             if artifact_result:
