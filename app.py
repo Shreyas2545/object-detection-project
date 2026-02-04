@@ -83,11 +83,13 @@ try:
     from model_mobilenet import get_mobilenet_model
     from yolo_model import predict_yolo_single
     from ai_image_detector import AIImageDetector
+    from ai_video_detector import AIVideoDetector
 except ImportError:
     from src.model_resnet import get_resnet18_model
     from src.model_mobilenet import get_mobilenet_model
     from src.yolo_model import predict_yolo_single
     from src.ai_image_detector import AIImageDetector
+    from src.ai_video_detector import AIVideoDetector
 
 CLASS_NAMES = [
     "backpack", "bird", "book", "bottle", "car", "cat", "dog", "human",
@@ -184,6 +186,16 @@ if ai_detector is None:
     print("Will continue without AI detection")
 else:
     print("AI detection initialized and ready")
+
+# ==================== LOAD AI VIDEO DETECTOR ====================
+ai_video_detector = None
+try:
+    print("Loading AI Video Detector...")
+    ai_video_detector = AIVideoDetector(max_duration=10)
+    print("✓ AI Video Detector loaded successfully")
+except Exception as e:
+    print(f"⚠️ AI Video Detector failed to load: {e}")
+    ai_video_detector = None
 
 # ----------------- Checkpoint watcher: reload detector after retraining completes -----------------
 import threading, time
@@ -726,9 +738,17 @@ def save_test_result(current_user):
         print(f"[SAVE] Debug - primary_object extracted: {primary_object}")
         print(f"[SAVE] Debug - confidence extracted: {confidence}")
         
+        # Ensure image_data is properly stored (critical for webcam captures)
+        image_data = data.get('image_data')
+        if image_data and not image_data.startswith('data:image'):
+            # If it's not a proper data URL, add the prefix
+            if image_data.startswith('/9j/') or image_data.startswith('iVBOR'):
+                image_data = f"data:image/jpeg;base64,{image_data}"
+        
         test_result = {
             'user_id': current_user,
-            'image_data': data.get('image_data'),  # Base64 encoded image
+            'image_data': image_data,  # Base64 encoded image with proper prefix
+            'image_path': data.get('image_path'),  # Optional file path
             'detection_results': results,  # Detection results from all models
             'detection_method': data.get('method', 'upload'),  # 'upload' or 'webcam'
             'timestamp': datetime.datetime.utcnow(),
@@ -1049,6 +1069,53 @@ def run_retrain(current_user):
         import traceback
         traceback.print_exc()
         return jsonify({'message': f'Server error: {str(e)}'}), 500
+
+
+# ==================== VIDEO DETECTION ROUTE ====================
+
+@app.route('/api/detect-video', methods=['POST'])
+@token_required
+def api_detect_video(current_user):
+    """Detect AI-generated vs Real video"""
+    if 'file' not in request.files:
+        return jsonify({'message': 'No video provided'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'message': 'No file selected'}), 400
+    
+    try:
+        # Check file extension
+        allowed_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.webm'}
+        file_ext = os.path.splitext(file.filename)[1].lower()
+        
+        if file_ext not in allowed_extensions:
+            return jsonify({'message': f'Unsupported video format. Allowed: {", ".join(allowed_extensions)}'}), 400
+        
+        # Save video temporarily
+        import tempfile
+        temp_dir = tempfile.mkdtemp()
+        temp_video_path = os.path.join(temp_dir, f"video{file_ext}")
+        file.save(temp_video_path)
+        
+        if ai_video_detector is None:
+            return jsonify({'message': 'Video detector not available'}), 503
+        
+        # Run video detection
+        results = ai_video_detector.predict(temp_video_path)
+        
+        # Clean up
+        import shutil
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        
+        return jsonify(results), 200
+        
+    except Exception as e:
+        print(f"Video detection error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'message': f'Error processing video: {str(e)}'}), 500
 
 # ==================== ERROR HANDLERS ====================
 
