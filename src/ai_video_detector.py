@@ -16,7 +16,7 @@ class AIVideoDetector:
     Analyzes temporal inconsistencies and frame artifacts
     """
     
-    def __init__(self, model_path=None, max_duration=10, max_frames=30, model_frame_count=15, analysis_resize=(320,240)):
+    def __init__(self, model_path=None, max_duration=10, max_frames=30, model_frame_count=15, analysis_resize=(320,240), hotspot_threshold=0.85, hotspot_boost=50):
         """
         Initialize AI Video Detector
         
@@ -26,12 +26,18 @@ class AIVideoDetector:
             max_frames: Maximum number of frames to extract/analyze
             model_frame_count: Number of frames the DL model should evaluate (sampled)
             analysis_resize: Resize used for temporal/motion analysis to speed optical flow
+            hotspot_threshold: Per-frame AI probability required to consider a hotspot
+            hotspot_boost: Score boost applied when hotspot is detected
         """
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.max_duration = max_duration
         # Operational tuning (can be adjusted via environment variables)
         self.max_frames = int(os.getenv('AI_VIDEO_MAX_FRAMES', max_frames))
         self.model_frame_count = int(os.getenv('AI_VIDEO_MODEL_FRAMES', model_frame_count))
+        # Hotspot configuration
+        self.hotspot_threshold = float(os.getenv('AI_VIDEO_HOTSPOT_THRESHOLD', hotspot_threshold))
+        self.hotspot_boost = float(os.getenv('AI_VIDEO_HOTSPOT_BOOST', hotspot_boost))
+
         resize_env = os.getenv('AI_VIDEO_ANALYSIS_RESIZE', None)
         if resize_env:
             try:
@@ -199,16 +205,16 @@ class AIVideoDetector:
             temporal_score = 0
             explanations = []
             
-            # Sudden changes indicate AI
-            if frame_diff_std > 15:
+            # Sudden changes indicate AI (lowered thresholds for higher sensitivity)
+            if frame_diff_std > 4.0:
                 temporal_score += 20
                 explanations.append(f"Inconsistent frame changes ({frame_diff_std:.1f})")
             
-            if color_shift_std > 10:
+            if color_shift_std > 2.0:
                 temporal_score += 15
                 explanations.append(f"Unstable color grading ({color_shift_std:.1f})")
             
-            if motion_inconsistency_avg > 8:
+            if motion_inconsistency_avg > 3.0:
                 temporal_score += 15
                 explanations.append(f"Unnatural motion patterns ({motion_inconsistency_avg:.1f})")
             
@@ -257,15 +263,25 @@ class AIVideoDetector:
                 edges = cv2.Canny(gray, 50, 150)
                 edge_ratio = np.sum(edges > 0) / edges.size
                 
+                # Pixel variance check to avoid flagging uniform frames (e.g., static test patterns)
+                frame_variance = float(np.var(gray))
+
                 # Calculate AI score for this frame
                 frame_ai_score = 0
-                
-                if noise_level < 3.0:
-                    frame_ai_score += 30
-                
-                if edge_ratio < 0.05 or edge_ratio > 0.25:
-                    frame_ai_score += 20
-                
+
+                # More permissive thresholds to detect subtler generative artifacts
+                # But avoid false positives on nearly-uniform frames
+                if frame_variance < 5.0 and edge_ratio < 0.02:
+                    # Very uniform frame — ambiguous, do not mark as AI by artifact heuristics
+                    frame_ai_score = 0
+                else:
+                    if noise_level < 6.0:
+                        frame_ai_score += 30
+
+                    if edge_ratio < 0.08 or edge_ratio > 0.20:
+                        frame_ai_score += 20
+
+                # Append per-frame AI score
                 ai_scores.append(frame_ai_score)
             
             avg_ai_score = np.mean(ai_scores) if ai_scores else 0.0
@@ -325,10 +341,15 @@ class AIVideoDetector:
             confidence = float(max(ai_ratio, 1 - ai_ratio) * 100)
             is_ai = ai_ratio > 0.5
 
+            # Per-frame AI probabilities (useful to detect high-confidence AI "hotspots")
+            frame_probs = [float(p[1]) for p in probs]
+
             return {
                 'is_ai': is_ai,
                 'confidence': confidence,
-                'ai_frame_ratio': ai_ratio
+                'ai_frame_ratio': ai_ratio,
+                'frame_probs': frame_probs,
+                'preds': preds.tolist()
             }
 
         except Exception as e:
@@ -435,6 +456,18 @@ class AIVideoDetector:
                 explanations.append(f"Model prediction: {model_result['confidence']:.1f}% confidence")
                 results['metrics']['model_confidence'] = model_result['confidence']
                 results['metrics']['ai_frame_ratio'] = model_result['ai_frame_ratio']
+
+                # Additional rule: if any single sampled frame has very high AI probability, treat as a hotspot and boost score
+                max_frame_ai_prob = max(model_result.get('frame_probs', [0.0]))
+                results['metrics']['model_max_ai_prob'] = float(max_frame_ai_prob)
+                # Hotspot rule: configurable threshold + boost to catch localized strong AI evidence
+                if max_frame_ai_prob > self.hotspot_threshold:
+                    # Strong per-frame evidence — add configurable boost
+                    final_score += self.hotspot_boost
+                    explanations.append(f"High AI-probability frame detected ({max_frame_ai_prob*100:.1f}%)")
+                    # Include config in metrics for traceability
+                    results['metrics']['hotspot_threshold'] = float(self.hotspot_threshold)
+                    results['metrics']['hotspot_boost'] = float(self.hotspot_boost)
             
             # Determine final result
             is_ai = final_score >= 50
