@@ -16,19 +16,35 @@ class AIVideoDetector:
     Analyzes temporal inconsistencies and frame artifacts
     """
     
-    def __init__(self, model_path=None, max_duration=10):
+    def __init__(self, model_path=None, max_duration=10, max_frames=30, model_frame_count=15, analysis_resize=(320,240)):
         """
         Initialize AI Video Detector
         
         Args:
             model_path: Path to trained model (uses image detector if not available)
             max_duration: Maximum video duration in seconds (default: 10)
+            max_frames: Maximum number of frames to extract/analyze
+            model_frame_count: Number of frames the DL model should evaluate (sampled)
+            analysis_resize: Resize used for temporal/motion analysis to speed optical flow
         """
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.max_duration = max_duration
+        # Operational tuning (can be adjusted via environment variables)
+        self.max_frames = int(os.getenv('AI_VIDEO_MAX_FRAMES', max_frames))
+        self.model_frame_count = int(os.getenv('AI_VIDEO_MODEL_FRAMES', model_frame_count))
+        resize_env = os.getenv('AI_VIDEO_ANALYSIS_RESIZE', None)
+        if resize_env:
+            try:
+                w,h = [int(x) for x in resize_env.split('x')]
+                self.analysis_resize = (w,h)
+            except Exception:
+                self.analysis_resize = analysis_resize
+        else:
+            self.analysis_resize = analysis_resize
+
         self.model = None
         
-        # Image preprocessing
+        # Image preprocessing for DL model (keep original size for model accuracy)
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
@@ -38,6 +54,8 @@ class AIVideoDetector:
             )
         ])
         
+        print(f"🛠️ Video detector config: max_frames={self.max_frames}, model_frame_count={self.model_frame_count}, analysis_resize={self.analysis_resize}, device={self.device}")
+
         # Try to load custom model
         if model_path and os.path.exists(model_path):
             self._load_model(model_path)
@@ -47,7 +65,7 @@ class AIVideoDetector:
             if os.path.exists(local_ckpt):
                 try:
                     self._load_model(local_ckpt)
-                except:
+                except Exception:
                     print("⚠️ Using frame-by-frame analysis (no model loaded)")
     
     def _load_model(self, model_path):
@@ -71,17 +89,20 @@ class AIVideoDetector:
             print(f"⚠️ Could not load model: {e}")
             self.model = None
     
-    def extract_frames(self, video_path, max_frames=30):
+    def extract_frames(self, video_path, max_frames=None):
         """
         Extract frames from video
         
         Args:
             video_path: Path to video file
-            max_frames: Maximum number of frames to analyze (default: 30)
+            max_frames: Maximum number of frames to analyze (default: self.max_frames)
         
         Returns:
-            List of frames (numpy arrays)
+            List of frames (numpy arrays), fps, duration
         """
+        if max_frames is None:
+            max_frames = self.max_frames
+
         try:
             cap = cv2.VideoCapture(video_path)
             
@@ -97,9 +118,11 @@ class AIVideoDetector:
                 print(f"⚠️ Video duration ({duration:.1f}s) exceeds maximum ({self.max_duration}s)")
                 print(f"   Analyzing first {self.max_duration} seconds only")
             
-            # Calculate frame interval
-            frames_to_analyze = min(max_frames, int(min(duration, self.max_duration) * fps))
-            interval = max(1, total_frames // frames_to_analyze)
+            # Calculate number of frames to analyze and interval
+            frames_to_analyze = min(max_frames, int(min(duration, self.max_duration) * fps) if fps>0 else max_frames)
+            if frames_to_analyze <= 0:
+                frames_to_analyze = min(max_frames, total_frames)
+            interval = max(1, max(1, total_frames // frames_to_analyze))
             
             frames = []
             frame_indices = []
@@ -137,14 +160,15 @@ class AIVideoDetector:
             if len(frames) < 3:
                 return None
             
-            # Calculate frame differences
+            # Downscale frames for faster optical flow / motion analysis
+            small_prev = cv2.resize(frames[0], self.analysis_resize)
             frame_diffs = []
             color_shifts = []
             motion_inconsistencies = []
             
             for i in range(1, len(frames)):
-                prev_frame = frames[i-1]
-                curr_frame = frames[i]
+                prev_frame = cv2.resize(frames[i-1], self.analysis_resize)
+                curr_frame = cv2.resize(frames[i], self.analysis_resize)
                 
                 # Frame difference
                 diff = cv2.absdiff(prev_frame, curr_frame)
@@ -157,18 +181,19 @@ class AIVideoDetector:
                 color_shift = np.linalg.norm(prev_mean - curr_mean)
                 color_shifts.append(color_shift)
                 
-                # Motion analysis using optical flow
+                # Motion analysis using optical flow (on smaller frames for speed)
                 prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
                 curr_gray = cv2.cvtColor(curr_frame, cv2.COLOR_BGR2GRAY)
                 
-                flow = cv2.calcOpticalFlowFarneback(prev_gray, curr_gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+                # Use slightly faster/less-precise parameters for Farneback
+                flow = cv2.calcOpticalFlowFarneback(prev_gray, curr_gray, None, 0.4, 2, 9, 2, 5, 1.1, 0)
                 motion_magnitude = np.sqrt(flow[..., 0]**2 + flow[..., 1]**2)
                 motion_inconsistencies.append(np.std(motion_magnitude))
             
             # Calculate metrics
             frame_diff_std = np.std(frame_diffs)
             color_shift_std = np.std(color_shifts)
-            motion_inconsistency_avg = np.mean(motion_inconsistencies)
+            motion_inconsistency_avg = np.mean(motion_inconsistencies) if motion_inconsistencies else 0.0
             
             # Scoring
             temporal_score = 0
@@ -214,15 +239,21 @@ class AIVideoDetector:
         try:
             ai_scores = []
             
-            for frame in frames[::max(1, len(frames)//10)]:  # Sample 10 frames
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            # Sample up to 10 frames evenly
+            sample_count = min(10, max(1, len(frames)))
+            indices = np.linspace(0, len(frames)-1, sample_count, dtype=int)
+            for idx in indices:
+                frame = frames[idx]
+                # Work on a downscaled grayscale to speed up processing
+                small = cv2.resize(frame, (min(320, frame.shape[1]), min(240, frame.shape[0])))
+                gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
                 
                 # Noise analysis
                 denoised = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
                 noise_diff = gray.astype(float) - denoised.astype(float)
                 noise_level = np.std(noise_diff)
                 
-                # Edge analysis
+                # Edge analysis (faster at smaller scale)
                 edges = cv2.Canny(gray, 50, 150)
                 edge_ratio = np.sum(edges > 0) / edges.size
                 
@@ -237,8 +268,8 @@ class AIVideoDetector:
                 
                 ai_scores.append(frame_ai_score)
             
-            avg_ai_score = np.mean(ai_scores)
-            score_variance = np.std(ai_scores)
+            avg_ai_score = np.mean(ai_scores) if ai_scores else 0.0
+            score_variance = np.std(ai_scores) if ai_scores else 0.0
             
             # High variance in AI scores suggests AI generation
             if score_variance > 15:
@@ -255,48 +286,55 @@ class AIVideoDetector:
             return None
     
     def predict_frames_with_model(self, frames):
-        """Predict using deep learning model on sampled frames"""
+        """Predict using deep learning model on sampled frames (batched inference)"""
         if self.model is None:
             return None
         
         try:
-            ai_predictions = []
-            
-            # Sample frames (analyze every Nth frame)
-            sample_interval = max(1, len(frames) // 15)
-            sampled_frames = frames[::sample_interval][:15]
-            
+            # Determine sample size and indices
+            sample_count = min(self.model_frame_count, max(1, len(frames)))
+            sample_interval = max(1, len(frames) // sample_count)
+            sampled_frames = frames[::sample_interval][:sample_count]
+
+            tensors = []
             for frame in sampled_frames:
-                # Convert to PIL Image
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 img_pil = Image.fromarray(frame_rgb)
-                
-                # Transform and predict
-                img_tensor = self.transform(img_pil).unsqueeze(0).to(self.device)
-                
-                with torch.no_grad():
-                    outputs = self.model(img_tensor)
-                    probs = torch.softmax(outputs, dim=1)
-                    pred_class = torch.argmax(probs, dim=1).item()
-                    confidence = probs[0][pred_class].item()
-                    
-                    # Assuming 0=Real, 1=AI
-                    is_ai = (pred_class == 0)
-                    ai_predictions.append(1.0 if is_ai else 0.0)
-            
-            # Calculate average
-            ai_ratio = np.mean(ai_predictions)
-            confidence = max(ai_ratio, 1 - ai_ratio) * 100
+                img_tensor = self.transform(img_pil)
+                tensors.append(img_tensor)
+
+            if not tensors:
+                return None
+
+            batch = torch.stack(tensors, dim=0).to(self.device)
+
+            with torch.no_grad():
+                # Use mixed precision if GPU available for faster inference
+                if self.device.type == 'cuda' and hasattr(torch.cuda, 'amp'):
+                    with torch.cuda.amp.autocast():
+                        outputs = self.model(batch)
+                else:
+                    outputs = self.model(batch)
+
+            probs = torch.softmax(outputs, dim=1).cpu().numpy()
+            preds = np.argmax(probs, axis=1)
+
+            # Assuming 0 = Real, 1 = AI
+            ai_preds = [1.0 if p == 1 else 0.0 for p in preds]
+            ai_ratio = float(np.mean(ai_preds))
+            confidence = float(max(ai_ratio, 1 - ai_ratio) * 100)
             is_ai = ai_ratio > 0.5
-            
+
             return {
                 'is_ai': is_ai,
-                'confidence': float(confidence),
-                'ai_frame_ratio': float(ai_ratio)
+                'confidence': confidence,
+                'ai_frame_ratio': ai_ratio
             }
-            
+
         except Exception as e:
             print(f"❌ Error in model prediction: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def predict(self, video_path):
@@ -306,6 +344,7 @@ class AIVideoDetector:
         Returns:
             Dictionary with detection results
         """
+        import time
         results = {
             'is_ai_generated': False,
             'confidence': 0.0,
@@ -318,7 +357,9 @@ class AIVideoDetector:
         }
         
         try:
-            # Check file size (max ~50MB for 10 seconds)
+            start_total = time.perf_counter()
+
+            # Check file size (max ~100MB allowed)
             file_size = os.path.getsize(video_path) / (1024 * 1024)  # MB
             if file_size > 100:
                 results['verdict'] = f"❌ Video file too large ({file_size:.1f}MB). Maximum: 100MB"
@@ -327,8 +368,11 @@ class AIVideoDetector:
             print(f"\n🎥 Analyzing video: {video_path}")
             print(f"   File size: {file_size:.1f}MB")
             
-            # Extract frames
+            # Extract frames (uses self.max_frames)
+            t0 = time.perf_counter()
             frames, fps, duration = self.extract_frames(video_path)
+            t1 = time.perf_counter()
+            print(f"   Frame extraction: {(t1 - t0):.3f}s")
             
             if len(frames) == 0:
                 results['verdict'] = "❌ Could not extract frames from video"
@@ -339,17 +383,26 @@ class AIVideoDetector:
             
             # === ANALYSIS 1: Temporal Consistency ===
             print("🔍 Analyzing temporal consistency...")
+            t0 = time.perf_counter()
             temporal_result = self.analyze_temporal_consistency(frames)
+            t1 = time.perf_counter()
+            print(f"   Temporal analysis: {(t1 - t0):.3f}s")
             
             # === ANALYSIS 2: Frame Artifacts ===
             print("🔍 Analyzing frame artifacts...")
+            t0 = time.perf_counter()
             artifact_result = self.analyze_frame_artifacts(frames)
+            t1 = time.perf_counter()
+            print(f"   Frame artifact analysis: {(t1 - t0):.3f}s")
             
             # === ANALYSIS 3: Model Prediction (if available) ===
             model_result = None
             if self.model is not None:
-                print("🔍 Running deep learning model...")
+                print("🔍 Running deep learning model (batched)...")
+                t0 = time.perf_counter()
                 model_result = self.predict_frames_with_model(frames)
+                t1 = time.perf_counter()
+                print(f"   Model inference: {(t1 - t0):.3f}s")
             
             # === COMBINE RESULTS ===
             final_score = 0
@@ -408,7 +461,8 @@ class AIVideoDetector:
                 else:
                     results['verdict'] = f"❓ Possibly Real Video ({confidence:.1f}% confidence)"
             
-            print(f"\n🎯 Analysis complete!")
+            t_end = time.perf_counter()
+            print(f"\n🎯 Analysis complete! Total time: {(t_end - start_total):.3f}s")
             print(f"   Result: {results['label']}")
             print(f"   Confidence: {results['confidence']:.1f}%")
             

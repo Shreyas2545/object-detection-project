@@ -63,14 +63,30 @@
         padding: 1rem 1.5rem;
         border-radius: 0.75rem;
         background-color: white;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
         font-weight: 600;
         display: flex;
         align-items: center;
         gap: 0.75rem;
         z-index: 1000;
-        animation: slideInUp 0.3s ease-out;
+        animation: slideInUp 0.32s cubic-bezier(.2,.8,.2,1);
     }
+
+    /* Video card & play overlay */
+    .video-card { position: relative; border-radius: 1rem; overflow: hidden; }
+    .play-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .play-overlay button { pointer-events: auto; background: rgba(0,0,0,0.55); border-radius: 999px; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border: none; color: white; font-size: 24px; transition: transform .18s; }
+    .play-overlay button:hover { transform: scale(1.06); }
+    .test-card { transition: transform .22s cubic-bezier(.16,.84,.24,1), box-shadow .22s; border-radius: 1.25rem; overflow: hidden; }
+    .test-card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(2,6,23,0.08); }
+    .badge { font-size: 0.8rem; padding: .45rem .8rem; border-radius: .75rem; }
+    .card-footer { display:flex; gap:.5rem; align-items:center; }
+    .modal-video { width:100%; border-radius:.75rem; background:#000; }
+    .modal-actions button { margin-right:.5rem; }
+
+    @media (max-width: 640px) { .play-overlay button { width:48px; height:48px; } }
+
+
     .toast.success {
         color: #166534;
         background-color: #dcfce7;
@@ -173,8 +189,8 @@
   <div id="loadingOverlay" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center">
     <div class="bg-white rounded-[2rem] p-10 shadow-2xl text-center max-w-sm w-full mx-4">
       <div class="loader mx-auto mb-6"></div>
-      <p class="text-xl font-bold text-slate-900">Neural Syncing...</p>
-      <p class="text-slate-500 mt-2">Running comparative analysis across 8 models.</p>
+      <p class="text-xl font-bold text-slate-900" id="loadingTitle">Neural Syncing...</p>
+      <p id="loadingText" class="text-slate-500 mt-2">Running comparative analysis across 8 models.</p>
     </div>
   </div>
 
@@ -254,6 +270,11 @@
             </svg>
             <p class="text-2xl font-bold text-slate-800 mb-3">Drop video here or click to browse</p>
             <p class="text-slate-500 text-sm">Supported formats: MP4, AVI, MOV, MKV, WEBM (max 10 seconds)</p>
+
+            <div class="mt-6 text-sm text-slate-600 flex items-center gap-3">
+              <input id="videoFastMode" type="checkbox" class="h-4 w-4" />
+              <label for="videoFastMode" class="select-none">Fast Mode — reduced frames for faster response (conservative)</label>
+            </div>
           </div>
         </div>
 
@@ -268,8 +289,18 @@
         <!-- Loading State -->
         <div id="videoLoadingState" class="hidden mt-12">
           <div class="loader mx-auto mb-4"></div>
-          <p class="text-slate-600 font-medium">Analyzing video frames...</p>
-          <p class="text-slate-500 text-sm mt-2">This may take a few moments</p>
+          <p class="text-slate-600 font-medium" id="videoLoadingMain">Analyzing video frames...</p>
+          <p class="text-slate-500 text-sm mt-2" id="videoLoadingSub">This may take a few moments</p>
+
+          <div id="videoUploadProgress" class="w-full max-w-2xl mx-auto mt-4 hidden">
+            <div class="h-2 bg-slate-200 rounded overflow-hidden">
+              <div id="videoProgressBar" class="h-2 bg-purple-600 w-0 transition-all"></div>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-xs text-slate-500">
+              <span id="videoProgressText">0%</span>
+              <button id="videoCancelBtn" class="px-3 py-1 bg-rose-50 text-rose-600 rounded-full hidden">Cancel</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -400,9 +431,9 @@
       </h2>
 
       <!-- Video Detection Result -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <!-- Detection Card -->
-        <div class="bg-gradient-to-br from-purple-50 to-white rounded-3xl p-8 border-2 border-purple-100">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Detection Card (center column on large screens) -->
+        <div class="bg-gradient-to-br from-purple-50 to-white rounded-3xl p-8 lg:p-12 border-2 border-purple-100 lg:col-start-1 lg:col-span-3 lg:max-w-6xl lg:mx-auto w-full">
           <h3 class="text-lg font-bold text-slate-700 mb-6">AI Detection Result</h3>
           
           <div id="videoDetectionResult" class="mb-6">
@@ -421,30 +452,37 @@
               <p id="videoFrames" class="font-bold text-slate-800 text-lg"></p>
             </div>
           </div>
+
+          <div class="mt-6 text-center">
+            <button id="videoViewMoreBtn" class="px-6 py-3 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition">View Technical Details</button>
+          </div>
         </div>
 
-        <!-- Technical Metrics -->
-        <div class="bg-white rounded-3xl p-8 border-2 border-slate-100">
-          <h3 class="text-lg font-bold text-slate-700 mb-6">Technical Analysis</h3>
-          <div id="videoMetrics" class="space-y-3 text-sm"></div>
         </div>
-      </div>
 
-      <!-- Explanation -->
-      <div class="bg-slate-50 rounded-2xl p-6 mb-8">
-        <h4 class="font-bold text-slate-800 mb-3">📊 Analysis Details</h4>
-        <p id="videoExplanation" class="text-slate-600 leading-relaxed"></p>
-      </div>
+        <!-- Technical Details (full width, shows below results when toggled) -->
+        <div id="videoDetailsWrapper" class="hidden mt-6">
+          <div class="bg-white rounded-3xl p-8 border-2 border-slate-100">
+            <h3 class="text-lg font-bold text-slate-700 mb-6">Technical Analysis</h3>
+            <div id="videoMetrics" class="space-y-3 text-sm"></div>
+          </div>
 
-      <!-- Action Buttons -->
-      <div class="flex gap-4">
-        <button id="analyzeAnotherVideoBtn" class="px-8 py-4 bg-purple-600 text-white font-bold rounded-2xl hover:bg-purple-700 transition-all">
-          🔄 Analyze Another Video
-        </button>
-        <button id="saveVideoResultBtn" class="px-8 py-4 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 transition-all">
-          💾 Save Result
-        </button>
-      </div>
+          <!-- Explanation -->
+          <div class="bg-slate-50 rounded-2xl p-6 mb-8 mt-4">
+            <h4 class="font-bold text-slate-800 mb-3">📊 Analysis Details</h4>
+            <p id="videoExplanation" class="text-slate-600 leading-relaxed"></p>
+          </div>
+        </div>
+
+        <!-- Action Buttons (only Analyze Another & Save) -->
+        <div class="flex gap-4">
+          <button id="analyzeAnotherVideoBtn" class="px-8 py-4 bg-purple-600 text-white font-bold rounded-2xl hover:bg-purple-700 transition-all">
+            🔄 Analyze Another Video
+          </button>
+          <button id="saveVideoResultBtn" class="px-8 py-4 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 transition-all">
+            💾 Save Result
+          </button>
+        </div>
     </div>
   </section>
 
@@ -497,6 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
     captureBtn: document.getElementById('captureBtn'),
     liveToggleBtn: document.getElementById('liveToggleBtn'),
     loadingOverlay: document.getElementById('loadingOverlay'),
+    loadingText: document.getElementById('loadingText'),
     uploadSection: document.getElementById('uploadSection'),
     results: document.getElementById('results'),
     videoResults: document.getElementById('videoResults'),
@@ -526,7 +565,16 @@ document.addEventListener('DOMContentLoaded', () => {
     videoUploadZone: document.getElementById('videoUploadZone'),
     videoPreview: document.getElementById('videoPreview'),
     videoPreviewContainer: document.getElementById('videoPreviewContainer'),
+    videoDetailsWrapper: document.getElementById('videoDetailsWrapper'),
+    videoViewMoreBtn: document.getElementById('videoViewMoreBtn'),
     videoLoadingState: document.getElementById('videoLoadingState'),
+    videoLoadingMain: document.getElementById('videoLoadingMain'),
+    videoLoadingSub: document.getElementById('videoLoadingSub'),
+    videoUploadProgress: document.getElementById('videoUploadProgress'),
+    videoProgressBar: document.getElementById('videoProgressBar'),
+    videoProgressText: document.getElementById('videoProgressText'),
+    videoCancelBtn: document.getElementById('videoCancelBtn'),
+    videoFastMode: document.getElementById('videoFastMode'),
     analyzeVideoBtn: document.getElementById('analyzeVideoBtn'),
     analyzeAnotherVideoBtn: document.getElementById('analyzeAnotherVideoBtn'),
     saveVideoResultBtn: document.getElementById('saveVideoResultBtn')
@@ -541,6 +589,14 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.moreDetails.classList.toggle('hidden');
     elements.viewMoreBtn.textContent = elements.moreDetails.classList.contains('hidden') ? 'View Detailed Logs' : 'Hide Logs';
   });
+
+  // Video details toggle
+  if (elements.videoViewMoreBtn && elements.videoDetailsWrapper) {
+    elements.videoViewMoreBtn.addEventListener('click', () => {
+      elements.videoDetailsWrapper.classList.toggle('hidden');
+      elements.videoViewMoreBtn.textContent = elements.videoDetailsWrapper.classList.contains('hidden') ? 'View Technical Details' : 'Hide Details';
+    });
+  }
 
   // Image Upload
   elements.fileInput.addEventListener('change', (e) => {
@@ -659,6 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let lastFrameTime = 0;
   let frameSendInterval = 1000;
+  let currentVideoXhr = null;
 
   async function sendLiveFrameOptimized() {
     if (!isLiveMode) return;
@@ -766,7 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
     finally { elements.loadingOverlay.classList.add('hidden'); }
   }
 
-  async function analyzeVideo() {
+  function analyzeVideo() {
     if (!selectedVideo) {
         showToast('Please select a video first', 'error', 2000);
         return;
@@ -786,56 +843,105 @@ document.addEventListener('DOMContentLoaded', () => {
 
     elements.videoPreviewContainer.classList.add('hidden');
     elements.loadingOverlay.classList.remove('hidden');
-    elements.loadingText.textContent = 'Analyzing video frames... This may take a few moments.';
+    elements.loadingText.textContent = 'Uploading video...';
+
+    // show progress UI
+    elements.videoUploadProgress.classList.remove('hidden');
+    elements.videoProgressBar.style.width = '0%';
+    elements.videoProgressText.textContent = '0%';
+    elements.videoCancelBtn.classList.remove('hidden');
 
     const formData = new FormData();
     formData.append('file', selectedVideo);
 
-    try {
-        const response = await fetch('/api/detect-video', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-                // Don't set Content-Type - browser will set it with boundary for FormData
-            },
-            body: formData
-        });
+    // Append fast-mode hint if user selected it (conservative, non-destructive)
+    if (elements.videoFastMode && elements.videoFastMode.checked) {
+        formData.append('fast', 'true');
+    }
 
-        console.log('Response status:', response.status);
+    const xhr = new XMLHttpRequest();
+    currentVideoXhr = xhr;
+    xhr.open('POST', '/api/detect-video', true);
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.timeout = 120000; // 2 minutes timeout
 
-        // CRITICAL FIX: Read as text first, then parse
-        const responseText = await response.text();
-        console.log('Raw response (first 500 chars):', responseText.substring(0, 500));
+    xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            elements.videoProgressBar.style.width = percent + '%';
+            elements.videoProgressText.textContent = percent + '%';
+        }
+    };
 
-        let data;
+    xhr.ontimeout = () => {
+        console.error('Upload timed out');
+        showToast('Video upload timed out. Please try again or use a shorter file.', 'error', 4000);
+        cleanupAfterFailure();
+    };
+
+    xhr.onerror = () => {
+        console.error('Network error during upload');
+        showToast('Network error during upload', 'error', 4000);
+        cleanupAfterFailure();
+    };
+
+    xhr.onload = () => {
         try {
-            data = JSON.parse(responseText);
-            console.log('Parsed JSON data:', data);
-        } catch (parseError) {
-            console.error('JSON Parse Error:', parseError);
-            console.error('Full response:', responseText);
-            throw new Error('Server returned invalid response. Check server logs.');
-        }
+            console.log('Response status:', xhr.status);
+            const responseText = xhr.responseText || '';
 
-        if (response.ok) {
-            console.log('✓ Video analysis complete');
-            videoAnalysisResult = data;
-            displayVideoResults(data);
-            elements.uploadSection.classList.add('hidden');
-            elements.videoContainer.classList.add('hidden');
-            elements.loadingOverlay.classList.add('hidden');
-            elements.videoResults.classList.remove('hidden');
-        } else {
-            console.error('Server error:', data);
-            throw new Error(data.message || data.error || 'Error analyzing video');
+            if (xhr.status === 200) {
+                elements.loadingText.textContent = 'Processing video on server...';
+                let data = {};
+                try {
+                    data = JSON.parse(responseText);
+                    console.log('Parsed JSON data:', data);
+                } catch (err) {
+                    console.error('JSON parse error:', err, responseText.substring(0, 500));
+                    throw new Error('Invalid server response. Check server logs.');
+                }
+
+                console.log('✓ Video analysis complete');
+                videoAnalysisResult = data;
+                displayVideoResults(data);
+                elements.uploadSection.classList.add('hidden');
+                elements.videoContainer.classList.add('hidden');
+                elements.loadingOverlay.classList.add('hidden');
+                elements.videoResults.classList.remove('hidden');
+                elements.videoUploadProgress.classList.add('hidden');
+                elements.videoCancelBtn.classList.add('hidden');
+            } else {
+                let data = {};
+                try { data = JSON.parse(responseText); } catch (e) {}
+                console.error('Server error:', data);
+                throw new Error(data.message || data.error || `Server error: ${xhr.status}`);
+            }
+        } catch (err) {
+            console.error('Video analysis error:', err);
+            showToast('Error: ' + (err.message || 'Video processing failed'), 'error', 5000);
+            cleanupAfterFailure();
+        } finally {
+            currentVideoXhr = null;
         }
-    } catch (error) {
-        console.error('=== VIDEO ANALYSIS ERROR ===');
-        console.error('Error:', error.message);
-        showToast('Error: ' + error.message, 'error', 5000);
+    };
+
+    elements.videoCancelBtn.onclick = () => {
+        if (currentVideoXhr) {
+            currentVideoXhr.abort();
+            showToast('Video upload canceled', 'info', 2000);
+            cleanupAfterFailure();
+        }
+    };
+
+    function cleanupAfterFailure() {
+        currentVideoXhr = null;
         elements.loadingOverlay.classList.add('hidden');
         elements.videoPreviewContainer.classList.remove('hidden');
+        elements.videoUploadProgress.classList.add('hidden');
+        elements.videoCancelBtn.classList.add('hidden');
     }
+
+    xhr.send(formData);
 }
 
   function displayVideoResults(data) {
@@ -895,12 +1001,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
+      // Capture a thumbnail from the preview if possible
+      let thumbnail = '';
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = elements.videoPreview.videoWidth || 320;
+        canvas.height = elements.videoPreview.videoHeight || 180;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(elements.videoPreview, 0, 0, canvas.width, canvas.height);
+        thumbnail = canvas.toDataURL('image/jpeg');
+      } catch (e) {
+        console.warn('Thumbnail capture failed', e);
+      }
+
       const reader = new FileReader();
       reader.onload = async function(e) {
         const videoData = e.target.result;
 
         const saveData = {
           video_data: videoData,
+          image_data: thumbnail || undefined,
           results: videoAnalysisResult,
           method: 'video_upload',
           type: 'video_detection'

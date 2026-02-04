@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 import os
 import joblib
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, Response
 try:
     from flask_cors import CORS
 except ImportError:
@@ -35,6 +35,42 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-this-in-production')
 CORS(app)
+
+# Utility: make Python objects JSON serializable (handles numpy types)
+import numpy as _np
+
+def _make_json_serializable(obj):
+    """Recursively convert numpy types and other non-JSON types to native Python types."""
+    try:
+        if obj is None:
+            return None
+        if isinstance(obj, (_np.generic,)):
+            # numpy scalar
+            if isinstance(obj, _np.bool_):
+                return bool(obj)
+            if isinstance(obj, (_np.integer,)):
+                return int(obj)
+            if isinstance(obj, (_np.floating,)):
+                return float(obj)
+            return obj.item()
+        if isinstance(obj, (list, tuple)):
+            return [_make_json_serializable(x) for x in obj]
+        if isinstance(obj, dict):
+            return {str(k): _make_json_serializable(v) for k, v in obj.items()}
+        if isinstance(obj, _np.ndarray):
+            return obj.tolist()
+        # Python built-ins
+        if isinstance(obj, (str, int, float, bool)):
+            return obj
+        # Fallback: attempt to convert
+        try:
+            return float(obj)
+        except Exception:
+            return str(obj)
+    except Exception as e:
+        print('Serialization helper error:', e)
+        return str(obj)
+
 
 # ==================== MONGODB CONNECTION ====================
 MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
@@ -744,16 +780,25 @@ def save_test_result(current_user):
             # If it's not a proper data URL, add the prefix
             if image_data.startswith('/9j/') or image_data.startswith('iVBOR'):
                 image_data = f"data:image/jpeg;base64,{image_data}"
-        
+
+        # If a video was provided, store it and set detection method appropriately
+        video_data = data.get('video_data')
+        if video_data and isinstance(video_data, str):
+            # We store the raw data URL (client sends data:*... base64)
+            # Optionally keep a thumbnail in image_data (client may provide it)
+            print('[SAVE] Video data included in payload')
+
         test_result = {
             'user_id': current_user,
-            'image_data': image_data,  # Base64 encoded image with proper prefix
+            'image_data': image_data,  # Base64 encoded image with proper prefix (thumbnail if video)
+            'video_data': video_data if video_data and isinstance(video_data, str) else None,
             'image_path': data.get('image_path'),  # Optional file path
             'detection_results': results,  # Detection results from all models
-            'detection_method': data.get('method', 'upload'),  # 'upload' or 'webcam'
+            'detection_method': data.get('method', 'upload'),  # 'upload', 'webcam' or 'video_upload'
             'timestamp': datetime.datetime.utcnow(),
             'primary_object': primary_object,
-            'confidence': confidence
+            'confidence': confidence,
+            'type': data.get('type')
         }
         
         print(f"[SAVE] User: {current_user}, Object: {primary_object}, Confidence: {confidence}")
@@ -1102,14 +1147,65 @@ def api_detect_video(current_user):
         if ai_video_detector is None:
             return jsonify({'message': 'Video detector not available'}), 503
         
-        # Run video detection
-        results = ai_video_detector.predict(temp_video_path)
-        
+        # Allow optional client hints for faster analysis (non-destructive)
+        old_max_frames = ai_video_detector.max_frames
+        old_model_frames = ai_video_detector.model_frame_count
+        try:
+            # Parse optional overrides from form-data
+            max_frames_override = request.form.get('max_frames')
+            model_frames_override = request.form.get('model_frames')
+            fast_hint = request.form.get('fast')  # 'true' or '1' indicates fast mode
+
+            if max_frames_override:
+                try:
+                    ai_video_detector.max_frames = int(max_frames_override)
+                except Exception:
+                    pass
+
+            if model_frames_override:
+                try:
+                    ai_video_detector.model_frame_count = int(model_frames_override)
+                except Exception:
+                    pass
+
+            if fast_hint and str(fast_hint).lower() in ('1', 'true', 'yes'):
+                # Conservative fast-mode defaults that still try to preserve accuracy
+                ai_video_detector.max_frames = min(10, ai_video_detector.max_frames)
+                ai_video_detector.model_frame_count = min(6, ai_video_detector.model_frame_count)
+
+            # Run video detection (with timing)
+            import time as _time
+            t0 = _time.perf_counter()
+            results = ai_video_detector.predict(temp_video_path)
+            t1 = _time.perf_counter()
+            print(f"API: video detection total server-side time: {(t1 - t0):.3f}s")
+        finally:
+            # Restore settings
+            ai_video_detector.max_frames = old_max_frames
+            ai_video_detector.model_frame_count = old_model_frames
+
         # Clean up
         import shutil
         shutil.rmtree(temp_dir, ignore_errors=True)
-        
-        return jsonify(results), 200
+
+        # Ensure the results are JSON serializable (convert numpy types etc.)
+        try:
+            serializable_results = _make_json_serializable(results)
+            # validate by attempting to dump to JSON string
+            import json as _json
+            try:
+                _json.dumps(serializable_results)
+                return jsonify(serializable_results), 200
+            except Exception as dump_err:
+                print('JSON dump failed after conversion:', dump_err)
+                # Fallback: send minimal safe JSON error
+                return Response(_json.dumps({'message': 'Error serializing result data'}), status=500, mimetype='application/json')
+        except Exception as e:
+            print('Error serializing results:', e)
+            import traceback
+            traceback.print_exc()
+            import json as _json
+            return Response(_json.dumps({'message': f'Error processing video: {str(e)}'}), status=500, mimetype='application/json')
         
     except Exception as e:
         print(f"Video detection error: {e}")

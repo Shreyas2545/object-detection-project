@@ -411,10 +411,13 @@
     );
     const object = test.primary_object || detectionResults['Final Prediction'] || detectionResults.object || 'Unknown';
 
+    card.classList.add('video-card');
     card.innerHTML = `
-      <div class="relative overflow-hidden bg-slate-100 h-40">
-        ${test.image_data ? `<img src="${test.image_data}" alt="Test image" class="w-full h-full object-cover">` : 
-          '<div class="w-full h-full flex items-center justify-center text-slate-400"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>'}
+      <div class="relative overflow-hidden bg-slate-100 h-40 video-card">
+        ${test.video_data ? `
+          <video src="${test.video_data}" poster="${test.image_data || ''}" class="w-full h-full object-cover" muted playsinline></video>
+          <div class="play-overlay"><button aria-label="Play"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3v18l15-9L5 3z" /></svg></button></div>
+        ` : test.image_data ? `<img src="${test.image_data}" alt="Test image" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-slate-400"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>'}
       </div>
       <div class="p-4">
         <div class="flex justify-between items-start mb-3">
@@ -427,14 +430,10 @@
         <div class="mb-4">
           <p class="text-sm text-slate-600 mb-2">Confidence: <span class="font-bold text-blue-600">${confidence}%</span></p>
         </div>
-        <div class="flex gap-2">
-          <button onclick="showModal('${test._id}')" class="flex-1 px-3 py-2 bg-blue-100 text-blue-700 font-semibold rounded-lg hover:bg-blue-200 transition">
-            Details
-          </button>
+        <div class="card-footer">
+          <button onclick="showModal('${test._id}')" class="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">Details</button>
           <button onclick="deleteTest('${test._id}')" class="px-3 py-2 bg-red-100 text-red-700 font-semibold rounded-lg hover:bg-red-200 transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-            </svg>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         </div>
       </div>
@@ -489,43 +488,57 @@
     resultsHTML += '</div>';
 
     const modalContent = `
-      <div class="space-y-6">
-        ${test.image_data ? `
-          <div>
-            <p class="text-sm font-semibold text-slate-700 mb-2">Analyzed Image</p>
-            <img src="${test.image_data}" alt="Test image" class="w-full rounded-lg max-h-64 object-contain">
-          </div>
-        ` : ''}
-        
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <p class="text-sm font-semibold text-slate-700 mb-2">Test Information</p>
-          <div class="bg-slate-50 p-4 rounded-lg space-y-2">
+          ${test.video_data ? `
+            <video controls class="modal-video" src="${test.video_data}" poster="${test.image_data || ''}"></video>
+          ` : test.image_data ? `
+            <img src="${test.image_data}" class="w-full rounded-lg" />
+          ` : ''}
+        </div>
+
+        <div>
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="font-bold text-slate-900 text-2xl mb-1">${object}</h3>
+              <p class="text-sm text-slate-500">${formattedDate}</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button class="px-4 py-2 bg-blue-600 text-white rounded-lg modal-actions" onclick="(function(){
+                const a=document.createElement('a'); a.href='${test.video_data || test.image_data || '#'}'; a.download='result'; document.body.appendChild(a); a.click(); a.remove();
+              })()">⬇️ Download</button>
+              <button class="px-4 py-2 bg-emerald-600 text-white rounded-lg modal-actions" onclick="(function(){
+                // Re-run AI detection quick action
+                fetch('/api/rerun-ai-detection/${test._id}', { method:'POST', headers:{ 'Content-Type':'application/json','Authorization': 'Bearer ' + localStorage.getItem('authToken') }})
+                .then(r=>r.json()).then(d=>{ showToast('Re-run requested', 'info', 2000); });
+              })()">🔁 Re-run</button>
+            </div>
+          </div>
+
+          <div class="bg-slate-50 p-4 rounded-lg space-y-2 mb-4">
             <p><span class="font-semibold text-slate-900">Primary Object:</span> ${test.primary_object || 'Unknown'}</p>
             <p><span class="font-semibold text-slate-900">Overall Confidence:</span> ${typeof test.confidence === 'number' ? test.confidence.toFixed(2) : test.confidence}%</p>
-            <p><span class="font-semibold text-slate-900">Method:</span> ${test.detection_method === 'webcam' ? '📷 Webcam Capture' : '📤 Image Upload'}</p>
-            ${aiDetection ? `
-              <div class="flex items-center gap-3">
-                <div>
-                  <p><span class="font-semibold text-slate-900">AI Verdict:</span> ${aiDetection.is_ai_generated ? '<span class="font-semibold text-red-600">Likely AI-generated</span>' : '<span class="font-semibold text-emerald-600">Not likely AI-generated</span>'}</p>
-                  <p><span class="font-semibold text-slate-900">AI Confidence:</span> ${typeof aiDetection.confidence === 'number' ? aiDetection.confidence.toFixed(2) + '%' : aiDetection.confidence || 'N/A'}</p>
-                  <p><span class="font-semibold text-slate-900">AI Label:</span> ${aiDetection.label || 'N/A'}</p>
-                </div>
-              </div>
-            ` : ''}
-            <p><span class="font-semibold text-slate-900">Date:</span> ${formattedDate}</p>
+            <p><span class="font-semibold text-slate-900">Method:</span> ${test.detection_method === 'webcam' ? '📷 Webcam Capture' : (test.detection_method === 'video_upload' ? '🎬 Video Upload' : '📤 Image Upload')}</p>
+            ${aiDetection ? `<p><span class="font-semibold text-slate-900">AI Verdict:</span> ${aiDetection.is_ai_generated ? '<span class="font-semibold text-red-600">Likely AI-generated</span>' : '<span class="font-semibold text-emerald-600">Not likely AI-generated</span>'}</p>` : ''}
+          </div>
+
+          <div class="mb-4">
+            <p class="text-sm font-semibold text-slate-700 mb-2">🏆 Top 3 Models</p>
+            ${resultsHTML}
+          </div>
+
+          <div>
+            <button id="modalViewMoreBtn" class="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg" onclick="(function(btn){const el=document.getElementById('modalTechnical'); el.classList.toggle('hidden'); btn.textContent = el.classList.contains('hidden') ? 'View Technical Details' : 'Hide Details';})(this)">View Technical Details</button>
+            <div id="modalTechnical" class="hidden mt-3"><pre id="modalTechnicalPre" class="text-xs bg-slate-50 p-4 rounded max-h-60 overflow-auto"></pre></div>
           </div>
         </div>
-
-        <div>
-          <p class="text-sm font-semibold text-slate-700 mb-2">🏆 Top 3 Models</p>
-          ${resultsHTML}
-        </div>
-
-
       </div>
     `;
 
     document.getElementById('modalContent').innerHTML = modalContent;
+    // Populate technical JSON (hidden by default)
+    const modalPre = document.getElementById('modalTechnicalPre');
+    if (modalPre) modalPre.textContent = JSON.stringify(results, null, 2);
     document.getElementById('detailModal').classList.remove('hidden');
   }
 
