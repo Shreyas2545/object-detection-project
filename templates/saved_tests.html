@@ -536,6 +536,18 @@
     `;
 
     document.getElementById('modalContent').innerHTML = modalContent;
+
+    // Attach View Technical Details listener (avoids inline onclick and id collisions)
+    const modalBtn = document.querySelector('#detailModal .modal-view-more-btn');
+    if (modalBtn) {
+      modalBtn.addEventListener('click', function() {
+        const el = document.getElementById('modalTechnical');
+        if (!el) return;
+        el.classList.toggle('hidden');
+        this.textContent = el.classList.contains('hidden') ? 'View Technical Details' : 'Hide Details';
+      });
+    }
+
     // Populate technical JSON (hidden by default)
     const modalPre = document.getElementById('modalTechnicalPre');
     if (modalPre) modalPre.textContent = JSON.stringify(results, null, 2);
