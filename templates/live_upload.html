@@ -162,6 +162,7 @@
     </div>
   </nav>
 </header>
+
 <main class="flex-grow max-w-6xl mx-auto px-8 py-12 w-full">
 
   <div id="pageHeader" class="text-center mb-12">
@@ -222,11 +223,63 @@
       </div>
     </div>
 
+    <!-- Video Upload Section -->
+    <div id="orDivider2" class="flex items-center justify-center gap-4">
+      <div class="h-px bg-slate-200 flex-grow"></div>
+      <span class="text-slate-400 font-bold text-xs tracking-widest uppercase">Or analyze video</span>
+      <div class="h-px bg-slate-200 flex-grow"></div>
+    </div>
+
+    <button id="useVideoBtn" class="w-full glass-card hover:bg-white rounded-[2rem] py-10 flex flex-col items-center gap-4 group transition-all">
+      <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <span class="font-bold text-slate-700">AI Video Detection</span>
+    </button>
+
+    <!-- Video Container -->
+    <div id="videoContainer" class="hidden">
+      <div class="glass-card rounded-3xl p-12 text-center">
+        <h2 class="text-2xl font-extrabold text-slate-900 mb-6">AI Video Detection</h2>
+        <p class="text-slate-600 mb-8">Upload a video (max 10 seconds) to detect if it's AI-generated</p>
+        
+        <!-- Video Upload Zone -->
+        <div id="videoUploadZone" class="upload-zone rounded-3xl p-16 cursor-pointer">
+          <input type="file" id="videoInput" accept="video/*" class="hidden" />
+          <div class="flex flex-col items-center">
+            <svg class="w-20 h-20 text-purple-600 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            <p class="text-2xl font-bold text-slate-800 mb-3">Drop video here or click to browse</p>
+            <p class="text-slate-500 text-sm">Supported formats: MP4, AVI, MOV, MKV, WEBM (max 10 seconds)</p>
+          </div>
+        </div>
+
+        <!-- Video Preview -->
+        <div id="videoPreviewContainer" class="hidden mt-8">
+          <video id="videoPreview" controls class="mx-auto rounded-2xl max-w-full max-h-96"></video>
+          <button id="analyzeVideoBtn" class="mt-6 px-10 py-4 bg-purple-600 text-white font-bold rounded-2xl hover:bg-purple-700 transition-all">
+            🔍 Analyze Video
+          </button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="videoLoadingState" class="hidden mt-12">
+          <div class="loader mx-auto mb-4"></div>
+          <p class="text-slate-600 font-medium">Analyzing video frames...</p>
+          <p class="text-slate-500 text-sm mt-2">This may take a few moments</p>
+        </div>
+      </div>
+    </div>
+
     <button id="analyzeBtn" class="hidden w-full py-5 rounded-[2rem] bg-slate-900 text-white text-xl font-bold hover:bg-black transition-all shadow-xl shadow-slate-200">
       Run Neural Scan →
     </button>
   </div>
 
+  <!-- Image Analysis Results -->
   <section id="results" class="hidden space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
     <div class="flex justify-between items-end mb-8">
         <div>
@@ -337,6 +390,64 @@
     </div>
 
   </section>
+
+  <!-- Video Analysis Results -->
+  <section id="videoResults" class="hidden space-y-8">
+    <div class="glass-card rounded-3xl p-12">
+      <h2 class="text-3xl font-extrabold text-slate-900 mb-8 flex items-center gap-3">
+        <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+        Video Analysis Results
+      </h2>
+
+      <!-- Video Detection Result -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Detection Card -->
+        <div class="bg-gradient-to-br from-purple-50 to-white rounded-3xl p-8 border-2 border-purple-100">
+          <h3 class="text-lg font-bold text-slate-700 mb-6">AI Detection Result</h3>
+          
+          <div id="videoDetectionResult" class="mb-6">
+            <div id="videoLabel" class="text-4xl font-extrabold mb-3"></div>
+            <div id="videoConfidence" class="text-2xl font-bold text-purple-600 mb-4"></div>
+            <div id="videoVerdict" class="p-6 rounded-2xl text-base font-semibold leading-relaxed"></div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div class="bg-white rounded-xl p-4">
+              <p class="text-slate-500 mb-1">Duration</p>
+              <p id="videoDuration" class="font-bold text-slate-800 text-lg"></p>
+            </div>
+            <div class="bg-white rounded-xl p-4">
+              <p class="text-slate-500 mb-1">Frames Analyzed</p>
+              <p id="videoFrames" class="font-bold text-slate-800 text-lg"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Technical Metrics -->
+        <div class="bg-white rounded-3xl p-8 border-2 border-slate-100">
+          <h3 class="text-lg font-bold text-slate-700 mb-6">Technical Analysis</h3>
+          <div id="videoMetrics" class="space-y-3 text-sm"></div>
+        </div>
+      </div>
+
+      <!-- Explanation -->
+      <div class="bg-slate-50 rounded-2xl p-6 mb-8">
+        <h4 class="font-bold text-slate-800 mb-3">📊 Analysis Details</h4>
+        <p id="videoExplanation" class="text-slate-600 leading-relaxed"></p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex gap-4">
+        <button id="analyzeAnotherVideoBtn" class="px-8 py-4 bg-purple-600 text-white font-bold rounded-2xl hover:bg-purple-700 transition-all">
+          🔄 Analyze Another Video
+        </button>
+        <button id="saveVideoResultBtn" class="px-8 py-4 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 transition-all">
+          💾 Save Result
+        </button>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <footer class="py-12 border-t border-slate-100">
@@ -346,12 +457,14 @@
 </footer>
 
 <script>
-// --- LOGIC REMAINS IDENTICAL TO YOUR VERSION ---
+// --- GLOBAL VARIABLES ---
 let selectedImage = null;
+let selectedVideo = null;
 let chartInstance = null;
 let liveInterval = null;
 let prevScores = {};
 let isLiveMode = false;
+let videoAnalysisResult = null;
 const { jsPDF } = window.jspdf;
 
 // Toast Notification Function
@@ -379,12 +492,14 @@ document.addEventListener('DOMContentLoaded', () => {
     preview: document.getElementById('preview'),
     analyzeBtn: document.getElementById('analyzeBtn'),
     useWebcamBtn: document.getElementById('useWebcamBtn'),
+    useVideoBtn: document.getElementById('useVideoBtn'),
     webcam: document.getElementById('webcam'),
     captureBtn: document.getElementById('captureBtn'),
     liveToggleBtn: document.getElementById('liveToggleBtn'),
     loadingOverlay: document.getElementById('loadingOverlay'),
     uploadSection: document.getElementById('uploadSection'),
     results: document.getElementById('results'),
+    videoResults: document.getElementById('videoResults'),
     resultImage: document.getElementById('resultImage'),
     detectedObject: document.getElementById('detectedObject'),
     detectedConfidence: document.getElementById('detectedConfidence'),
@@ -398,18 +513,28 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadReportBtn: document.getElementById('downloadReportBtn'),
     uploadContainer: document.getElementById('uploadContainer'),
     orDivider: document.getElementById('orDivider'),
+    orDivider2: document.getElementById('orDivider2'),
     webcamContainer: document.getElementById('webcamContainer'),
+    videoContainer: document.getElementById('videoContainer'),
     classificationSummary: document.getElementById('classificationSummary'),
     backBtn: document.getElementById('backBtn'),
     viewMoreBtn: document.getElementById('viewMoreBtn'),
     moreDetails: document.getElementById('moreDetails'),
     modelDetailsList: document.getElementById('modelDetailsList'),
-    top3ModelsList: document.getElementById('top3ModelsList')
+    top3ModelsList: document.getElementById('top3ModelsList'),
+    videoInput: document.getElementById('videoInput'),
+    videoUploadZone: document.getElementById('videoUploadZone'),
+    videoPreview: document.getElementById('videoPreview'),
+    videoPreviewContainer: document.getElementById('videoPreviewContainer'),
+    videoLoadingState: document.getElementById('videoLoadingState'),
+    analyzeVideoBtn: document.getElementById('analyzeVideoBtn'),
+    analyzeAnotherVideoBtn: document.getElementById('analyzeAnotherVideoBtn'),
+    saveVideoResultBtn: document.getElementById('saveVideoResultBtn')
   };
 
+  // --- EVENT LISTENERS ---
   elements.backBtn.addEventListener('click', () => location.reload());
   elements.testAnotherBtn.addEventListener('click', () => location.reload());
-
   elements.saveTestBtn.addEventListener('click', saveCurrentTest);
 
   elements.viewMoreBtn.addEventListener('click', () => {
@@ -417,21 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.viewMoreBtn.textContent = elements.moreDetails.classList.contains('hidden') ? 'View Detailed Logs' : 'Hide Logs';
   });
 
-  function animateCounter(element, startValue, targetValue, duration = 800) {
-    let current = startValue;
-    const diff = targetValue - startValue;
-    const increment = diff / (duration / 16);
-    const timer = setInterval(() => {
-      current += increment;
-      if ((diff > 0 && current >= targetValue) || (diff < 0 && current <= targetValue) || diff === 0) {
-        element.textContent = `${Math.round(targetValue)}%`;
-        clearInterval(timer);
-      } else {
-        element.textContent = `${Math.round(current)}%`;
-      }
-    }, 16);
-  }
-
+  // Image Upload
   elements.fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -447,6 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Webcam
   elements.useWebcamBtn.addEventListener('click', async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -480,22 +592,79 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.results.classList.remove('hidden');
       isLiveMode = true;
       lastFrameTime = 0;
-      frameSendInterval = 1000;  // Send detection every 1000ms
-      sendLiveFrameOptimized();  // Start the loop
+      frameSendInterval = 1000;
+      sendLiveFrameOptimized();
       elements.liveToggleBtn.textContent = 'Terminate Stream';
       elements.liveToggleBtn.classList.replace('bg-emerald-500', 'bg-rose-500');
     }
   });
 
+  // Video Upload
+  elements.useVideoBtn.addEventListener('click', () => {
+    elements.videoContainer.classList.remove('hidden');
+    hideInputScreen();
+  });
+
+  elements.videoUploadZone.addEventListener('click', () => {
+    elements.videoInput.click();
+  });
+
+  elements.videoInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 100 * 1024 * 1024) {
+        showToast('Video file too large. Maximum size: 100MB', 'error', 3000);
+        return;
+      }
+
+      selectedVideo = file;
+      const videoUrl = URL.createObjectURL(file);
+      elements.videoPreview.src = videoUrl;
+      
+      elements.videoUploadZone.classList.add('hidden');
+      elements.videoPreviewContainer.classList.remove('hidden');
+    }
+  });
+
+  elements.analyzeVideoBtn.addEventListener('click', analyzeVideo);
+  elements.analyzeAnotherVideoBtn.addEventListener('click', analyzeAnotherVideo);
+  elements.saveVideoResultBtn.addEventListener('click', saveVideoResult);
+
+  elements.analyzeBtn.addEventListener('click', () => {
+    if (!selectedImage && !elements.preview.src) {
+      alert('Please select or upload an image first');
+      return;
+    }
+    isLiveMode = false;
+    analyzeImage(elements.preview.src);
+  });
+
+  elements.downloadReportBtn.addEventListener('click', downloadReport);
+
+  // --- HELPER FUNCTIONS ---
+  function animateCounter(element, startValue, targetValue, duration = 800) {
+    let current = startValue;
+    const diff = targetValue - startValue;
+    const increment = diff / (duration / 16);
+    const timer = setInterval(() => {
+      current += increment;
+      if ((diff > 0 && current >= targetValue) || (diff < 0 && current <= targetValue) || diff === 0) {
+        element.textContent = `${Math.round(targetValue)}%`;
+        clearInterval(timer);
+      } else {
+        element.textContent = `${Math.round(current)}%`;
+      }
+    }, 16);
+  }
+
   let lastFrameTime = 0;
-  let frameSendInterval = 1000;  // Send detection every 1000ms for performance
+  let frameSendInterval = 1000;
 
   async function sendLiveFrameOptimized() {
     if (!isLiveMode) return;
     
     const now = Date.now();
     
-    // Only send frame for detection analysis every frameSendInterval ms
     if (now - lastFrameTime >= frameSendInterval) {
       lastFrameTime = now;
       
@@ -505,14 +674,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       ctx.drawImage(elements.webcam, 0, 0);
       
-      // Use higher JPEG quality but canvas.toBlob is faster than toDataURL
       canvas.toBlob(async (blob) => {
         if (!blob || !isLiveMode) return;
         
         const formData = new FormData();
         formData.append('file', blob, 'frame.jpg');
         
-        // Add JWT token
         const token = localStorage.getItem('authToken');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
         
@@ -527,7 +694,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const data = await res.json();
           if (data.error) throw new Error(data.error);
           
-          // Convert blob to persistent base64 data URL for display (fixes broken saved webcam images)
           const reader = new FileReader();
           reader.onload = () => {
             const frameData = reader.result;
@@ -537,30 +703,18 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) { 
           console.error('Live Detection Error:', err);
         }
-      }, 'image/jpeg', 0.85);  // 85% quality for faster processing
+      }, 'image/jpeg', 0.85);
     }
     
-    // Continue animation loop for smooth webcam display
     liveInterval = requestAnimationFrame(sendLiveFrameOptimized);
   }
 
-  elements.analyzeBtn.addEventListener('click', () => {
-    if (!selectedImage && !elements.preview.src) {
-      alert('Please select or upload an image first');
-      return;
-    }
-    isLiveMode = false;
-    analyzeImage(elements.preview.src);
-  });
-
   async function analyzeImage(imageDataUrl) {
-    // Validate inputs
     if (!selectedImage && (!imageDataUrl || imageDataUrl === 'undefined')) {
       alert('Please select or upload an image first');
       return;
     }
     
-    // Check authentication
     const token = localStorage.getItem('authToken');
     if (!token) {
       alert('Please login to analyze images');
@@ -571,7 +725,6 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.loadingOverlay.classList.remove('hidden');
     const formData = new FormData();
     
-    // Use selected file if available, otherwise convert data URL
     if (selectedImage) {
       formData.append('file', selectedImage);
     } else if (imageDataUrl && imageDataUrl !== 'undefined') {
@@ -613,6 +766,145 @@ document.addEventListener('DOMContentLoaded', () => {
     finally { elements.loadingOverlay.classList.add('hidden'); }
   }
 
+  async function analyzeVideo() {
+    if (!selectedVideo) return;
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      showToast('Please login to analyze videos', 'error', 3000);
+      window.location.href = '/login';
+      return;
+    }
+
+    elements.videoPreviewContainer.classList.add('hidden');
+    elements.videoLoadingState.classList.remove('hidden');
+
+    const formData = new FormData();
+    formData.append('file', selectedVideo);
+
+    try {
+      const response = await fetch('/api/detect-video', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        videoAnalysisResult = data;
+        displayVideoResults(data);
+        elements.uploadSection.classList.add('hidden');
+        elements.videoContainer.classList.add('hidden');
+        elements.videoLoadingState.classList.add('hidden');
+        elements.videoResults.classList.remove('hidden');
+      } else {
+        showToast(data.message || 'Error analyzing video', 'error', 3000);
+        elements.videoLoadingState.classList.add('hidden');
+        elements.videoPreviewContainer.classList.remove('hidden');
+      }
+    } catch (error) {
+      console.error('Video analysis error:', error);
+      showToast('Error analyzing video', 'error', 3000);
+      elements.videoLoadingState.classList.add('hidden');
+      elements.videoPreviewContainer.classList.remove('hidden');
+    }
+  }
+
+  function displayVideoResults(data) {
+    document.getElementById('videoLabel').textContent = data.label || 'Unknown';
+    document.getElementById('videoConfidence').textContent = `${data.confidence.toFixed(1)}% Confidence`;
+    
+    const verdictEl = document.getElementById('videoVerdict');
+    verdictEl.textContent = data.verdict || 'Analysis complete';
+    
+    if (data.is_ai_generated) {
+      verdictEl.className = 'p-6 rounded-2xl text-base font-semibold leading-relaxed bg-orange-50 text-orange-800 border-2 border-orange-200';
+    } else {
+      verdictEl.className = 'p-6 rounded-2xl text-base font-semibold leading-relaxed bg-green-50 text-green-800 border-2 border-green-200';
+    }
+
+    document.getElementById('videoDuration').textContent = `${data.duration.toFixed(1)}s`;
+    document.getElementById('videoFrames').textContent = data.frames_analyzed || 'N/A';
+
+    const metricsEl = document.getElementById('videoMetrics');
+    metricsEl.innerHTML = '';
+    if (data.metrics) {
+      for (const [key, value] of Object.entries(data.metrics)) {
+        const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const displayValue = typeof value === 'number' ? value.toFixed(3) : value;
+        metricsEl.innerHTML += `
+          <div class="flex justify-between border-b border-slate-200 pb-2">
+            <span class="text-slate-600">${displayKey}:</span>
+            <span class="font-bold text-slate-800">${displayValue}</span>
+          </div>
+        `;
+      }
+    }
+
+    document.getElementById('videoExplanation').textContent = data.explanation || 'No additional details available';
+  }
+
+  function analyzeAnotherVideo() {
+    selectedVideo = null;
+    videoAnalysisResult = null;
+    elements.videoPreview.src = '';
+    elements.videoInput.value = '';
+    
+    elements.videoResults.classList.add('hidden');
+    elements.uploadSection.classList.remove('hidden');
+    elements.videoContainer.classList.remove('hidden');
+    elements.videoUploadZone.classList.remove('hidden');
+    elements.videoPreviewContainer.classList.add('hidden');
+  }
+
+  async function saveVideoResult() {
+    if (!videoAnalysisResult) return;
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      showToast('Please login to save results', 'error', 3000);
+      return;
+    }
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const videoData = e.target.result;
+
+        const saveData = {
+          video_data: videoData,
+          results: videoAnalysisResult,
+          method: 'video_upload',
+          type: 'video_detection'
+        };
+
+        const response = await fetch('/api/save-test-result', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(saveData)
+        });
+
+        if (response.ok) {
+          showToast('Video result saved successfully!', 'success', 3000);
+        } else {
+          const data = await response.json();
+          showToast(data.message || 'Error saving result', 'error', 3000);
+        }
+      };
+      
+      reader.readAsDataURL(selectedVideo);
+    } catch (error) {
+      console.error('Save error:', error);
+      showToast('Error saving result', 'error', 3000);
+    }
+  }
+
   async function saveCurrentTest() {
     const token = localStorage.getItem('authToken');
     if (!token) {
@@ -651,7 +943,6 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.saveTestBtn.textContent = '✓ Saved!';
       showToast('Test result saved successfully!', 'success', 2000);
       
-      // Reset button after 2 seconds
       setTimeout(() => {
         elements.saveTestBtn.disabled = false;
         elements.saveTestBtn.textContent = '💾 Save Test';
@@ -665,7 +956,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateResults(data, imageSrc) {
-    // Map backend response to frontend expected fields
     const finalPrediction = data["Final Prediction"] || data.object || "Unknown";
     const bestModel = data["Best Model"] || data.best_model || "Unknown";
     const confidence = data["Confidence (%)"] || data.confidence || 0;
@@ -690,10 +980,9 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => animateCounter(elements.detectedConfidence, 0, confidence), 300);
     }
 
-    // Model Scores List (all models)
     elements.modelScoreList.innerHTML = '';
     Object.entries(allScores).forEach(([model, score]) => {
-      if (score > 0 || allPredictions[model] !== "N/A") {  // Only show models that didn't fail
+      if (score > 0 || allPredictions[model] !== "N/A") {
         const div = document.createElement('div');
         div.className = 'flex justify-between items-center p-4 rounded-2xl bg-slate-50 border border-slate-100';
         const scoreValue = typeof score === 'number' ? score.toFixed(1) : score;
@@ -707,7 +996,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Top 3 Predictors (from backend calculation)
     elements.top3ModelsList.innerHTML = '';
     if (top3Models && Array.isArray(top3Models) && top3Models.length > 0) {
       top3Models.forEach((item, index) => {
@@ -726,7 +1014,6 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.top3ModelsList.appendChild(div);
       });
     } else {
-      // Fallback: generate top 3 from all scores if not provided by backend
       const top3 = Object.entries(allScores).sort((a, b) => b[1] - a[1]).slice(0, 3);
       top3.forEach((item, index) => {
         const [model, score] = item;
@@ -746,10 +1033,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Model Details Table
     elements.modelDetailsList.innerHTML = '';
     Object.entries(allScores).forEach(([model, score]) => {
-      if (score > 0 || allPredictions[model] !== "N/A") {  // Only show models that didn't fail
+      if (score > 0 || allPredictions[model] !== "N/A") {
         const pred = allPredictions[model] || finalPrediction;
         const scoreValue = typeof score === 'number' ? score.toFixed(1) : score;
         const tr = document.createElement('tr');
@@ -759,7 +1045,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Chart (showing only successful models)
     const labels = Object.keys(allScores).filter(model => allScores[model] > 0 || allPredictions[model] !== "N/A");
     const values = labels.map(label => {
       const val = allScores[label];
@@ -789,7 +1074,6 @@ document.addEventListener('DOMContentLoaded', () => {
       <li class="flex items-center gap-2">● Neural Nodes: ${Object.keys(allScores).filter(m => allScores[m] > 0 || allPredictions[m] !== "N/A").length} Active</li>
     `;
 
-    // ==================== AI IMAGE DETECTION ====================
     const aiDetectionMinimal = document.getElementById('aiDetectionMinimal');
     const aiImageLabel = document.getElementById('aiImageLabel');
     const aiScoreMinimal = document.getElementById('aiScoreMinimal');
@@ -799,17 +1083,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const aiData = data["AI Detection"];
       console.log('AI Detection Data:', aiData);
       
-      // Show the minimal display
       aiDetectionMinimal.style.display = 'flex';
       
-      // Set label
       if (aiData.is_ai_generated) {
         aiImageLabel.textContent = 'Likely to be AI-generated';
       } else {
         aiImageLabel.textContent = 'Not likely to be AI-generated';
       }
       
-      // Set score
       const aiConfidence = aiData.confidence;
       if (isLiveMode) {
         aiScoreMinimal.textContent = `${aiConfidence.toFixed(1)}%`;
@@ -818,23 +1099,18 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => animateCounter(aiScoreMinimal, 0, aiConfidence), 800);
       }
       
-      // Simple color logic based on AI or Real
       let boxColor;
       
       if (aiData.is_ai_generated) {
-        // Red for AI - shade based on confidence (0-100%)
-        // Use power function to make color change more visible
-        const opacity = Math.pow(aiConfidence / 100, 0.6);  // More dramatic color change
-        boxColor = `rgba(239, 68, 68, ${opacity})`;  // Red with opacity
+        const opacity = Math.pow(aiConfidence / 100, 0.6);
+        boxColor = `rgba(239, 68, 68, ${opacity})`;
         aiDetectionMinimal.className = 'mt-6 rounded-2xl border-2 border-slate-200 flex items-center gap-3 px-5 py-3';
       } else {
-        // Green for Real Photo - shade based on confidence directly
-        const opacity = Math.pow(aiConfidence / 100, 0.6);  // More dramatic color change
-        boxColor = `rgba(34, 197, 94, ${opacity})`;  // Green with opacity
+        const opacity = Math.pow(aiConfidence / 100, 0.6);
+        boxColor = `rgba(34, 197, 94, ${opacity})`;
         aiDetectionMinimal.className = 'mt-6 rounded-2xl border-2 border-slate-200 flex items-center gap-3 px-5 py-3';
       }
       
-      // Apply color only to the small box
       aiProgressBox.style.backgroundColor = boxColor;
       aiProgressBox.style.border = 'none';
     } else {
@@ -844,7 +1120,8 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('resultData', JSON.stringify(data));
     localStorage.setItem('resultImage', imageSrc);
   }
- downloadReportBtn.addEventListener('click', async () => {
+
+  async function downloadReport() {
     const data = JSON.parse(localStorage.getItem('resultData'));
     const imageSrc = localStorage.getItem('resultImage');
     const chartImg = document.getElementById('chart').toDataURL('image/png');
@@ -941,14 +1218,15 @@ document.addEventListener('DOMContentLoaded', () => {
     pdf.text('Page 2 of 2', 105, 285, { align: 'center' });
 
     pdf.save('Analysis_report.pdf');
-  });
-
+  }
 
   function hideInputScreen() {
     elements.backBtn.classList.remove('hidden');
     elements.uploadContainer.classList.add('hidden');
     elements.orDivider.classList.add('hidden');
+    elements.orDivider2.classList.add('hidden');
     elements.useWebcamBtn.classList.add('hidden');
+    elements.useVideoBtn.classList.add('hidden');
   }
 
   function dataURLToFile(dataurl, filename) {
@@ -968,7 +1246,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
-    // Setup profile dropdown
     const profileBtn = document.getElementById('profileBtn');
     const dropdownMenu = document.getElementById('dropdownMenu');
     const profileEmail = document.getElementById('profileEmail');
@@ -979,14 +1256,12 @@ document.addEventListener('DOMContentLoaded', () => {
       profileEmail.textContent = user.email.split('@')[0];
     }
     
-    // Toggle dropdown
     if (profileBtn && dropdownMenu) {
       profileBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         dropdownMenu.classList.toggle('hidden');
       });
       
-      // Close dropdown when clicking outside
       document.addEventListener('click', (e) => {
         if (!profileBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
           dropdownMenu.classList.add('hidden');
@@ -994,7 +1269,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
     
-    // Logout
     if (logoutBtnDropdown) {
       logoutBtnDropdown.addEventListener('click', (e) => {
         e.preventDefault();
