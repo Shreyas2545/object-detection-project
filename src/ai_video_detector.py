@@ -433,7 +433,12 @@ class AIVideoDetector:
             # === ANALYSIS 4: Temporal ML Model (if available) ===
             temporal_ml_prob = None
             try:
-                from temporal_model import TemporalModel
+                # Try both import styles to support running from project root or as package
+                try:
+                    from temporal_model import TemporalModel
+                except Exception:
+                    from src.temporal_model import TemporalModel
+
                 temporal_model_ckpt = os.path.join('checkpoints', 'temporal_model.joblib')
                 if os.path.exists(temporal_model_ckpt):
                     t0 = time.perf_counter()
@@ -442,7 +447,9 @@ class AIVideoDetector:
                     temporal_ml_prob = tm.predict_proba(video_path)
                     t1 = time.perf_counter()
                     print(f"   Temporal ML inference: {(t1 - t0):.3f}s (AI_prob: {temporal_ml_prob:.3f})")
-            except Exception:
+            except Exception as e:
+                # Log for debugging so failures are visible
+                print(f"⚠️ Temporal model could not be loaded or executed: {e}")
                 temporal_ml_prob = None
             
             # === COMBINE RESULTS ===
