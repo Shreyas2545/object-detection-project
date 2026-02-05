@@ -430,6 +430,16 @@
         Video Analysis Results
       </h2>
 
+      <!-- Video Preview Section -->
+      <div class="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2">
+          <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+            <span class="w-2 h-2 bg-purple-600 rounded-full"></span> Input Video Preview
+          </h3>
+          <video id="resultVideo" controls class="rounded-3xl w-full object-cover shadow-lg border-4 border-white" style="max-height: 400px; background-color: #000;"></video>
+        </div>
+      </div>
+
       <!-- Video Detection Result -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <!-- Detection Card (center column on large screens) -->
@@ -577,7 +587,8 @@ document.addEventListener('DOMContentLoaded', () => {
     videoFastMode: document.getElementById('videoFastMode'),
     analyzeVideoBtn: document.getElementById('analyzeVideoBtn'),
     analyzeAnotherVideoBtn: document.getElementById('analyzeAnotherVideoBtn'),
-    saveVideoResultBtn: document.getElementById('saveVideoResultBtn')
+    saveVideoResultBtn: document.getElementById('saveVideoResultBtn'),
+    resultVideo: document.getElementById('resultVideo')
   };
 
   // --- EVENT LISTENERS ---
@@ -945,6 +956,12 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
   function displayVideoResults(data) {
+    // Display the uploaded video in the results
+    if (selectedVideo) {
+      const videoUrl = URL.createObjectURL(selectedVideo);
+      elements.resultVideo.src = videoUrl;
+    }
+
     document.getElementById('videoLabel').textContent = data.label || 'Unknown';
     document.getElementById('videoConfidence').textContent = `${data.confidence.toFixed(1)}% Confidence`;
     

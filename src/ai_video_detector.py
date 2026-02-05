@@ -16,7 +16,7 @@ class AIVideoDetector:
     Analyzes temporal inconsistencies and frame artifacts
     """
     
-    def __init__(self, model_path=None, max_duration=10, max_frames=30, model_frame_count=15, analysis_resize=(320,240), hotspot_threshold=0.92, hotspot_boost=30, model_min_ai_ratio=0.4):
+    def __init__(self, model_path=None, max_duration=10, max_frames=30, model_frame_count=15, analysis_resize=(320,240), hotspot_threshold=0.92, hotspot_boost=30, model_min_ai_ratio=0.25):
         """
         Initialize AI Video Detector
         
@@ -40,6 +40,9 @@ class AIVideoDetector:
         self.hotspot_boost = float(os.getenv('AI_VIDEO_HOTSPOT_BOOST', hotspot_boost))
         # Model-level minimum AI ratio to consider model evidence
         self.model_min_ai_ratio = float(os.getenv('AI_VIDEO_MODEL_MIN_RATIO', model_min_ai_ratio))
+        # Temporal model hotspot config (if temporal model strongly predicts AI, boost final score)
+        self.temporal_hotspot_threshold = float(os.getenv('AI_VIDEO_TEMPORAL_HOTSPOT_THRESHOLD', 0.85))
+        self.temporal_hotspot_boost = float(os.getenv('AI_VIDEO_TEMPORAL_HOTSPOT_BOOST', 40.0))
 
         resize_env = os.getenv('AI_VIDEO_ANALYSIS_RESIZE', None)
         if resize_env:
@@ -65,17 +68,25 @@ class AIVideoDetector:
         
         print(f"🛠️ Video detector config: max_frames={self.max_frames}, model_frame_count={self.model_frame_count}, analysis_resize={self.analysis_resize}, device={self.device}")
 
-        # Try to load custom model
+# Try to load supplied model, else prefer fine-tuned checkpoint if present
         if model_path and os.path.exists(model_path):
             self._load_model(model_path)
         else:
-            # Use image detector as fallback
+            # Prefer fine-tuned checkpoint if available
+            fine_ckpt = os.path.join('checkpoints', 'ai_detector_finetuned.pth')
             local_ckpt = os.path.join('checkpoints', 'ai_detector.pth')
-            if os.path.exists(local_ckpt):
+            ckpt_to_use = None
+            if os.path.exists(fine_ckpt):
+                ckpt_to_use = fine_ckpt
+            elif os.path.exists(local_ckpt):
+                ckpt_to_use = local_ckpt
+            if ckpt_to_use:
                 try:
-                    self._load_model(local_ckpt)
+                    self._load_model(ckpt_to_use)
                 except Exception:
                     print("⚠️ Using frame-by-frame analysis (no model loaded)")
+            else:
+                print("⚠️ No image model checkpoint found; running heuristic-only detector")
     
     def _load_model(self, model_path):
         """Load AI detection model"""
@@ -86,7 +97,13 @@ class AIVideoDetector:
             model.fc = nn.Linear(num_ftrs, 2)
             
             state = torch.load(model_path, map_location=self.device)
-            if isinstance(state, dict):
+            # Support both plain state_dict and saved checkpoint dicts
+            if isinstance(state, dict) and 'state_dict' in state:
+                model.load_state_dict(state['state_dict'])
+                # If temperature saved, store it
+                self.model_temperature = float(state.get('temperature', 1.0))
+            elif isinstance(state, dict):
+                # Old style: assume state_dict
                 model.load_state_dict(state)
             else:
                 model = state
