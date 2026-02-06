@@ -1154,7 +1154,7 @@ def api_detect_video(current_user):
             # Parse optional overrides from form-data
             max_frames_override = request.form.get('max_frames')
             model_frames_override = request.form.get('model_frames')
-            fast_hint = request.form.get('fast')  # 'true' or '1' indicates fast mode
+            fast_hint = None
 
             if max_frames_override:
                 try:
@@ -1168,10 +1168,10 @@ def api_detect_video(current_user):
                 except Exception:
                     pass
 
-            if fast_hint and str(fast_hint).lower() in ('1', 'true', 'yes'):
-                # Conservative fast-mode defaults that still try to preserve accuracy
-                ai_video_detector.max_frames = min(10, ai_video_detector.max_frames)
-                ai_video_detector.model_frame_count = min(6, ai_video_detector.model_frame_count)
+            # Enforce fast-mode defaults for all video uploads (server-side default)
+            # Conservative defaults keep responsiveness while preserving accuracy
+            ai_video_detector.max_frames = min(10, ai_video_detector.max_frames)
+            ai_video_detector.model_frame_count = min(6, ai_video_detector.model_frame_count)
 
             # Run video detection (with timing)
             import time as _time

@@ -272,8 +272,7 @@
             <p class="text-slate-500 text-sm">Supported formats: MP4, AVI, MOV, MKV, WEBM (max 10 seconds)</p>
 
             <div class="mt-6 text-sm text-slate-600 flex items-center gap-3">
-              <input id="videoFastMode" type="checkbox" class="h-4 w-4" />
-              <label for="videoFastMode" class="select-none">Fast Mode — reduced frames for faster response (conservative)</label>
+              <span class="select-none text-slate-500">(Server uses optimized processing by default)</span>
             </div>
           </div>
         </div>
@@ -432,7 +431,7 @@
 
       <!-- Video Preview Section -->
       <div class="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-2">
+        <div class="lg:col-span-3 lg:max-w-2xl lg:mx-auto w-full">
           <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
             <span class="w-2 h-2 bg-purple-600 rounded-full"></span> Input Video Preview
           </h3>
@@ -584,7 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
     videoProgressBar: document.getElementById('videoProgressBar'),
     videoProgressText: document.getElementById('videoProgressText'),
     videoCancelBtn: document.getElementById('videoCancelBtn'),
-    videoFastMode: document.getElementById('videoFastMode'),
+    // videoFastMode removed: server applies optimized defaults automatically
     analyzeVideoBtn: document.getElementById('analyzeVideoBtn'),
     analyzeAnotherVideoBtn: document.getElementById('analyzeAnotherVideoBtn'),
     saveVideoResultBtn: document.getElementById('saveVideoResultBtn'),
@@ -865,10 +864,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const formData = new FormData();
     formData.append('file', selectedVideo);
 
-    // Append fast-mode hint if user selected it (conservative, non-destructive)
-    if (elements.videoFastMode && elements.videoFastMode.checked) {
-        formData.append('fast', 'true');
-    }
+    // Server applies optimized (fast) processing by default; no client toggle needed
 
     const xhr = new XMLHttpRequest();
     currentVideoXhr = xhr;
