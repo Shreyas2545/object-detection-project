@@ -505,6 +505,8 @@
       // AI detection payload (if available)
       const aiDetection = results['AI Detection'] || null;
 
+      const object = test.primary_object || results['Final Prediction'] || results.object || 'Unknown';
+
       let resultsHTML = '<div class="space-y-3">';
 
       // Get top 3 models from backend response
