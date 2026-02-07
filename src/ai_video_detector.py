@@ -37,12 +37,13 @@ class AIVideoDetector:
         self.model_frame_count = int(os.getenv('AI_VIDEO_MODEL_FRAMES', model_frame_count))
         # Hotspot configuration
         self.hotspot_threshold = float(os.getenv('AI_VIDEO_HOTSPOT_THRESHOLD', hotspot_threshold))
+        # Tighten hotspot to require higher per-frame confidence to count as a hotspot
         self.hotspot_boost = float(os.getenv('AI_VIDEO_HOTSPOT_BOOST', hotspot_boost))
-        # Model-level minimum AI ratio to consider model evidence
-        self.model_min_ai_ratio = float(os.getenv('AI_VIDEO_MODEL_MIN_RATIO', model_min_ai_ratio))
+        # Model-level minimum AI ratio to consider model evidence (increase for precision)
+        self.model_min_ai_ratio = float(os.getenv('AI_VIDEO_MODEL_MIN_RATIO', 0.40))
         # Temporal model hotspot config (if temporal model strongly predicts AI, boost final score)
         self.temporal_hotspot_threshold = float(os.getenv('AI_VIDEO_TEMPORAL_HOTSPOT_THRESHOLD', 0.85))
-        self.temporal_hotspot_boost = float(os.getenv('AI_VIDEO_TEMPORAL_HOTSPOT_BOOST', 40.0))
+        self.temporal_hotspot_boost = float(os.getenv('AI_VIDEO_TEMPORAL_HOTSPOT_BOOST', 50.0))
 
         resize_env = os.getenv('AI_VIDEO_ANALYSIS_RESIZE', None)
         if resize_env:
@@ -354,17 +355,15 @@ class AIVideoDetector:
                     outputs = self.model(batch)
 
             probs = torch.softmax(outputs, dim=1).cpu().numpy()
-            preds = np.argmax(probs, axis=1)
 
-            # Assuming 0 = Real, 1 = AI
-            ai_preds = [1.0 if p == 1 else 0.0 for p in preds]
-            ai_ratio = float(np.mean(ai_preds))
-            # Confidence now reflects fraction of frames predicted as AI (0-100)
+            # Use the mean AI-class probability across sampled frames (smoother, more precise)
+            frame_probs = [float(p[1]) for p in probs]
+            ai_ratio = float(np.mean(frame_probs))  # average probability for AI class (0..1)
             confidence = float(ai_ratio * 100.0)
             is_ai = ai_ratio > 0.5
 
-            # Per-frame AI probabilities (useful to detect high-confidence AI "hotspots")
-            frame_probs = [float(p[1]) for p in probs]
+            # Preds (for diagnostic purposes) still provided
+            preds = np.argmax(probs, axis=1)
 
             return {
                 'is_ai': is_ai,
