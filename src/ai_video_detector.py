@@ -500,6 +500,32 @@ class AIVideoDetector:
                     'score_variance': artifact_result['score_variance']
                 })
             
+            # Prepare "Top 3 Models" equivalent for UI display
+            # We map our 3 analysis components to this structure so the frontend can display them nicely
+            top_3_models = []
+            
+            # 1. Temporal Analysis
+            if temporal_result:
+                temp_conf = temporal_result['score']
+                temp_label = "AI-Generated" if temp_conf > 50 else "Real Video"
+                top_3_models.append({
+                    "model": "Temporal Analysis",
+                    "confidence": float(temp_conf),
+                    "prediction": temp_label
+                })
+
+            # 2. Artifact Analysis
+            if artifact_result:
+                art_conf = artifact_result['score']
+                art_label = "AI-Generated" if art_conf > 50 else "Real Video"
+                top_3_models.append({
+                    "model": "Frame Artifacts",
+                    "confidence": float(art_conf),
+                    "prediction": art_label
+                })
+
+            # 3. Deep Learning Model
+            
             # Model prediction weight: 35%
             if model_result:
                 ai_ratio = float(model_result.get('ai_frame_ratio', 0.0))
@@ -524,9 +550,17 @@ class AIVideoDetector:
                     # Strong per-frame evidence — add configurable boost
                     final_score += self.hotspot_boost
                     explanations.append(f"High AI-probability frame detected ({max_frame_ai_prob*100:.1f}%)")
-                    # Include config in metrics for traceability
+                # Include config in metrics for traceability
                     results['metrics']['hotspot_threshold'] = float(self.hotspot_threshold)
                     results['metrics']['hotspot_boost'] = float(self.hotspot_boost)
+
+                # Add to Top 3
+                dl_label = "AI-Generated" if ai_ratio > 0.5 else "Real Video"
+                top_3_models.append({
+                    "model": "Deep Learning Model",
+                    "confidence": float(model_score if ai_ratio >= self.model_min_ai_ratio else (100 - model_score)),
+                    "prediction": dl_label
+                })
             
             # Determine final result
             is_ai = final_score >= 50
@@ -537,6 +571,11 @@ class AIVideoDetector:
             results['label'] = 'AI Generated Video' if is_ai else 'Real Video'
             results['explanation'] = ' | '.join(explanations) if explanations else 'Analysis complete'
             
+            # Include synthesized Top 3 Models for frontend compatibility
+            # Sort by confidence
+            top_3_models.sort(key=lambda x: x['confidence'], reverse=True)
+            results['Top 3 Models'] = top_3_models
+
             # Generate verdict
             if is_ai:
                 if confidence > 80:

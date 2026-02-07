@@ -539,34 +539,87 @@
       resultsHTML += '</div>';
 
       const modalContent = `
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
+      <div class="flex flex-col md:flex-row h-full">
+        <!-- Left: Media Preview -->
+        <div class="w-full md:w-5/12 bg-slate-100 flex items-center justify-center p-4 min-h-[300px] md:min-h-0 relative group">
           ${test.video_data ? `
-            <video controls class="modal-video" src="${test.video_data}" poster="${test.image_data || ''}"></video>
+            <video controls class="w-full max-h-[70vh] rounded-xl shadow-lg" src="${test.video_data}" poster="${test.image_data || ''}"></video>
+            <div class="absolute top-4 left-4">
+               <span class="px-3 py-1 bg-black/50 backdrop-blur text-white text-xs font-bold rounded-full border border-white/20">VIDEO</span>
+            </div>
           ` : test.image_data ? `
-            <img src="${test.image_data}" class="w-full rounded-lg" />
-          ` : ''}
+            <img src="${test.image_data}" class="w-full max-h-[70vh] object-contain rounded-xl shadow-lg" />
+            <div class="absolute top-4 left-4">
+               <span class="px-3 py-1 bg-black/50 backdrop-blur text-white text-xs font-bold rounded-full border border-white/20">IMAGE</span>
+            </div>
+          ` : `
+            <div class="text-slate-400 flex flex-col items-center">
+                <svg class="w-16 h-16 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>No Media Available</span>
+            </div>
+          `}
         </div>
 
-        <div>
-          <div class="flex justify-between items-start mb-4">
-            <div>
-              <h3 class="font-bold text-slate-900 text-2xl mb-1">${object}</h3>
-              <p class="text-sm text-slate-500">${formattedDate}</p>
+        <!-- Right: Details Scrollable -->
+        <div class="w-full md:w-7/12 p-6 md:p-8 overflow-y-auto max-h-[80vh]">
+          
+          <!-- Header -->
+          <div class="mb-6 pb-6 border-b border-slate-100">
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                   <span class="text-sm font-bold text-blue-600 tracking-wider uppercase mb-1 block">Primary Prediction</span>
+                   <h2 class="text-3xl font-extrabold text-slate-900">${object}</h2>
+                </div>
+                ${aiDetection ? `
+                    <div class="flex flex-col items-end">
+                       <span class="px-4 py-1.5 ${aiDetection.is_ai_generated ? 'bg-red-100 text-red-700 border-red-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200'} rounded-full text-sm font-bold border">
+                         ${aiDetection.is_ai_generated ? '⚠️ AI PROBABLE' : '✅ REAL'}
+                       </span>
+                    </div>
+                ` : ''}
+            </div>
+            <p class="text-slate-400 text-sm flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> 
+                ${formattedDate}
+            </p>
+          </div>
+
+          <!-- Confidence Meter -->
+          <div class="mb-8">
+             <div class="flex justify-between mb-2">
+                <span class="text-sm font-semibold text-slate-600">Overall Confidence</span>
+                <span class="text-sm font-bold text-slate-900">${typeof test.confidence === 'number' ? test.confidence.toFixed(1) : test.confidence}%</span>
+             </div>
+             <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-1000" style="width: ${test.confidence}%"></div>
+             </div>
+          </div>
+
+          <!-- Top Models Grid -->
+          <div class="mb-8">
+            <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="bg-blue-100 text-blue-600 p-1 rounded">🏆</span> Top Analysis Models
+            </h3>
+            
+            <div class="space-y-3">
+              ${top3.length > 0 ? resultsHTML : '<p class="text-slate-400 text-sm italic">No detailed model analysis available.</p>'}
             </div>
           </div>
 
-          <div class="bg-slate-50 p-4 rounded-lg space-y-2 mb-4">
-            <p><span class="font-semibold text-slate-900">Primary Object:</span> ${test.primary_object || 'Unknown'}</p>
-            <p><span class="font-semibold text-slate-900">Overall Confidence:</span> ${typeof test.confidence === 'number' ? test.confidence.toFixed(2) : test.confidence}%</p>
-            <p><span class="font-semibold text-slate-900">Method:</span> ${test.detection_method === 'webcam' ? '📷 Webcam Capture' : (test.detection_method === 'video_upload' ? '🎬 Video Upload' : '📤 Image Upload')}</p>
-            ${aiDetection ? `<p><span class="font-semibold text-slate-900">AI Verdict:</span> ${aiDetection.is_ai_generated ? '<span class="font-semibold text-red-600">Likely AI-generated</span>' : '<span class="font-semibold text-emerald-600">Not likely AI-generated</span>'}</p>` : ''}
+          <!-- Metadata -->
+          <div class="grid grid-cols-2 gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-200/60">
+             <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Detection Method</span>
+                <p class="font-semibold text-slate-700 mt-1 capitalize">
+                    ${test.detection_method === 'webcam' ? '📸 Live Webcam' : (test.detection_method === 'video_upload' ? '🎬 Video Analysis' : '📤 File Upload')}
+                </p>
+             </div>
+             <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Type</span>
+                <p class="font-semibold text-slate-700 mt-1 capitalize">${test.type || (test.video_data ? 'Video' : 'Image')}</p>
+             </div>
           </div>
 
-          <div class="mb-4">
-            <p class="text-sm font-semibold text-slate-700 mb-2">🏆 Top 3 Models</p>
-            ${resultsHTML}
-          </div>
         </div>
       </div>
     `;
