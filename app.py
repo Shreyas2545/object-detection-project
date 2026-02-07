@@ -788,6 +788,33 @@ def save_test_result(current_user):
             # Optionally keep a thumbnail in image_data (client may provide it)
             print('[SAVE] Video data included in payload')
 
+        # If object is 'Unknown' and it's a video, rename to 'saved_video-N'
+        if primary_object == 'Unknown' and video_data:
+            import re
+            
+            # Find all saved tests for this user that look like saved_video-N
+            # We use a regex query if possible, or consistent python-side filtering
+            cursor = test_results_collection.find({
+                'user_id': current_user,
+                'primary_object': {'$regex': '^saved_video-\\d+$'}
+            }, {'primary_object': 1})
+            
+            max_n = 0
+            for doc in cursor:
+                obj_name = doc.get('primary_object', '')
+                try:
+                    # Extract number
+                    match = re.search(r'saved_video-(\d+)', obj_name)
+                    if match:
+                        n = int(match.group(1))
+                        if n > max_n:
+                            max_n = n
+                except:
+                    pass
+            
+            # Assign next number
+            primary_object = f'saved_video-{max_n + 1}'
+
         test_result = {
             'user_id': current_user,
             'image_data': image_data,  # Base64 encoded image with proper prefix (thumbnail if video)
