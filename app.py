@@ -36,6 +36,9 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-this-in-production')
 CORS(app)
 
+# ==================== OAUTH SETUP (REMOVED) ====================
+# OAuth functionality has been removed as per request
+
 # Utility: make Python objects JSON serializable (handles numpy types)
 import numpy as _np
 
@@ -547,6 +550,8 @@ def saved_tests():
     return render_template('saved_tests.html')
 
 # ==================== AUTHENTICATION ROUTES ====================
+
+# Google Login routes removed
 
 @app.route('/api/signup', methods=['POST'])
 def api_signup():
