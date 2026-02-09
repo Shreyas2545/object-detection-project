@@ -1375,34 +1375,50 @@
 
           aiDetectionMinimal.style.display = 'flex';
 
-          if (aiData.is_ai_generated) {
-            aiImageLabel.textContent = 'Likely to be AI-generated';
-          } else {
-            aiImageLabel.textContent = 'Not likely to be AI-generated';
-          }
-
+          // Determine label and confidence
           const aiConfidence = aiData.confidence;
+          const isAI = aiData.is_ai_generated;
+
+          if (isAI) {
+            aiImageLabel.textContent = 'Likely to be AI-Generated';
+            aiDetectionMinimal.className = 'mt-6 rounded-2xl border-2 border-red-200 bg-red-50 flex items-center gap-3 px-5 py-3';
+            aiProgressBox.style.backgroundColor = '#ef4444'; // red-500
+          } else {
+            aiImageLabel.textContent = 'Likely Real Image';
+            aiDetectionMinimal.className = 'mt-6 rounded-2xl border-2 border-green-200 bg-green-50 flex items-center gap-3 px-5 py-3';
+            aiProgressBox.style.backgroundColor = '#22c55e'; // green-500
+          }
+
+          // Display Confidence Explicitly
           if (isLiveMode) {
-            aiScoreMinimal.textContent = `${aiConfidence.toFixed(1)}%`;
+            aiScoreMinimal.textContent = `${aiConfidence.toFixed(1)}% Confidence`;
           } else {
-            aiScoreMinimal.textContent = '0%';
-            setTimeout(() => animateCounter(aiScoreMinimal, 0, aiConfidence), 800);
+            // Animate or set directly
+            aiScoreMinimal.textContent = '0% Confidence';
+            setTimeout(() => {
+              // Custom animation for the text including "Confidence"
+              let start = 0;
+              const end = aiConfidence;
+              const duration = 800;
+              const startTime = performance.now();
+
+              function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                const currentVal = start + (end - start) * progress;
+                aiScoreMinimal.textContent = `${currentVal.toFixed(1)}% Confidence`;
+
+                if (progress < 1) {
+                  requestAnimationFrame(update);
+                }
+              }
+              requestAnimationFrame(update);
+            }, 300);
           }
 
-          let boxColor;
+          aiProgressBox.style.display = 'none'; // Hide the box, use background color on container instead for better UI
 
-          if (aiData.is_ai_generated) {
-            const opacity = Math.pow(aiConfidence / 100, 0.6);
-            boxColor = `rgba(239, 68, 68, ${opacity})`;
-            aiDetectionMinimal.className = 'mt-6 rounded-2xl border-2 border-slate-200 flex items-center gap-3 px-5 py-3';
-          } else {
-            const opacity = Math.pow(aiConfidence / 100, 0.6);
-            boxColor = `rgba(34, 197, 94, ${opacity})`;
-            aiDetectionMinimal.className = 'mt-6 rounded-2xl border-2 border-slate-200 flex items-center gap-3 px-5 py-3';
-          }
-
-          aiProgressBox.style.backgroundColor = boxColor;
-          aiProgressBox.style.border = 'none';
         } else {
           aiDetectionMinimal.style.display = 'none';
         }
