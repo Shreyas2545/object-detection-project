@@ -532,15 +532,16 @@ class AIVideoDetector:
                 results['metrics']['ai_frame_ratio'] = ai_ratio
 
                 # Only count model evidence if a minimum fraction of frames are predicted AI (helps avoid false positives)
+                model_score = ai_ratio * 100.0  # proportion -> percent
+                
                 if ai_ratio >= self.model_min_ai_ratio:
-                    model_score = ai_ratio * 100.0  # proportion -> percent
                     final_score += model_score * 0.35
-                    explanations.append(f"Model prediction: {ai_ratio*100:.1f}% AI-frame ratio")
+                    explanations.append(f"Model prediction: {model_score:.1f}% AI-frame ratio")
                     results['metrics']['model_confidence'] = model_score
                 else:
                     # Model did not show sufficient consensus to be strong evidence
-                    explanations.append(f"Model: low AI-frame ratio ({ai_ratio*100:.1f}%)")
-                    results['metrics']['model_confidence'] = ai_ratio * 100.0
+                    explanations.append(f"Model: low AI-frame ratio ({model_score:.1f}%)")
+                    results['metrics']['model_confidence'] = model_score
 
                 # Additional rule: if any single sampled frame has very high AI probability, treat as a hotspot and boost score
                 max_frame_ai_prob = max(model_result.get('frame_probs', [0.0]))
