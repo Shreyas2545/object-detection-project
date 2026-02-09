@@ -564,6 +564,7 @@ class AIVideoDetector:
                 })
             
             # Determine final result
+            final_score = min(100.0, final_score)
             is_ai = final_score >= 50
             confidence = final_score if is_ai else (100 - final_score)
             
