@@ -818,7 +818,7 @@
           yPosition += 8;
         }
 
-        // Image section (if available)
+        // Image section with aspect ratio handling
         if (currentTest.image_data) {
           if (yPosition > pageHeight - 80) {
             doc.addPage();
@@ -832,9 +832,32 @@
           yPosition += 10;
 
           try {
-            doc.addImage(currentTest.image_data, 'JPEG', margin, yPosition, pageWidth - 2 * margin, 60);
+            // Calculate dimensions to maintain aspect ratio
+            const imgProps = doc.getImageProperties(currentTest.image_data);
+            const imgWidth = imgProps.width;
+            const imgHeight = imgProps.height;
+            const ratio = imgWidth / imgHeight;
+
+            const maxWidth = pageWidth - (2 * margin);
+            const maxHeight = 80; // Limit height to avoid taking too much vertical space
+
+            let finalWidth = maxWidth;
+            let finalHeight = finalWidth / ratio;
+
+            if (finalHeight > maxHeight) {
+              finalHeight = maxHeight;
+              finalWidth = finalHeight * ratio;
+            }
+
+            // Center image if it's narrower than the page
+            const xPos = margin + (maxWidth - finalWidth) / 2;
+
+            doc.addImage(currentTest.image_data, 'JPEG', xPos, yPosition, finalWidth, finalHeight);
           } catch (e) {
-            doc.text('(Image not available for export)', margin, yPosition);
+            console.error('Image add error:', e);
+            doc.setTextColor(100, 116, 139);
+            doc.setFontSize(10);
+            doc.text('(Image could not be rendered)', margin, yPosition);
           }
         }
 

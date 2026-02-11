@@ -199,17 +199,17 @@ try:
     import os
     sensitivity = os.getenv('AI_DETECT_SENSITIVITY', 'medium')
 
-    # Try HuggingFace model first (most accurate), fall back to hybrid or artifact if not available
+    # Try HuggingFace model first (most accurate), fall back to ensemble or artifact if not available
     try:
-        ai_detector = AIImageDetector(method='hybrid', sensitivity=sensitivity)
-        print("✓ AI Image Detector (Hybrid) loaded successfully")
+        ai_detector = AIImageDetector(method='ensemble', sensitivity=sensitivity)
+        print("✓ AI Image Detector (Ensemble) loaded successfully")
     except Exception:
-        print("⚠️ HuggingFace model not available, trying hybrid approach...")
+        print("⚠️ Ensemble model not available, trying artifact approach...")
         try:
-            ai_detector = AIImageDetector(method='hybrid', sensitivity=sensitivity)
-            print("✓ AI Image Detector (Hybrid) loaded successfully")
+            ai_detector = AIImageDetector(method='artifact', sensitivity=sensitivity)
+            print("✓ AI Image Detector (Artifact) loaded successfully")
         except Exception:
-            print("⚠️ Hybrid detector failed, trying artifact-only approach...")
+            print("⚠️ Artifact detector failed, trying artifact-only approach...")
             try:
                 ai_detector = AIImageDetector(method='artifact', sensitivity=sensitivity)
                 print("✓ AI Image Detector (Artifact) loaded successfully")
@@ -247,14 +247,13 @@ def _watch_checkpoints(interval=30):
     while True:
         try:
             if os.path.exists(ckpt):
-                m = os.path.getmtime(ckpt)
                 if _ai_detector_mtime is None:
                     _ai_detector_mtime = m
                 elif m > _ai_detector_mtime:
                     print('Detected updated ai detector checkpoint, reloading detector...')
                     try:
                         sensitivity = os.getenv('AI_DETECT_SENSITIVITY', 'high')
-                        new_detector = AIImageDetector(method='hybrid', sensitivity=sensitivity)
+                        new_detector = AIImageDetector(method='ensemble', sensitivity=sensitivity)
                         ai_detector = new_detector
                         _ai_detector_mtime = m
                         print('AI detector reloaded from checkpoint.')
@@ -1005,7 +1004,7 @@ def rerun_ai_detection(current_user, test_id):
 
         # Instantiate a detector with requested sensitivity; prefer local custom model if available
         from src.ai_image_detector import AIImageDetector
-        detector = AIImageDetector(method='hybrid', sensitivity=sensitivity)
+        detector = AIImageDetector(method='ensemble', sensitivity=sensitivity)
         new_result = detector.predict(tmp_file)
 
         # Map to DB shape

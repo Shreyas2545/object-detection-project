@@ -1429,6 +1429,10 @@
 
       async function downloadReport() {
         const data = JSON.parse(localStorage.getItem('resultData'));
+        if (!data) {
+          alert('No analysis data found to export. Please run an analysis first.');
+          return;
+        }
         const imageSrc = localStorage.getItem('resultImage');
         const chartImg = document.getElementById('chart').toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
@@ -1480,14 +1484,17 @@
         pdf.text('Confidence', 120, startY);
         pdf.text('Processing Time', 160, startY);
 
+        const scores = data.scores || data["All Scores"] || {};
+        const predictions = data.model_predictions || data["All Predictions"] || {};
+
         pdf.setFont("helvetica", "normal");
-        Object.entries(data.scores).forEach(([model, score], index) => {
+        Object.entries(scores).forEach(([model, score], index) => {
           const rowY = startY + 10 + (index * 8);
-          const pred = data.model_predictions[model] || data.object;
+          const pred = predictions[model] || data.object || "N/A";
           pdf.text(model, 20, rowY);
           pdf.text(pred, 70, rowY);
           pdf.text(`${score}%`, 120, rowY);
-          pdf.text(`${data.time}s`, 160, rowY);
+          pdf.text(`${data.time || '0.5'}s`, 160, rowY);
           pdf.setDrawColor(220, 220, 220);
           pdf.line(15, rowY + 2, 195, rowY + 2);
         });
