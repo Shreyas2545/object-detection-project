@@ -467,7 +467,7 @@ class AIImageDetector:
                     hf_weight = 0.7
                     decision_threshold = 45
 
-                elif hf_result and artifact_result:
+                if hf_result and artifact_result:
                     # Use weighted scoring and normalize
                     hf_score = hf_result['confidence'] if hf_result['is_ai'] else (100 - hf_result['confidence'])
                     artifact_score = artifact_result['confidence'] if artifact_result['is_ai'] else (100 - artifact_result['confidence'])
@@ -475,8 +475,12 @@ class AIImageDetector:
                     combined_score = (hf_weight * hf_score + artifact_weight * artifact_score)
                     is_ai = combined_score >= decision_threshold
                     
+                    # If is_ai is True, confidence is combined_score
+                    # If is_ai is False (Real), confidence is (100 - combined_score) which is the "Real" confidence
+                    confidence = combined_score if is_ai else (100 - combined_score)
+                    
                     results['is_ai_generated'] = is_ai
-                    results['confidence'] = combined_score if is_ai else (100 - combined_score)
+                    results['confidence'] = float(confidence)
                     results['label'] = 'AI Generated' if is_ai else 'Real Photo'
                     results['metrics'] = artifact_result.get('metrics', {})
                     results['explanation'] = f"HuggingFace: {hf_result['confidence']:.1f}% | Artifacts: {artifact_result['confidence']:.1f}%"
@@ -502,10 +506,8 @@ class AIImageDetector:
                 else:
                     results['verdict'] = f"❓ Uncertain, but leans towards AI-generated ({results['confidence']:.1f}% confidence)"
             else:
-                # If the user requested high sensitivity and the detector is 'custom' or 'hybrid', be slightly stricter when labeling as real
-                if self.sensitivity == 'high' and results['confidence'] < 85 and self.method in ['custom','hybrid']:
-                    results['verdict'] = f"❓ Low confidence real photo ({results['confidence']:.1f}%) — consider retraining with more AI samples"
-                elif results['confidence'] > 80:
+                # For Real photos
+                if results['confidence'] > 80:
                     results['verdict'] = f"✅ This image is LIKELY A REAL PHOTO with {results['confidence']:.1f}% confidence"
                 elif results['confidence'] > 60:
                     results['verdict'] = f"✅ This image APPEARS to be a real photo ({results['confidence']:.1f}% confidence)"
