@@ -201,8 +201,8 @@ try:
 
     # Try HuggingFace model first (most accurate), fall back to ensemble or artifact if not available
     try:
-        ai_detector = AIImageDetector(method='ensemble', sensitivity=sensitivity)
-        print("✓ AI Image Detector (Ensemble) loaded successfully")
+        ai_detector = AIImageDetector(method='hybrid', sensitivity=sensitivity)
+        print("✓ AI Image Detector (Hybrid) loaded successfully")
     except Exception:
         print("⚠️ Ensemble model not available, trying artifact approach...")
         try:
@@ -247,13 +247,14 @@ def _watch_checkpoints(interval=30):
     while True:
         try:
             if os.path.exists(ckpt):
+                m = os.path.getmtime(ckpt)
                 if _ai_detector_mtime is None:
                     _ai_detector_mtime = m
                 elif m > _ai_detector_mtime:
                     print('Detected updated ai detector checkpoint, reloading detector...')
                     try:
                         sensitivity = os.getenv('AI_DETECT_SENSITIVITY', 'high')
-                        new_detector = AIImageDetector(method='ensemble', sensitivity=sensitivity)
+                        new_detector = AIImageDetector(method='hybrid', sensitivity=sensitivity)
                         ai_detector = new_detector
                         _ai_detector_mtime = m
                         print('AI detector reloaded from checkpoint.')
@@ -423,20 +424,21 @@ def run_all_predictions_from_image(image: np.ndarray):
         def task_ai():
             if ai_detector is None:
                 return None
+            
+            tmp_path = None
             try:
                 print("[AI DETECTOR] Running AI image detection...")
                 import tempfile
-                # Use a unique temp file
+                import os
+                
+                # Use a unique temp file - CLOSE IT immediately to avoid Windows locking
+                # delete=False is required so we can reopen it in the detector
                 with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp:
                     tmp_path = tmp.name
                     image_pil.save(tmp_path)
                 
+                # Now that the file handle is closed, we can pass the path to the detector
                 ai_result = ai_detector.predict(tmp_path)
-                
-                try:
-                    os.remove(tmp_path)
-                except:
-                    pass
                 
                 res = {
                     "is_ai_generated": ai_result.get('is_ai_generated', False),
@@ -451,6 +453,8 @@ def run_all_predictions_from_image(image: np.ndarray):
                 return res
             except Exception as e:
                 print(f"[ERROR] AI detection failed: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 return {
                     "is_ai_generated": False,
                     "confidence": 0,
@@ -458,6 +462,13 @@ def run_all_predictions_from_image(image: np.ndarray):
                     "verdict": f"Detection failed: {str(e)}",
                     "method": "error"
                 }
+            finally:
+                # Clean up the temp file
+                if tmp_path and os.path.exists(tmp_path):
+                    try:
+                        os.remove(tmp_path)
+                    except Exception as e:
+                        print(f"[WARNING] Failed to remove temp file {tmp_path}: {e}")
 
         # Execute in parallel
         with concurrent.futures.ThreadPoolExecutor() as executor:

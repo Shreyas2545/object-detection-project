@@ -461,11 +461,15 @@ class AIImageDetector:
                 hf_weight = 0.8 # Increased HF trust
                 artifact_weight = 0.2 # Decreased artifact trust
                 decision_threshold = 50
+                
+                print(f"[DEBUG] sensitivity={self.sensitivity}")
+                
                 if self.sensitivity == 'high':
                     # Balanced weighting for high sensitivity - don't over-rely on artifacts
-                    artifact_weight = 0.3
-                    hf_weight = 0.7
-                    decision_threshold = 45
+                    artifact_weight = 0.35  # Increased from 0.3
+                    hf_weight = 0.65       # Decreased from 0.7
+                    decision_threshold = 40 # Lowered from 45 to catch more AI
+                    print(f"[DEBUG] High sensitivity mode: weights=({hf_weight}, {artifact_weight}), thresh={decision_threshold}")
 
                 if hf_result and artifact_result:
                     # Use weighted scoring and normalize
@@ -474,6 +478,10 @@ class AIImageDetector:
                     
                     combined_score = (hf_weight * hf_score + artifact_weight * artifact_score)
                     is_ai = combined_score >= decision_threshold
+                    
+                    print(f"[DEBUG] HF Score: {hf_score:.2f} (is_ai={hf_result['is_ai']})")
+                    print(f"[DEBUG] Artifact Score: {artifact_score:.2f} (is_ai={artifact_result['is_ai']})")
+                    print(f"[DEBUG] Combined Score: {combined_score:.2f} -> is_ai={is_ai}")
                     
                     # If is_ai is True, confidence is combined_score
                     # If is_ai is False (Real), confidence is (100 - combined_score) which is the "Real" confidence
