@@ -71,7 +71,7 @@ def _make_json_serializable(obj):
         except Exception:
             return str(obj)
     except Exception as e:
-        print('Serialization helper error:', e)
+        print('The Serialization helper error:', e)
         return str(obj)
 
 
