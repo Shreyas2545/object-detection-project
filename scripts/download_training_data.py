@@ -42,6 +42,7 @@ def setup_data():
     datasets_to_try = [
         ("Parveshiiii/AI-vs-Real", "image"), # Dataset, image_key
         ("artix/ai-vs-real-images", "image"),
+        ("Hemg/AI-Generated-vs-Real-Images-Datasets", "image"),
     ]
     
     success = False
@@ -56,7 +57,7 @@ def setup_data():
             ds = load_dataset(ds_name, split="train", streaming=True)
             
             counts = {"real": 0, "ai": 0}
-            target_per_class = 800 # Reduced goal for speed/stability
+            target_per_class = 10000 # Increased to 10k per class as requested
             
             pbar = tqdm(total=target_per_class*2)
             
