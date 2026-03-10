@@ -613,7 +613,7 @@ def api_signup():
         token = jwt.encode({
             'user_id': str(result.inserted_id),
             'email': email,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=3)
         }, app.config['SECRET_KEY'], algorithm='HS256')
         
         return jsonify({
@@ -663,7 +663,7 @@ def api_login():
         token = jwt.encode({
             'user_id': str(user['_id']),
             'email': email,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=3)
         }, app.config['SECRET_KEY'], algorithm='HS256')
         
         return jsonify({
