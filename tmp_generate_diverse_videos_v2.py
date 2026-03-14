@@ -5,8 +5,31 @@ import random
 import glob
 from pathlib import Path
 
+IMAGE_EXTENSIONS = ('*.jpg', '*.jpeg', '*.png', '*.bmp', '*.webp')
+
+
+def collect_images(directory, limit_per_subdir=None):
+    images = []
+    if not directory.exists():
+        return images
+
+    subdirs = [path for path in directory.iterdir() if path.is_dir()]
+    if subdirs:
+        for subdir in subdirs:
+            subdir_files = []
+            for pattern in IMAGE_EXTENSIONS:
+                subdir_files.extend(subdir.glob(pattern))
+            if limit_per_subdir is not None:
+                subdir_files = random.sample(subdir_files, min(limit_per_subdir, len(subdir_files)))
+            images.extend(subdir_files)
+        return images
+
+    for pattern in IMAGE_EXTENSIONS:
+        images.extend(directory.glob(pattern))
+    return images
+
 def create_video(src_image_path, out_file, duration_sec=3, fps=15, is_ai=False):
-    img = cv2.imread(str(src_image_path))
+    img = cv2.imread(str(src_image_path)) if src_image_path else None
     if img is None:
         # Fallback noise
         img = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
@@ -77,7 +100,7 @@ def create_video(src_image_path, out_file, duration_sec=3, fps=15, is_ai=False):
     out.release()
 
 def main():
-    base_dir = Path(r"s:\Projects\object-detection-project")
+    base_dir = Path(__file__).resolve().parent
     real_out = base_dir / "data" / "ai_videos" / "train" / "real"
     ai_out = base_dir / "data" / "ai_videos" / "train" / "ai"
     
@@ -90,13 +113,7 @@ def main():
     
     # 2. Select 35 Diverse REAL images
     train_dir = base_dir / "data" / "images" / "train"
-    real_folders = [d for d in train_dir.iterdir() if d.is_dir()]
-    real_images = []
-    # Take 2 from each folder (17 folders x 2 = 34 images)
-    for folder in real_folders:
-        files = list(folder.glob("*.jpg"))
-        if files:
-            real_images.extend(random.sample(files, min(2, len(files))))
+    real_images = collect_images(train_dir, limit_per_subdir=2)
     
     # Add one more (random) to reach 35
     if real_images:
@@ -110,8 +127,8 @@ def main():
         if i % 10 == 0: print(f"  Real {i}/35")
         
     # 3. Select 50 AI "instances"
-    brain_dir = Path(r"C:\Users\shrey\.gemini\antigravity\brain\e3520b49-0a0b-4443-ae41-0da79b1ebb2d")
-    ai_sources = list(brain_dir.glob("ai_*.png")) 
+    ai_source_dir = base_dir / "data" / "ai_detector" / "train" / "ai"
+    ai_sources = collect_images(ai_source_dir)
     
     print(f"Generating 50 AI videos using {len(ai_sources)} diverse sources and unique transformations...")
     for i in range(50):

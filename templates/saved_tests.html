@@ -503,15 +503,18 @@
 
       // AI detection payload (if available)
       const aiDetection = results['AI Detection'] || null;
+      const isVideoTest = Boolean(test.video_data);
 
-      const object = test.primary_object || results['Final Prediction'] || results.object || 'Unknown';
+      const object = isVideoTest && aiDetection && aiDetection.label
+        ? aiDetection.label
+        : (test.primary_object || results['Final Prediction'] || results.object || 'Unknown');
 
       let resultsHTML = '<div class="space-y-3">';
 
       // Get top 3 models from backend response
       const top3 = results['Top 3 Models'] || [];
 
-      if (top3 && top3.length > 0) {
+      if (!isVideoTest && top3 && top3.length > 0) {
         top3.forEach((model, idx) => {
           const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
           const modelName = model.model || 'Unknown';
@@ -594,7 +597,20 @@
              </div>
           </div>
 
-          <!-- Top Models Grid -->
+          ${isVideoTest ? `
+          <div class="mb-8">
+            <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="bg-emerald-100 text-emerald-700 p-1 rounded">🎬</span> Video Verdict
+            </h3>
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/60">
+              <p class="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-2">AI Video Detection</p>
+              <p class="text-lg font-bold ${aiDetection && aiDetection.is_ai_generated ? 'text-red-600' : 'text-emerald-600'}">
+                ${aiDetection ? (aiDetection.is_ai_generated ? 'AI-generated video likely' : 'Real video likely') : 'Video verdict unavailable'}
+              </p>
+              ${aiDetection && aiDetection.explanation ? `<p class="text-sm text-slate-600 mt-3">${aiDetection.explanation}</p>` : ''}
+            </div>
+          </div>
+          ` : `
           <div class="mb-8">
             <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <span class="bg-blue-100 text-blue-600 p-1 rounded">🏆</span> Top Analysis Models
@@ -604,6 +620,7 @@
               ${top3.length > 0 ? resultsHTML : '<p class="text-slate-400 text-sm italic">No detailed model analysis available.</p>'}
             </div>
           </div>
+          `}
 
           <!-- Metadata -->
           <div class="grid grid-cols-2 gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-200/60">
@@ -747,12 +764,22 @@
         doc.text('Test Information', margin, yPosition);
         yPosition += 8;
 
+        const results = currentTest.detection_results || {};
+        const isVideoTest = Boolean(currentTest.video_data);
+        const aiInfo = results['AI Detection'] || null;
+        const primaryLabel = isVideoTest && aiInfo && aiInfo.label
+          ? aiInfo.label
+          : (currentTest.primary_object || 'Unknown');
+        const detectionMethod = currentTest.detection_method === 'webcam'
+          ? 'Webcam Capture'
+          : (currentTest.detection_method === 'video_upload' ? 'Video Analysis' : 'Image Upload');
+
         doc.setFontSize(11);
         doc.setTextColor(51, 65, 85);
         const testInfo = [
-          `Primary Object: ${currentTest.primary_object || 'Unknown'}`,
+          `Primary Object: ${primaryLabel}`,
           `Overall Confidence: ${typeof currentTest.confidence === 'number' ? currentTest.confidence.toFixed(2) : currentTest.confidence}%`,
-          `Detection Method: ${currentTest.detection_method === 'webcam' ? 'Webcam Capture' : 'Image Upload'}`,
+          `Detection Method: ${detectionMethod}`,
           `Timestamp: ${formattedDate}`
         ];
 
@@ -763,49 +790,58 @@
 
         yPosition += 5;
 
-        // Top 3 Models Section
-        doc.setFontSize(14);
-        doc.setTextColor(15, 23, 42);
-        doc.text('Top 3 Models Analysis', margin, yPosition);
-        yPosition += 8;
+        if (isVideoTest) {
+          doc.setFontSize(14);
+          doc.setTextColor(15, 23, 42);
+          doc.text('Video Verdict', margin, yPosition);
+          yPosition += 8;
 
-        const results = currentTest.detection_results || {};
-        const top3 = results['Top 3 Models'] || [];
-
-        if (top3 && top3.length > 0) {
-          doc.setFontSize(10);
+          doc.setFontSize(11);
           doc.setTextColor(51, 65, 85);
+          const verdict = aiInfo
+            ? (aiInfo.is_ai_generated ? 'AI-generated video likely' : 'Real video likely')
+            : 'Video verdict unavailable';
+          doc.text(`Verdict: ${verdict}`, margin + 5, yPosition);
+          yPosition += 8;
+        } else {
+          // Top 3 Models Section
+          doc.setFontSize(14);
+          doc.setTextColor(15, 23, 42);
+          doc.text('Top 3 Models Analysis', margin, yPosition);
+          yPosition += 8;
 
-          top3.forEach((model, idx) => {
-            const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
-            const modelName = model.model || 'Unknown';
-            const confidence = Math.round(model.confidence || 0);
-            const prediction = model.prediction || 'Unknown';
+          const top3 = results['Top 3 Models'] || [];
 
-            // Check if we need a new page
-            if (yPosition > pageHeight - 30) {
-              doc.addPage();
-              yPosition = margin;
-            }
-
-            // Model box background
-            doc.setFillColor(241, 245, 255);
-            doc.rect(margin, yPosition - 5, pageWidth - 2 * margin, 20, 'F');
-
-            doc.setTextColor(59, 130, 246);
-            doc.text(`${idx + 1}. ${modelName}`, margin + 5, yPosition);
-
+          if (top3 && top3.length > 0) {
+            doc.setFontSize(10);
             doc.setTextColor(51, 65, 85);
-            doc.setFontSize(9);
-            doc.text(`Prediction: ${prediction}`, margin + 5, yPosition + 6);
-            doc.text(`Confidence: ${confidence}%`, margin + 5, yPosition + 12);
 
-            yPosition += 25;
-          });
+            top3.forEach((model, idx) => {
+              const modelName = model.model || 'Unknown';
+              const confidence = Math.round(model.confidence || 0);
+              const prediction = model.prediction || 'Unknown';
+
+              if (yPosition > pageHeight - 30) {
+                doc.addPage();
+                yPosition = margin;
+              }
+
+              doc.setFillColor(241, 245, 255);
+              doc.rect(margin, yPosition - 5, pageWidth - 2 * margin, 20, 'F');
+
+              doc.setTextColor(59, 130, 246);
+              doc.text(`${idx + 1}. ${modelName}`, margin + 5, yPosition);
+
+              doc.setTextColor(51, 65, 85);
+              doc.setFontSize(9);
+              doc.text(`Prediction: ${prediction}`, margin + 5, yPosition + 6);
+              doc.text(`Confidence: ${confidence}%`, margin + 5, yPosition + 12);
+
+              yPosition += 25;
+            });
+          }
         }
 
-        // Add concise AI Detection info to Test Information in PDF (if available)
-        const aiInfo = currentTest.detection_results && currentTest.detection_results['AI Detection'];
         if (aiInfo) {
           doc.setFontSize(11);
           doc.setTextColor(51, 65, 85);

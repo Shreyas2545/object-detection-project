@@ -3,7 +3,7 @@
 *.h5
 *.onnx
 
-# Datasets
+# Datasetshell
 data/
 dataset/
 datasets/

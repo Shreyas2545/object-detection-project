@@ -4,6 +4,29 @@ import os
 import random
 from pathlib import Path
 
+IMAGE_EXTENSIONS = ('*.jpg', '*.jpeg', '*.png', '*.bmp', '*.webp')
+
+
+def collect_images(directory, limit_per_subdir=None):
+    images = []
+    if not directory.exists():
+        return images
+
+    subdirs = [path for path in directory.iterdir() if path.is_dir()]
+    if subdirs:
+        for subdir in subdirs:
+            subdir_files = []
+            for pattern in IMAGE_EXTENSIONS:
+                subdir_files.extend(subdir.glob(pattern))
+            if limit_per_subdir is not None:
+                subdir_files = random.sample(subdir_files, min(limit_per_subdir, len(subdir_files)))
+            images.extend(subdir_files)
+        return images
+
+    for pattern in IMAGE_EXTENSIONS:
+        images.extend(directory.glob(pattern))
+    return images
+
 def create_video(src_image_path, out_file, duration_sec=3, fps=15, is_ai=False):
     if src_image_path and os.path.exists(src_image_path):
         img = cv2.imread(str(src_image_path))
@@ -76,7 +99,7 @@ def create_video(src_image_path, out_file, duration_sec=3, fps=15, is_ai=False):
     out.release()
 
 def main():
-    base_dir = Path(r"s:\Projects\object-detection-project")
+    base_dir = Path(__file__).resolve().parent
     real_out = base_dir / "data" / "ai_videos" / "train" / "real"
     ai_out = base_dir / "data" / "ai_videos" / "train" / "ai"
     
@@ -85,20 +108,14 @@ def main():
     
     # 1. Gather all real images to ensure diversity
     img_train_dir = base_dir / "data" / "images" / "train"
-    real_images = []
-    if img_train_dir.exists():
-        for category_dir in img_train_dir.iterdir():
-            if category_dir.is_dir():
-                # Add up to 10 images from each category for variety
-                files = list(category_dir.glob("*.jpg"))
-                real_images.extend(random.sample(files, min(10, len(files))))
+    real_images = collect_images(img_train_dir, limit_per_subdir=10)
     
     random.shuffle(real_images)
     print(f"Collected {len(real_images)} diverse real images across multiple categories.")
     
-    # 2. Gather AI images (the ones just generated + previous ones)
-    brain_dir = Path(r"C:\Users\shrey\.gemini\antigravity\brain\e3520b49-0a0b-4443-ae41-0da79b1ebb2d")
-    ai_sources = list(brain_dir.glob("ai_source_*.png")) + list(brain_dir.glob("ai_src_*.png"))
+    # 2. Gather AI images from the local classifier dataset.
+    ai_source_dir = base_dir / "data" / "ai_detector" / "train" / "ai"
+    ai_sources = collect_images(ai_source_dir)
     random.shuffle(ai_sources)
     print(f"Collected {len(ai_sources)} diverse AI source images.")
     
