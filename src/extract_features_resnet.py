@@ -1,4 +1,5 @@
 import os
+import inspect
 import torch
 import numpy as np
 from torchvision import datasets, transforms
@@ -24,9 +25,36 @@ transform = transforms.Compose([
     )
 ])
 
+
+def load_imagefolder_safe(root_dir, transform, split_name):
+    kwargs = {"transform": transform}
+    if "allow_empty" in inspect.signature(datasets.ImageFolder.__init__).parameters:
+        kwargs["allow_empty"] = True
+
+    data = datasets.ImageFolder(root_dir, **kwargs)
+
+    class_counts = {class_name: 0 for class_name in data.classes}
+    for _, class_idx in data.samples:
+        class_name = data.classes[class_idx]
+        class_counts[class_name] += 1
+
+    empty_classes = [name for name, count in class_counts.items() if count == 0]
+    if empty_classes:
+        print(
+            f"⚠️ {split_name} has empty class folders: {', '.join(empty_classes)}. "
+            "They are being skipped for sampling."
+        )
+
+    if len(data) == 0:
+        raise RuntimeError(
+            f"No images found in {root_dir}. Please add images before extracting features."
+        )
+
+    return data
+
 # ===== LOAD DATA =====
-train_data = datasets.ImageFolder(train_dir, transform=transform)
-test_data = datasets.ImageFolder(test_dir, transform=transform)
+train_data = load_imagefolder_safe(train_dir, transform, "Train")
+test_data = load_imagefolder_safe(test_dir, transform, "Test")
 
 train_loader = DataLoader(train_data, batch_size=1, shuffle=False)
 test_loader = DataLoader(test_data, batch_size=1, shuffle=False)

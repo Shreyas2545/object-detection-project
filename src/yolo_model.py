@@ -6,7 +6,9 @@ import cv2
 # =========================
 # These must match your dataset folder names exactly
 ALLOWED_CLASSES = [
-    "backpack","bird","book","bottle","car","cat","dog","human","keyboard","laptop","mobile","mouse","mug","plant","shoe","watch"
+    "backpack", "ball", "bird", "book", "bottle", "cap", "car", "cat",
+    "charger", "dog", "glasses", "headphone", "human", "keyboard", "laptop", "mobile",
+    "mouse", "mug", "pen", "plant", "remote", "shoe", "umbrella", "watch"
 ]
 CLASS_MAPPING = {
     "person": "human",
@@ -28,7 +30,9 @@ CLASS_MAPPING = {
     "backpack": "backpack",
     "keyboard": "keyboard",
     "mouse": "mouse",
-    "potted plant ": "plant"
+    "potted plant ": "plant",
+    "umbrella": "umbrella",
+    "remote": "remote"
 }
 
 # =========================

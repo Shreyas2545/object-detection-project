@@ -131,9 +131,11 @@ except ImportError:
     from src.ai_video_detector import AIVideoDetector
 
 CLASS_NAMES = [
-    "backpack", "bird", "book", "bottle", "car", "cat", "dog", "human",
-    "keyboard", "laptop", "mobile", "mouse", "mug", "plant", "shoe", "watch"
+    "backpack", "ball", "bird", "book", "bottle", "cap", "car", "cat",
+    "charger", "dog", "glasses", "headphone", "human", "keyboard", "laptop", "mobile",
+    "mouse", "mug", "pen", "plant", "remote", "shoe", "umbrella", "watch"
 ]
+NUM_CLASSES = len(CLASS_NAMES)
 
 TEMPERATURE = 2.0
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -163,7 +165,7 @@ class CNNModel(nn.Module):
             nn.Linear(256 * 8 * 8, 256),
             nn.ReLU(),
             nn.Dropout(0.3),
-            nn.Linear(256, 16)
+            nn.Linear(256, NUM_CLASSES)
         )
 
     def forward(self, x):
@@ -175,11 +177,11 @@ cnn_model = CNNModel()
 cnn_model.load_state_dict(torch.load("checkpoints/cnn_model.pth", map_location=device))
 cnn_model.to(device).eval()
 
-resnet_model = get_resnet18_model(num_classes=16)
+resnet_model = get_resnet18_model(num_classes=NUM_CLASSES)
 resnet_model.load_state_dict(torch.load("checkpoints/resnet18_model.pth", map_location=device))
 resnet_model.to(device).eval()
 
-mobilenet_model = get_mobilenet_model(num_classes=16)
+mobilenet_model = get_mobilenet_model(num_classes=NUM_CLASSES)
 mobilenet_model.load_state_dict(torch.load("checkpoints/mobilenet_model.pth", map_location=device))
 mobilenet_model.to(device).eval()
 

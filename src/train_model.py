@@ -1,4 +1,5 @@
 import os
+import inspect
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -35,9 +36,38 @@ transform_test = transforms.Compose([
     )  #same as in train
 ])
 
+
+def load_imagefolder_safe(root_dir, transform, split_name):
+    """Load ImageFolder while allowing empty class folders when supported."""
+    kwargs = {"transform": transform}
+    if "allow_empty" in inspect.signature(datasets.ImageFolder.__init__).parameters:
+        kwargs["allow_empty"] = True
+
+    data = datasets.ImageFolder(root_dir, **kwargs)
+
+    # Warn when classes exist but have no images so training does not fail silently.
+    class_counts = {class_name: 0 for class_name in data.classes}
+    for _, class_idx in data.samples:
+        class_name = data.classes[class_idx]
+        class_counts[class_name] += 1
+
+    empty_classes = [name for name, count in class_counts.items() if count == 0]
+    if empty_classes:
+        print(
+            f"⚠️ {split_name} has empty class folders: {', '.join(empty_classes)}. "
+            "They are being skipped for sampling."
+        )
+
+    if len(data) == 0:
+        raise RuntimeError(
+            f"No images found in {root_dir}. Please add images before training."
+        )
+
+    return data
+
 # LOAD DATA
-train_data = datasets.ImageFolder(train_dir, transform=transform_train) # reads all images from your train folder
-test_data = datasets.ImageFolder(test_dir, transform=transform_test) # reads all images from your test folder
+train_data = load_imagefolder_safe(train_dir, transform_train, "Train") # reads all images from your train folder
+test_data = load_imagefolder_safe(test_dir, transform_test, "Test") # reads all images from your test folder
 train_loader = DataLoader(train_data, batch_size=4, shuffle=True) # Loads images in small batches of 4. and randomly mixes images every epoch(shuffling)
 test_loader = DataLoader(test_data, batch_size=4, shuffle=False) # Loads images in small batches of 4. and with no shuffling
 
@@ -85,11 +115,11 @@ def train_model(model, model_name, epochs=8,lr=0.001): # model + model name + ep
     print(f"✅ {model_name} saved to {save_path}\n")
 
 
-train_model(CNNModel(num_classes=len(train_data.classes)), "CNN", epochs=6, lr=0.001)  
+train_model(CNNModel(num_classes=len(train_data.classes)), "CNN", epochs=12, lr=0.001)  
 
-train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18", epochs=3, lr=0.001 ) 
+train_model(get_resnet18_model(num_classes=len(train_data.classes)), "ResNet18", epochs=8, lr=0.001 ) 
 
-train_model(get_mobilenet_model(num_classes=len(train_data.classes)),"MobileNet", epochs=3, lr=0.001)  
+train_model(get_mobilenet_model(num_classes=len(train_data.classes)),"MobileNet", epochs=8, lr=0.001)  
 
 # epoch = how many times the model sees all training images.
 # learning rate = how fast the model learns.
